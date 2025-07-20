@@ -1,0 +1,8 @@
+.prettierignore
+.gitignore
+*.svg
+*.png
+*.jpg
+*.lrc
+*.ico
+*.log

@@ -60,6 +60,21 @@ export async function GET(
       const timeInSeconds = parseFloat(currentTime);
       const syncState = lyricsService.updateSyncState(songId, timeInSeconds);
 
+      if (!syncState) {
+        return NextResponse.json<ApiResponse<never>>(
+          {
+            success: false,
+            error: {
+              code: "SYNC_FAILED",
+              message: "Unable to sync lyrics at current time",
+              timestamp: new Date()
+            },
+            timestamp: new Date(),
+          },
+          { status: 404 }
+        );
+      }
+
       return NextResponse.json<ApiResponse<LyricsSyncState>>({
         success: true,
         data: syncState,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { LyricsDisplay } from "@/components/tv/LyricsDisplay";
 import { QueuePreview } from "@/components/tv/QueuePreview";
@@ -12,6 +12,7 @@ import { NextUpSidebar } from "@/components/tv/NextUpSidebar";
 export default function TVDisplay() {
   const [showHostControls, setShowHostControls] = useState(false);
   const [showQueuePreview, setShowQueuePreview] = useState(false);
+  const lastUpdateRef = useRef<number>(0);
 
   const {
     isConnected,
@@ -116,8 +117,8 @@ export default function TVDisplay() {
     // Only send updates every 2 seconds to avoid spam
     const now = Date.now();
     if (
-      !handleTimeUpdate.lastUpdate ||
-      now - handleTimeUpdate.lastUpdate > 2000
+      !lastUpdateRef.current ||
+      now - lastUpdateRef.current > 2000
     ) {
       playbackControl({
         action: "time-update",
@@ -125,7 +126,7 @@ export default function TVDisplay() {
         userId: "tv-display",
         timestamp: new Date(),
       });
-      handleTimeUpdate.lastUpdate = now;
+      lastUpdateRef.current = now;
     }
   };
 

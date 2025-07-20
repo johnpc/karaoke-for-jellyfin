@@ -1,5 +1,8 @@
 # Karaoke For Jellyfin
 
+[![Docker Build](https://github.com/your-username/karaoke-for-jellyfin/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/your-username/karaoke-for-jellyfin/actions/workflows/docker-publish.yml)
+[![Docker Hub](https://img.shields.io/docker/pulls/mrorbitman/karaoke-for-jellyfin)](https://hub.docker.com/r/mrorbitman/karaoke-for-jellyfin)
+
 A web-based karaoke system that integrates with Jellyfin media server to provide karaoke functionality.
 
 ## Features
@@ -10,6 +13,25 @@ A web-based karaoke system that integrates with Jellyfin media server to provide
 - **Real-time Sync**: WebSocket-based real-time updates between devices
 
 ## Getting Started
+
+### Docker (Recommended)
+
+The easiest way to run Karaoke For Jellyfin is using Docker:
+
+```bash
+docker run -d \
+  --name karaoke-app \
+  -p 3000:3000 \
+  -e JELLYFIN_SERVER_URL=http://your-jellyfin-server:8096 \
+  -e JELLYFIN_API_KEY=your_api_key \
+  -e JELLYFIN_USERNAME=your_username \
+  -e SESSION_SECRET=your_session_secret \
+  mrorbitman/karaoke-for-jellyfin:latest
+```
+
+Or use Docker Compose - see [DOCKER.md](./DOCKER.md) for detailed instructions.
+
+### Local Development
 
 ### Prerequisites
 

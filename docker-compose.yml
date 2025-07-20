@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  karaoke-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      # Jellyfin Configuration
+      - JELLYFIN_SERVER_URL=${JELLYFIN_SERVER_URL:-http://host.docker.internal:8096}
+      - JELLYFIN_API_KEY=${JELLYFIN_API_KEY}
+      - JELLYFIN_USERNAME=${JELLYFIN_USERNAME}
+      
+      # Lyrics Configuration
+      - LYRICS_PATH=/app/lyrics
+      - JELLYFIN_MEDIA_PATH=/app/media
+      
+      # Application Configuration
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - SESSION_SECRET=${SESSION_SECRET:-default_session_secret_change_in_production}
+      
+      # Node.js Configuration
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    volumes:
+      # Mount lyrics directory (adjust path as needed)
+      - ${LYRICS_PATH:-./lyrics}:/app/lyrics:ro
+      # Mount Jellyfin media directory (adjust path as needed)
+      - ${JELLYFIN_MEDIA_PATH:-/path/to/jellyfin/media}:/app/media:ro
+    restart: unless-stopped
+    networks:
+      - karaoke-network
+    # Use host networking if you need to access Jellyfin on localhost
+    # network_mode: host
+    extra_hosts:
+      # Allow container to access host services (like Jellyfin on localhost)
+      - "host.docker.internal:host-gateway"
+
+networks:
+  karaoke-network:
+    driver: bridge

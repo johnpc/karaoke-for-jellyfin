@@ -152,7 +152,8 @@ export type PlaybackAction =
   | "previous"
   | "seek"
   | "volume"
-  | "mute";
+  | "mute"
+  | "time-update";
 
 export interface PlaybackCommand {
   action: PlaybackAction;

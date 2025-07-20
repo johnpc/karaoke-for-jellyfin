@@ -1,0 +1,58 @@
+# Dependencies
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Next.js build output
+.next
+out
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Testing
+coverage
+__tests__
+*.test.js
+*.test.ts
+*.test.tsx
+jest.config.js
+jest.setup.js
+
+# Development files
+.vscode
+.kiro
+dev.log
+*.log
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Documentation
+README.md
+*.md
+
+# Misc
+.DS_Store
+*.tgz
+*.tar.gz
+
+# IDE
+.idea
+*.swp
+*.swo
+
+# Temporary files
+tmp
+temp

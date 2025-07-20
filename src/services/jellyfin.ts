@@ -71,7 +71,7 @@ export class JellyfinService {
       if (users && users.length > 0) {
         // Find user by username (case insensitive)
         const targetUser = users.find(
-          (user: unknown) =>
+          (user: any) =>
             user.Name?.toLowerCase() === this.username.toLowerCase(),
         );
 
@@ -84,7 +84,7 @@ export class JellyfinService {
         } else {
           console.error(
             `User "${this.username}" not found. Available users:`,
-            users.map((u: unknown) => u.Name),
+            users.map((u: any) => u.Name),
           );
           return false;
         }
@@ -272,7 +272,7 @@ export class JellyfinService {
   /**
    * Get lyrics for a media item from Jellyfin
    */
-  async getLyrics(itemId: string): Promise<string | null> {
+  async getLyrics(itemId: string): Promise<string | any[] | null> {
     if (!this.userId) {
       const authenticated = await this.authenticate();
       if (!authenticated) {
@@ -440,7 +440,7 @@ export class JellyfinService {
       const data = await response.json();
       console.log(
         "Available libraries:",
-        data.Items?.map((lib: unknown) => ({
+        data.Items?.map((lib: any) => ({
           name: lib.Name,
           id: lib.Id,
           type: lib.CollectionType,

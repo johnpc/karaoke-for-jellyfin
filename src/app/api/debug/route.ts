@@ -48,7 +48,7 @@ export async function GET() {
         type: lib.CollectionType,
       })),
       sampleItems: allItems,
-      userId: (jellyfinService as unknown).userId,
+      userId: (jellyfinService as any).userId,
     });
   } catch (error) {
     console.error("Debug API error:", error);
