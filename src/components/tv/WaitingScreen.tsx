@@ -65,8 +65,11 @@ export function WaitingScreen({
               <h2 className="text-4xl font-semibold text-white mb-4">
                 Ready to Rock! 🎤
               </h2>
-              <p className="text-xl text-gray-300">
+              <p className="text-xl text-gray-300 mb-2">
                 {totalSongs} song{totalSongs !== 1 ? "s" : ""} in the queue
+              </p>
+              <p className="text-lg text-purple-400 animate-pulse">
+                ▶️ Auto-play will start shortly...
               </p>
             </div>
           ) : (
@@ -77,13 +80,16 @@ export function WaitingScreen({
               <p className="text-xl text-gray-300 mb-4">
                 Use your phone to search and add songs to the queue
               </p>
-              <div className="text-lg text-gray-400">
+              <div className="text-lg text-gray-400 mb-2">
                 Visit{" "}
                 <span className="text-purple-400 font-mono">
                   https://karaoke.jpc.io
                 </span>{" "}
                 on your mobile device
               </div>
+              <p className="text-sm text-green-400">
+                ✨ Songs will start playing automatically when added
+              </p>
             </div>
           )}
         </div>

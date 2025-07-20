@@ -12,6 +12,7 @@ import { NextUpSidebar } from "@/components/tv/NextUpSidebar";
 export default function TVDisplay() {
   const [showHostControls, setShowHostControls] = useState(false);
   const [showQueuePreview, setShowQueuePreview] = useState(false);
+  const [hasTriggeredAutoPlay, setHasTriggeredAutoPlay] = useState(false);
   const lastUpdateRef = useRef<number>(0);
 
   const {
@@ -35,6 +36,70 @@ export default function TVDisplay() {
       joinSession("main-session", "TV Display");
     }
   }, [isConnected, joinSession]);
+
+  // Auto-play functionality
+  useEffect(() => {
+    // Auto-play when:
+    // 1. We have a current song
+    // 2. We're connected
+    // 3. Playback is not already playing
+    // 4. We have valid playback state
+    // 5. We haven't already triggered auto-play for this song
+    if (
+      currentSong &&
+      isConnected &&
+      playbackState &&
+      !playbackState.isPlaying &&
+      !hasTriggeredAutoPlay
+    ) {
+      console.log("Auto-starting playback for:", currentSong.mediaItem.title);
+      setHasTriggeredAutoPlay(true);
+      
+      // Small delay to ensure everything is ready
+      const autoPlayTimer = setTimeout(() => {
+        playbackControl({
+          action: "play",
+          userId: "tv-display-autoplay",
+          timestamp: new Date(),
+        });
+      }, 500);
+
+      return () => clearTimeout(autoPlayTimer);
+    }
+  }, [currentSong, isConnected, playbackState, playbackControl, hasTriggeredAutoPlay]);
+
+  // Reset auto-play flag when song changes
+  useEffect(() => {
+    setHasTriggeredAutoPlay(false);
+  }, [currentSong?.id]);
+
+  // Auto-play when queue changes from empty to having songs
+  useEffect(() => {
+    // If we don't have a current song but we have songs in queue,
+    // and we're connected, try to start the first song
+    if (
+      !currentSong &&
+      queue.length > 0 &&
+      isConnected &&
+      session
+    ) {
+      const firstPendingSong = queue.find(song => song.status === "pending");
+      if (firstPendingSong) {
+        console.log("Auto-starting first song in queue:", firstPendingSong.mediaItem.title);
+        
+        // Small delay to ensure everything is ready
+        const queueAutoPlayTimer = setTimeout(() => {
+          playbackControl({
+            action: "play",
+            userId: "tv-display-queue-autoplay",
+            timestamp: new Date(),
+          });
+        }, 1000);
+
+        return () => clearTimeout(queueAutoPlayTimer);
+      }
+    }
+  }, [queue, currentSong, isConnected, session, playbackControl]);
 
   // Keyboard shortcuts for TV remote/host controls
   useEffect(() => {
@@ -213,7 +278,7 @@ export default function TVDisplay() {
       {/* Keyboard Shortcuts Help */}
       <div className="absolute bottom-4 left-4 text-gray-500 text-sm">
         <div className="bg-black bg-opacity-50 rounded px-3 py-2">
-          Press H for controls • Q for queue • Space to play/pause • S to skip
+          Auto-play enabled • H for controls • Q for queue • Space to play/pause • S to skip
         </div>
       </div>
     </div>
