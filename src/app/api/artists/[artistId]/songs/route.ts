@@ -1,4 +1,4 @@
-// API route for song title search using Jellyfin SDK
+// API route for getting songs by artist ID using Jellyfin SDK
 import { NextRequest, NextResponse } from "next/server";
 import { getJellyfinSDKService } from "@/services/jellyfin-sdk";
 import {
@@ -6,37 +6,32 @@ import {
   createErrorResponse,
   createPaginatedResponse,
 } from "@/lib/utils";
-import { validateSearchRequest, ValidationError } from "@/lib/validation";
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ artistId: string }> }
+) {
   try {
     const { searchParams } = new URL(request.url);
-    const query = searchParams.get("q");
     const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 1000);
     const startIndex = Math.max(
       parseInt(searchParams.get("startIndex") || "0"),
       0,
     );
 
-    if (!query || !query.trim()) {
+    const { artistId } = await params;
+
+    if (!artistId) {
       return NextResponse.json(
-        createErrorResponse("INVALID_SEARCH", "Search query is required"),
+        createErrorResponse("INVALID_ARTIST_ID", "Artist ID is required"),
         { status: 400 },
       );
     }
 
-    // Validate search parameters
-    try {
-      validateSearchRequest({ query, limit, offset: startIndex });
-    } catch (error) {
-      if (error instanceof ValidationError) {
-        return NextResponse.json(
-          createErrorResponse("INVALID_SEARCH", error.message),
-          { status: 400 },
-        );
-      }
-      throw error;
-    }
+    // Extract the actual Jellyfin ID from our prefixed ID
+    const jellyfinArtistId = artistId.startsWith("jellyfin_artist_") 
+      ? artistId.replace("jellyfin_artist_", "")
+      : artistId;
 
     const jellyfinService = getJellyfinSDKService();
 
@@ -52,8 +47,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Search by title using the SDK
-    const songs = await jellyfinService.searchByTitle(query.trim(), limit, startIndex);
+    // Get songs by artist ID using the SDK
+    const songs = await jellyfinService.getSongsByArtistId(jellyfinArtistId, limit, startIndex);
 
     return NextResponse.json(
       createPaginatedResponse(
@@ -64,11 +59,11 @@ export async function GET(request: NextRequest) {
       ),
     );
   } catch (error) {
-    console.error("Title search API error:", error);
+    console.error("Get songs by artist API error:", error);
     return NextResponse.json(
       createErrorResponse(
-        "TITLE_SEARCH_FAILED",
-        "Failed to search songs by title",
+        "GET_SONGS_BY_ARTIST_FAILED",
+        "Failed to get songs by artist",
       ),
       { status: 500 },
     );

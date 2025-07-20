@@ -1,4 +1,4 @@
-// API route for song title search using Jellyfin SDK
+// API route for artist search using Jellyfin SDK
 import { NextRequest, NextResponse } from "next/server";
 import { getJellyfinSDKService } from "@/services/jellyfin-sdk";
 import {
@@ -52,23 +52,23 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Search by title using the SDK
-    const songs = await jellyfinService.searchByTitle(query.trim(), limit, startIndex);
+    // Search for artists using the SDK
+    const artists = await jellyfinService.searchArtists(query.trim(), limit, startIndex);
 
     return NextResponse.json(
       createPaginatedResponse(
-        songs,
+        artists,
         Math.floor(startIndex / limit) + 1,
         limit,
-        songs.length,
+        artists.length,
       ),
     );
   } catch (error) {
-    console.error("Title search API error:", error);
+    console.error("Artist search API error:", error);
     return NextResponse.json(
       createErrorResponse(
-        "TITLE_SEARCH_FAILED",
-        "Failed to search songs by title",
+        "ARTIST_SEARCH_FAILED",
+        "Failed to search artists",
       ),
       { status: 500 },
     );

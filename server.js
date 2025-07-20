@@ -339,10 +339,6 @@ app.prepare().then(() => {
                 console.log("Song started successfully");
               } else {
                 console.log("No pending songs in queue");
-                socket.emit("error", {
-                  code: "NO_SONGS",
-                  message: "No songs in queue to play",
-                });
               }
             } else {
               console.log("Resuming current song");

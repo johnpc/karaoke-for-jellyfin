@@ -23,9 +23,32 @@ export interface JellyfinMediaItem {
   };
 }
 
+export interface JellyfinArtist {
+  Id: string;
+  Name: string;
+  Type: string;
+  Overview?: string;
+  ImageTags?: {
+    Primary?: string;
+  };
+}
+
 export interface JellyfinSearchResponse {
   Items: JellyfinMediaItem[];
   TotalRecordCount: number;
+}
+
+export interface JellyfinArtistSearchResponse {
+  Items: JellyfinArtist[];
+  TotalRecordCount: number;
+}
+
+export interface Artist {
+  id: string;
+  name: string;
+  jellyfinId: string;
+  imageUrl?: string;
+  songCount?: number;
 }
 
 export class JellyfinService {
@@ -192,8 +215,114 @@ export class JellyfinService {
   }
 
   /**
-   * Search for audio items by artist only with pagination support
+   * Search for artists by name
    */
+  async searchArtists(query: string, limit: number = 50, startIndex: number = 0): Promise<Artist[]> {
+    if (!this.userId) {
+      const authenticated = await this.authenticate();
+      if (!authenticated) {
+        throw new Error("Failed to authenticate with Jellyfin");
+      }
+    }
+
+    try {
+      console.log(`Searching for artists: "${query}" (limit: ${limit}, startIndex: ${startIndex})`);
+      
+      const searchParams = new URLSearchParams({
+        searchTerm: query,
+        includeItemTypes: "MusicArtist",
+        recursive: "true",
+        limit: limit.toString(),
+        startIndex: startIndex.toString(),
+        userId: this.userId!,
+        fields: "Overview,ImageTags",
+        sortBy: "SortName",
+        sortOrder: "Ascending",
+      });
+
+      console.log(`Artist search URL: ${this.baseUrl}/Items?${searchParams.toString()}`);
+
+      const response = await fetch(
+        `${this.baseUrl}/Items?${searchParams.toString()}`,
+        {
+          headers: {
+            "X-Emby-Token": this.apiKey,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Artist search failed: ${response.status}`);
+      }
+
+      const data: JellyfinArtistSearchResponse = await response.json();
+      console.log(`Jellyfin returned ${data.Items?.length || 0} artists`);
+      
+      const artists = this.transformArtists(data.Items || []);
+      console.log(`Transformed ${artists.length} artists`);
+      
+      return artists;
+    } catch (error) {
+      console.error("Jellyfin artist search error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all songs by a specific artist ID
+   */
+  async getSongsByArtistId(artistId: string, limit: number = 50, startIndex: number = 0): Promise<MediaItem[]> {
+    if (!this.userId) {
+      const authenticated = await this.authenticate();
+      if (!authenticated) {
+        throw new Error("Failed to authenticate with Jellyfin");
+      }
+    }
+
+    try {
+      console.log(`Getting songs for artist ID: ${artistId} (limit: ${limit}, startIndex: ${startIndex})`);
+      
+      const searchParams = new URLSearchParams({
+        includeItemTypes: "Audio",
+        recursive: "true",
+        artistIds: artistId,
+        limit: limit.toString(),
+        startIndex: startIndex.toString(),
+        userId: this.userId!,
+        fields: "Artists,Album,RunTimeTicks",
+        sortBy: "Album,SortName",
+        sortOrder: "Ascending",
+      });
+
+      console.log(`Songs by artist URL: ${this.baseUrl}/Items?${searchParams.toString()}`);
+
+      const response = await fetch(
+        `${this.baseUrl}/Items?${searchParams.toString()}`,
+        {
+          headers: {
+            "X-Emby-Token": this.apiKey,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Get songs by artist failed: ${response.status}`);
+      }
+
+      const data: JellyfinSearchResponse = await response.json();
+      console.log(`Jellyfin returned ${data.Items?.length || 0} songs for artist ${artistId}`);
+      
+      const songs = this.transformMediaItems(data.Items || []);
+      console.log(`Transformed ${songs.length} songs`);
+      
+      return songs;
+    } catch (error) {
+      console.error("Jellyfin get songs by artist error:", error);
+      throw error;
+    }
+  }
   async searchByArtist(query: string, limit: number = 50, startIndex: number = 0): Promise<MediaItem[]> {
     if (!this.userId) {
       const authenticated = await this.authenticate();
@@ -708,8 +837,32 @@ export class JellyfinService {
   }
 
   /**
-   * Transform Jellyfin media items to our MediaItem format
+   * Transform Jellyfin artists to our Artist format
    */
+  private transformArtists(items: JellyfinArtist[]): Artist[] {
+    return items
+      .filter(item => item.Type === "MusicArtist")
+      .map((item) => this.transformArtist(item))
+      .filter(Boolean) as Artist[];
+  }
+
+  /**
+   * Transform a single Jellyfin artist to our Artist format
+   */
+  private transformArtist(item: JellyfinArtist): Artist | null {
+    if (item.Type !== "MusicArtist") {
+      return null;
+    }
+
+    return {
+      id: `jellyfin_artist_${item.Id}`,
+      name: item.Name || "Unknown Artist",
+      jellyfinId: item.Id,
+      imageUrl: item.ImageTags?.Primary 
+        ? `${this.baseUrl}/Items/${item.Id}/Images/Primary?maxHeight=300&maxWidth=300&quality=90`
+        : undefined,
+    };
+  }
   private transformMediaItems(items: JellyfinMediaItem[]): MediaItem[] {
     return items
       .map((item) => this.transformMediaItem(item))

@@ -16,6 +16,14 @@ export interface MediaItem {
   metadata?: MediaMetadata;
 }
 
+export interface Artist {
+  id: string;
+  name: string;
+  jellyfinId: string;
+  imageUrl?: string;
+  songCount?: number;
+}
+
 export interface MediaMetadata {
   genre?: string;
   year?: number;
