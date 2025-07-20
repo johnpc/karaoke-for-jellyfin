@@ -3,6 +3,10 @@ const { createServer } = require("http");
 const { parse } = require("url");
 const next = require("next");
 const { Server } = require("socket.io");
+const fetch = require("node-fetch");
+
+// Import the session manager
+const { getSessionManager } = require("./src/services/session.ts");
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -15,6 +19,31 @@ const handle = app.getRequestHandler();
 app.prepare().then(() => {
   const server = createServer(async (req, res) => {
     try {
+      // Handle debug endpoint before Next.js
+      if (req.url === '/debug/websocket-state' && req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          currentSession: currentSession ? {
+            id: currentSession.id,
+            name: currentSession.name,
+            queueLength: currentSession.queue?.length || 0,
+            currentSong: currentSession.currentSong ? {
+              title: currentSession.currentSong.mediaItem.title,
+              status: currentSession.currentSong.status
+            } : null,
+            connectedUsers: currentSession.connectedUsers?.length || 0,
+            queue: currentSession.queue?.map(item => ({
+              title: item.mediaItem.title,
+              artist: item.mediaItem.artist,
+              status: item.status,
+              addedBy: item.addedBy
+            })) || []
+          } : null,
+          connectedUsersCount: connectedUsers.size
+        }, null, 2));
+        return;
+      }
+
       // Be sure to pass `true` as the second argument to `url.parse`.
       // This tells it to parse the query portion of the URL.
       const parsedUrl = parse(req.url, true);
@@ -159,7 +188,7 @@ app.prepare().then(() => {
       console.log(`User ${userName} joined session ${sessionId}`);
     });
 
-    socket.on("add-song", (data) => {
+    socket.on("add-song", async (data) => {
       console.log("Adding song:", data);
 
       // Get the user for this socket
@@ -212,6 +241,50 @@ app.prepare().then(() => {
       currentSession.queue.forEach((item, index) => {
         item.position = index;
       });
+
+      // SYNC WITH SESSION MANAGER: Also add to the API session manager
+      try {
+        const response = await fetch('http://localhost:3000/api/queue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'add-song',
+            mediaItem: mediaItem,
+            userId: user.id,
+            userName: user.name,
+            position: position
+          })
+        });
+        
+        if (!response.ok) {
+          console.log('Failed to sync with session manager, creating session...');
+          // Try to create session first
+          await fetch('http://localhost:3000/api/queue', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'create-session',
+              userName: user.name
+            })
+          });
+          
+          // Then try adding the song again
+          await fetch('http://localhost:3000/api/queue', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'add-song',
+              mediaItem: mediaItem,
+              userId: user.id,
+              userName: user.name,
+              position: position
+            })
+          });
+        }
+        console.log('Successfully synced with session manager');
+      } catch (error) {
+        console.log('Failed to sync with session manager:', error.message);
+      }
 
       console.log("Broadcasting queue update to session:", currentSession.id);
       console.log("Queue length:", currentSession.queue.length);
