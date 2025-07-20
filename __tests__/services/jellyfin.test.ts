@@ -12,6 +12,7 @@ describe("JellyfinService", () => {
     // Set up environment variables
     process.env.JELLYFIN_SERVER_URL = "https://test.jellyfin.com";
     process.env.JELLYFIN_API_KEY = "test-api-key";
+    process.env.JELLYFIN_USERNAME = "test-user";
 
     service = new JellyfinService();
     mockFetch.mockClear();
@@ -29,16 +30,17 @@ describe("JellyfinService", () => {
     it("should throw error if environment variables are missing", () => {
       delete process.env.JELLYFIN_SERVER_URL;
       delete process.env.JELLYFIN_API_KEY;
+      delete process.env.JELLYFIN_USERNAME;
 
       expect(() => new JellyfinService()).toThrow(
-        "JELLYFIN_SERVER_URL and JELLYFIN_API_KEY must be configured",
+        "JELLYFIN_SERVER_URL, JELLYFIN_API_KEY, and JELLYFIN_USERNAME must be configured",
       );
     });
   });
 
   describe("authenticate", () => {
     it("should authenticate successfully", async () => {
-      const mockUsers = [{ Id: "user123", Name: "TestUser" }];
+      const mockUsers = [{ Id: "user123", Name: "test-user" }];
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -84,7 +86,7 @@ describe("JellyfinService", () => {
       // Mock successful authentication
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => [{ Id: "user123", Name: "TestUser" }],
+        json: async () => [{ Id: "user123", Name: "test-user" }],
       } as Response);
 
       await service.authenticate();
@@ -106,12 +108,20 @@ describe("JellyfinService", () => {
         TotalRecordCount: 1,
       };
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockSearchResponse,
-      } as Response);
+      // Mock both search calls (title and artist search)
+      // First call should return the song (title search matches "test query")
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockSearchResponse,
+        } as Response)
+        // Second call returns empty (artist search doesn't match "test query")
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ Items: [], TotalRecordCount: 0 }),
+        } as Response);
 
-      const result = await service.searchMedia("test query");
+      const result = await service.searchMedia("test");
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
@@ -121,21 +131,154 @@ describe("JellyfinService", () => {
         album: "Test Album",
         duration: 180, // 3 minutes in seconds
         jellyfinId: "song123",
-        streamUrl:
-          "https://test.jellyfin.com/Audio/song123/stream?api_key=test-api-key",
-        lyricsPath: undefined,
+        streamUrl: "/api/stream/song123",
+        lyricsPath: "jellyfin_song123",
       });
+
+      // Should make two search calls (title and artist)
+      expect(mockFetch).toHaveBeenCalledTimes(2);
     });
 
-    it("should handle search errors", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-      } as Response);
+    it("should deduplicate results from title and artist searches", async () => {
+      const mockSong = {
+        Id: "song123",
+        Name: "Test Song",
+        Artists: ["Test Artist"],
+        Album: "Test Album",
+        RunTimeTicks: 1800000000,
+        Type: "Audio",
+      };
 
-      await expect(service.searchMedia("test")).rejects.toThrow(
-        "Search failed: 500",
-      );
+      const mockSearchResponse = {
+        Items: [mockSong],
+        TotalRecordCount: 1,
+      };
+
+      // Mock both searches returning the same song
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockSearchResponse,
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockSearchResponse,
+        } as Response);
+
+      const result = await service.searchMedia("test");
+
+      // Should only return one result despite both searches finding the same song
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("jellyfin_song123");
+    });
+
+    it("should sort results by relevance", async () => {
+      const mockSongs = [
+        {
+          Id: "song1",
+          Name: "Test Song",
+          Artists: ["Artist B"],
+          Album: "Album",
+          RunTimeTicks: 1800000000,
+          Type: "Audio",
+        },
+        {
+          Id: "song2", 
+          Name: "Another Song",
+          Artists: ["Test Artist"], // Exact artist match
+          Album: "Album",
+          RunTimeTicks: 1800000000,
+          Type: "Audio",
+        },
+        {
+          Id: "song3",
+          Name: "Test", // Exact title match
+          Artists: ["Artist C"],
+          Album: "Album", 
+          RunTimeTicks: 1800000000,
+          Type: "Audio",
+        },
+      ];
+
+      // Mock title search returning songs 1 and 3 (both have "test" in title)
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ Items: [mockSongs[0], mockSongs[2]], TotalRecordCount: 2 }),
+        } as Response)
+        // Mock artist search returning song 2 (has "test" in artist name)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ Items: [mockSongs[1]], TotalRecordCount: 1 }),
+        } as Response);
+
+      const result = await service.searchMedia("test");
+
+      expect(result).toHaveLength(3);
+      // Should be sorted: exact title match first, then exact artist match, then partial title match
+      expect(result[0].title).toBe("Test"); // Exact title match
+      expect(result[1].title).toBe("Test Song"); // Partial title match (alphabetically before "Another Song")
+      expect(result[2].artist).toBe("Test Artist"); // Exact artist match
+    });
+
+    it("should handle search errors gracefully", async () => {
+      // Mock first search failing, second succeeding
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 500,
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ Items: [], TotalRecordCount: 0 }),
+        } as Response);
+
+      // Should not throw error, just return empty results
+      const result = await service.searchMedia("test");
+      expect(result).toEqual([]);
+    });
+
+    it("should handle complete search failure", async () => {
+      // Mock both searches failing
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 500,
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 500,
+        } as Response);
+
+      // Should not throw error, just return empty results
+      const result = await service.searchMedia("test");
+      expect(result).toEqual([]);
+    });
+
+    it("should respect the limit parameter", async () => {
+      const mockSongs = Array.from({ length: 10 }, (_, i) => ({
+        Id: `song${i}`,
+        Name: `Test Song ${i}`,
+        Artists: [`Artist ${i}`],
+        Album: "Album",
+        RunTimeTicks: 1800000000,
+        Type: "Audio",
+      }));
+
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ Items: mockSongs.slice(0, 5), TotalRecordCount: 5 }),
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ Items: mockSongs.slice(5), TotalRecordCount: 5 }),
+        } as Response);
+
+      const result = await service.searchMedia("test", 3);
+
+      // Should limit results to 3 even though we got 10 total
+      expect(result).toHaveLength(3);
     });
   });
 
@@ -143,9 +286,7 @@ describe("JellyfinService", () => {
     it("should generate correct stream URL", () => {
       const url = service.getStreamUrl("song123");
 
-      expect(url).toBe(
-        "https://test.jellyfin.com/Audio/song123/stream?api_key=test-api-key",
-      );
+      expect(url).toBe("/api/stream/song123");
     });
   });
 
@@ -192,7 +333,7 @@ describe("JellyfinService", () => {
       // Mock successful authentication
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => [{ Id: "user123", Name: "TestUser" }],
+        json: async () => [{ Id: "user123", Name: "test-user" }],
       } as Response);
 
       await service.authenticate();
@@ -223,9 +364,8 @@ describe("JellyfinService", () => {
         album: "Test Album",
         duration: 180,
         jellyfinId: "song123",
-        streamUrl:
-          "https://test.jellyfin.com/Audio/song123/stream?api_key=test-api-key",
-        lyricsPath: undefined,
+        streamUrl: "/api/stream/song123",
+        lyricsPath: "jellyfin_song123",
       });
     });
 
