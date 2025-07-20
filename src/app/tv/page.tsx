@@ -9,12 +9,21 @@ import { WaitingScreen } from "@/components/tv/WaitingScreen";
 import { AudioPlayer } from "@/components/tv/AudioPlayer";
 import { NextUpSidebar } from "@/components/tv/NextUpSidebar";
 import { QRCode } from "@/components/tv/QRCode";
+import { RatingAnimation } from "@/components/tv/RatingAnimation";
+import { NextSongSplash } from "@/components/tv/NextSongSplash";
+import { ApplausePlayer } from "@/components/tv/ApplausePlayer";
+import { TVDisplayState, TransitionState } from "@/types";
+import { generateRatingForSong } from "@/lib/ratingGenerator";
 
 export default function TVDisplay() {
   const [showHostControls, setShowHostControls] = useState(false);
   const [showQueuePreview, setShowQueuePreview] = useState(false);
   const [hasTriggeredAutoPlay, setHasTriggeredAutoPlay] = useState(false);
+  const [transitionState, setTransitionState] = useState<TransitionState>({
+    displayState: "waiting"
+  });
   const lastUpdateRef = useRef<number>(0);
+  const lastSongIdRef = useRef<string | null>(null);
 
   const {
     isConnected,
@@ -32,13 +41,96 @@ export default function TVDisplay() {
     error,
   } = useWebSocket();
 
+  // Handle display state transitions based on current song and queue
+  useEffect(() => {
+    const currentSongId = currentSong?.id || null;
+    
+    // If we have a current song and it's different from the last one
+    if (currentSong && currentSongId !== lastSongIdRef.current) {
+      setTransitionState({
+        displayState: "playing"
+      });
+      lastSongIdRef.current = currentSongId;
+    }
+    // If we don't have a current song but we have songs in queue
+    else if (!currentSong && queue.length > 0) {
+      setTransitionState({
+        displayState: "waiting"
+      });
+      lastSongIdRef.current = null;
+    }
+    // If we have no songs at all
+    else if (!currentSong && queue.length === 0) {
+      setTransitionState({
+        displayState: "waiting"
+      });
+      lastSongIdRef.current = null;
+    }
+  }, [currentSong, queue]);
+
+  // Handle song completion and transitions
+  const handleSongCompleted = (completedSong: any) => {
+    console.log("Song completed, starting transition sequence");
+    
+    // Generate rating for the completed song
+    const rating = generateRatingForSong(completedSong.mediaItem.duration);
+    
+    // Find next song in queue
+    const nextSong = queue.find(song => song.status === "pending");
+    
+    // Start applause and rating phase
+    setTransitionState({
+      displayState: "applause",
+      completedSong,
+      nextSong,
+      rating,
+      transitionStartTime: Date.now()
+    });
+  };
+
+  // Handle rating animation completion
+  const handleRatingComplete = () => {
+    console.log("Rating animation complete");
+    
+    if (transitionState.nextSong) {
+      // Show next song splash
+      setTransitionState(prev => ({
+        ...prev,
+        displayState: "next-up"
+      }));
+    } else {
+      // No next song, go to waiting
+      setTransitionState({
+        displayState: "waiting"
+      });
+    }
+  };
+
+  // Handle next song splash completion
+  const handleNextSongComplete = () => {
+    console.log("Next song splash complete, starting next song");
+    
+    // Transition to playing the next song
+    setTransitionState({
+      displayState: "transitioning"
+    });
+    
+    // Trigger playback of next song
+    setTimeout(() => {
+      playbackControl({
+        action: "play",
+        userId: "tv-display-transition",
+        timestamp: new Date(),
+      });
+    }, 500);
+  };
+
   useEffect(() => {
     // Auto-join session as TV display
     if (isConnected) {
       joinSession("main-session", "TV Display");
     }
   }, [isConnected, joinSession]);
-
   // Auto-play functionality
   useEffect(() => {
     // Auto-play when:
@@ -47,12 +139,14 @@ export default function TVDisplay() {
     // 3. Playback is not already playing
     // 4. We have valid playback state
     // 5. We haven't already triggered auto-play for this song
+    // 6. We're in playing state (not in transition)
     if (
       currentSong &&
       isConnected &&
       playbackState &&
       !playbackState.isPlaying &&
-      !hasTriggeredAutoPlay
+      !hasTriggeredAutoPlay &&
+      transitionState.displayState === "playing"
     ) {
       console.log("Auto-starting playback for:", currentSong.mediaItem.title);
       setHasTriggeredAutoPlay(true);
@@ -74,6 +168,7 @@ export default function TVDisplay() {
     playbackState,
     playbackControl,
     hasTriggeredAutoPlay,
+    transitionState.displayState,
   ]);
 
   // Reset auto-play flag when song changes
@@ -120,9 +215,13 @@ export default function TVDisplay() {
           setShowQueuePreview(!showQueuePreview);
           break;
         case " ":
-          // Spacebar to play/pause
+          // Spacebar to play/pause or skip transitions
           event.preventDefault();
-          if (playbackState) {
+          if (transitionState.displayState === "applause") {
+            handleRatingComplete();
+          } else if (transitionState.displayState === "next-up") {
+            handleNextSongComplete();
+          } else if (playbackState) {
             playbackControl({
               action: playbackState.isPlaying ? "pause" : "play",
               userId: "tv-display",
@@ -132,8 +231,14 @@ export default function TVDisplay() {
           break;
         case "s":
         case "S":
-          // S to skip
-          skipSong();
+          // S to skip song or transitions
+          if (transitionState.displayState === "applause") {
+            handleRatingComplete();
+          } else if (transitionState.displayState === "next-up") {
+            handleNextSongComplete();
+          } else {
+            skipSong();
+          }
           break;
         case "Escape":
           setShowHostControls(false);
@@ -150,6 +255,7 @@ export default function TVDisplay() {
     playbackState,
     playbackControl,
     skipSong,
+    transitionState.displayState,
   ]);
 
   // Auto-hide controls after 10 seconds of inactivity
@@ -176,8 +282,12 @@ export default function TVDisplay() {
 
   // Audio player handlers
   const handleSongEnded = () => {
-    // Song ended naturally, emit song-ended event to server
-    console.log("Song ended naturally, notifying server");
+    // Song ended naturally, start transition sequence
+    console.log("Song ended naturally, starting transition sequence");
+    if (currentSong) {
+      handleSongCompleted(currentSong);
+    }
+    // Also notify server
     songEnded();
   };
 
@@ -243,11 +353,24 @@ export default function TVDisplay() {
       )}
 
       {/* Main Content */}
-      {currentSong ? (
+      {transitionState.displayState === "playing" && currentSong ? (
         <LyricsDisplay
           song={currentSong}
           playbackState={playbackState}
           isConnected={isConnected}
+        />
+      ) : transitionState.displayState === "applause" && transitionState.completedSong && transitionState.rating ? (
+        <RatingAnimation
+          song={transitionState.completedSong}
+          rating={transitionState.rating}
+          onComplete={handleRatingComplete}
+          duration={4000}
+        />
+      ) : transitionState.displayState === "next-up" && transitionState.nextSong ? (
+        <NextSongSplash
+          nextSong={transitionState.nextSong}
+          onComplete={handleNextSongComplete}
+          duration={3000}
         />
       ) : (
         <WaitingScreen
@@ -290,6 +413,12 @@ export default function TVDisplay() {
         onTimeUpdate={handleTimeUpdate}
       />
 
+      {/* Applause Player */}
+      <ApplausePlayer
+        isPlaying={transitionState.displayState === "applause"}
+        volume={60}
+      />
+
       {/* Next Up Sidebar - Always visible */}
       <NextUpSidebar queue={queue} currentSong={currentSong} />
 
@@ -297,7 +426,7 @@ export default function TVDisplay() {
       <div className="absolute bottom-4 left-4 text-gray-500 text-sm">
         <div className="bg-black bg-opacity-50 rounded px-3 py-2">
           Auto-play enabled • H for controls • Q for queue • Space to play/pause
-          • S to skip
+          • S to skip • Transitions: {transitionState.displayState}
         </div>
       </div>
     </div>

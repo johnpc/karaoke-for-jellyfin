@@ -198,6 +198,31 @@ export type PlaybackEventType =
   | "seek-performed";
 
 // ============================================================================
+// TV DISPLAY TYPES
+// ============================================================================
+
+export type TVDisplayState = 
+  | "waiting"      // No songs in queue
+  | "playing"      // Song is currently playing
+  | "applause"     // Showing applause and rating after song
+  | "next-up"      // Showing next song splash screen
+  | "transitioning"; // Brief transition state
+
+export interface SongRating {
+  grade: string; // A+, A, A-, B+, B, B-, C+, C, C-, D+, D, F
+  score: number; // 0-100
+  message: string; // "Fantastic!", "Great job!", etc.
+}
+
+export interface TransitionState {
+  displayState: TVDisplayState;
+  completedSong?: QueueItem;
+  nextSong?: QueueItem;
+  rating?: SongRating;
+  transitionStartTime?: number;
+}
+
+// ============================================================================
 // WEBSOCKET TYPES
 // ============================================================================
 
