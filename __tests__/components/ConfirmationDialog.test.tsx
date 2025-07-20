@@ -21,7 +21,7 @@ describe("ConfirmationDialog", () => {
         title="Test Title"
         message="Test message"
         onClose={mockOnClose}
-      />
+      />,
     );
 
     expect(screen.getByText("Test Title")).toBeInTheDocument();
@@ -35,7 +35,7 @@ describe("ConfirmationDialog", () => {
         title="Test Title"
         message="Test message"
         onClose={mockOnClose}
-      />
+      />,
     );
 
     expect(screen.queryByText("Test Title")).not.toBeInTheDocument();
@@ -48,7 +48,7 @@ describe("ConfirmationDialog", () => {
         title="Test Title"
         message="Test message"
         onClose={mockOnClose}
-      />
+      />,
     );
 
     const closeButton = screen.getByLabelText("Close");
@@ -65,7 +65,7 @@ describe("ConfirmationDialog", () => {
         message="Test message"
         onClose={mockOnClose}
         autoCloseDelay={1000}
-      />
+      />,
     );
 
     expect(mockOnClose).not.toHaveBeenCalled();
@@ -84,7 +84,7 @@ describe("ConfirmationDialog", () => {
         message="Test message"
         onClose={mockOnClose}
         autoCloseDelay={0}
-      />
+      />,
     );
 
     jest.advanceTimersByTime(5000);
@@ -100,7 +100,7 @@ describe("ConfirmationDialog", () => {
         message="Operation successful"
         onClose={mockOnClose}
         type="success"
-      />
+      />,
     );
 
     // Look for the main dialog container with the background color
@@ -116,7 +116,7 @@ describe("ConfirmationDialog", () => {
         message="Operation failed"
         onClose={mockOnClose}
         type="error"
-      />
+      />,
     );
 
     // Look for the main dialog container with the background color

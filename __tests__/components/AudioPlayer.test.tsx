@@ -87,9 +87,9 @@ describe("AudioPlayer", () => {
 
   it("shows debug info in development mode", () => {
     const originalEnv = process.env.NODE_ENV;
-    Object.defineProperty(process.env, 'NODE_ENV', {
-      value: 'development',
-      configurable: true
+    Object.defineProperty(process.env, "NODE_ENV", {
+      value: "development",
+      configurable: true,
     });
 
     const { container } = render(<AudioPlayer {...mockProps} />);
@@ -99,17 +99,17 @@ describe("AudioPlayer", () => {
     expect(container.textContent).toContain("State: Playing");
     expect(container.textContent).toContain("Volume: 75%");
 
-    Object.defineProperty(process.env, 'NODE_ENV', {
+    Object.defineProperty(process.env, "NODE_ENV", {
       value: originalEnv,
-      configurable: true
+      configurable: true,
     });
   });
 
   it("does not show debug info in production mode", () => {
     const originalEnv = process.env.NODE_ENV;
-    Object.defineProperty(process.env, 'NODE_ENV', {
-      value: 'production',
-      configurable: true
+    Object.defineProperty(process.env, "NODE_ENV", {
+      value: "production",
+      configurable: true,
     });
 
     const { container } = render(<AudioPlayer {...mockProps} />);
@@ -117,9 +117,9 @@ describe("AudioPlayer", () => {
     // Should not show debug info in production
     expect(container.textContent).not.toContain("Audio: Loaded");
 
-    Object.defineProperty(process.env, 'NODE_ENV', {
+    Object.defineProperty(process.env, "NODE_ENV", {
       value: originalEnv,
-      configurable: true
+      configurable: true,
     });
   });
 });

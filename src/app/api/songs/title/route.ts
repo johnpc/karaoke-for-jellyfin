@@ -53,7 +53,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Search by title using the SDK
-    const songs = await jellyfinService.searchByTitle(query.trim(), limit, startIndex);
+    const songs = await jellyfinService.searchByTitle(
+      query.trim(),
+      limit,
+      startIndex,
+    );
 
     return NextResponse.json(
       createPaginatedResponse(

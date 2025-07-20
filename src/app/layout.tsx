@@ -13,9 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+  ),
   title: "Karaoke For Jellyfin",
-  description: "A web-based karaoke system that integrates with Jellyfin media server to provide karaoke functionality",
+  description:
+    "A web-based karaoke system that integrates with Jellyfin media server to provide karaoke functionality",
   keywords: ["karaoke", "jellyfin", "music", "singing", "entertainment"],
   authors: [{ name: "Karaoke For Jellyfin" }],
   creator: "Karaoke For Jellyfin",
@@ -44,7 +47,8 @@ export const metadata: Metadata = {
     startupImage: [
       {
         url: "/icons/icon-512x512.png",
-        media: "(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)",
+        media:
+          "(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)",
       },
     ],
   },
@@ -52,7 +56,8 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "Karaoke For Jellyfin",
     title: "Karaoke For Jellyfin",
-    description: "A web-based karaoke system that integrates with Jellyfin media server",
+    description:
+      "A web-based karaoke system that integrates with Jellyfin media server",
     images: [
       {
         url: "/icons/icon-512x512.png",
@@ -65,7 +70,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary",
     title: "Karaoke For Jellyfin",
-    description: "A web-based karaoke system that integrates with Jellyfin media server",
+    description:
+      "A web-based karaoke system that integrates with Jellyfin media server",
     images: ["/icons/icon-512x512.png"],
   },
 };
@@ -97,13 +103,23 @@ export default function RootLayout({
         <meta name="msapplication-config" content="/browserconfig.xml" />
         <meta name="msapplication-TileColor" content="#8B5CF6" />
         <meta name="msapplication-tap-highlight" content="no" />
-        
+
         {/* Additional Favicon Links */}
         <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="/favicon-16x16.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="/favicon-32x32.png"
+        />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        
+
         {/* Manifest */}
         <link rel="manifest" href="/manifest.json" />
       </head>

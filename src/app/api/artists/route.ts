@@ -53,7 +53,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Search for artists using the SDK
-    const artists = await jellyfinService.searchArtists(query.trim(), limit, startIndex);
+    const artists = await jellyfinService.searchArtists(
+      query.trim(),
+      limit,
+      startIndex,
+    );
 
     return NextResponse.json(
       createPaginatedResponse(
@@ -66,10 +70,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Artist search API error:", error);
     return NextResponse.json(
-      createErrorResponse(
-        "ARTIST_SEARCH_FAILED",
-        "Failed to search artists",
-      ),
+      createErrorResponse("ARTIST_SEARCH_FAILED", "Failed to search artists"),
       { status: 500 },
     );
   }

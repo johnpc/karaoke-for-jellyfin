@@ -27,10 +27,10 @@ This document explains how to set up the GitHub Actions workflow to automaticall
 
 ### Required Secrets
 
-| Secret Name | Value | Description |
-|-------------|-------|-------------|
-| `DOCKERHUB_USERNAME` | `mrorbitman` | Your Docker Hub username |
-| `DOCKERHUB_TOKEN` | `your_access_token` | The access token from Step 1 |
+| Secret Name          | Value               | Description                  |
+| -------------------- | ------------------- | ---------------------------- |
+| `DOCKERHUB_USERNAME` | `mrorbitman`        | Your Docker Hub username     |
+| `DOCKERHUB_TOKEN`    | `your_access_token` | The access token from Step 1 |
 
 ### Adding Each Secret
 
@@ -62,6 +62,7 @@ The workflow file `.github/workflows/docker-publish.yml` is already configured t
 ## Step 4: Test the Workflow
 
 ### Option 1: Push to Main Branch
+
 ```bash
 git add .
 git commit -m "feat: add Docker Hub publishing workflow"
@@ -69,12 +70,14 @@ git push origin main
 ```
 
 ### Option 2: Create a Release Tag
+
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
 ### Option 3: Manual Trigger
+
 1. Go to your GitHub repository
 2. Click **Actions** tab
 3. Select **Build and Push Docker Image** workflow
@@ -98,19 +101,24 @@ git push origin v1.0.0
 ## Workflow Features
 
 ### Multi-Architecture Support
+
 The workflow builds for both AMD64 and ARM64 architectures, making it compatible with:
+
 - Intel/AMD servers and desktops
 - ARM-based systems (including Raspberry Pi, Apple Silicon Macs)
 
 ### Caching
+
 The workflow uses GitHub Actions cache to speed up builds by caching Docker layers.
 
 ### Security
+
 - Secrets are never exposed in logs
 - Only pushes images on main branch and tags (not on pull requests)
 - Uses official GitHub Actions for security
 
 ### Automatic README Updates
+
 The workflow automatically updates the Docker Hub repository description with the contents of `README-DOCKERHUB.md`.
 
 ## Troubleshooting
@@ -169,6 +177,7 @@ Once the workflow is set up and working:
 ## Support
 
 If you encounter issues:
+
 1. Check the GitHub Actions logs
 2. Verify your Docker Hub credentials
 3. Test the Docker build locally first

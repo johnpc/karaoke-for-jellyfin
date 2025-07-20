@@ -44,10 +44,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Get playlists API error:", error);
     return NextResponse.json(
-      createErrorResponse(
-        "PLAYLIST_FETCH_FAILED",
-        "Failed to fetch playlists",
-      ),
+      createErrorResponse("PLAYLIST_FETCH_FAILED", "Failed to fetch playlists"),
       { status: 500 },
     );
   }

@@ -26,9 +26,9 @@ body {
 }
 
 /* Enhanced input styling for better text contrast */
-input[type="text"], 
-input[type="search"], 
-input[type="email"], 
+input[type="text"],
+input[type="search"],
+input[type="email"],
 input[type="password"] {
   color: #111827 !important; /* Dark gray text */
 }

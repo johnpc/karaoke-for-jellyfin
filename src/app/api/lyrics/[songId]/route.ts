@@ -67,11 +67,11 @@ export async function GET(
             error: {
               code: "SYNC_FAILED",
               message: "Unable to sync lyrics at current time",
-              timestamp: new Date()
+              timestamp: new Date(),
             },
             timestamp: new Date(),
           },
-          { status: 404 }
+          { status: 404 },
         );
       }
 

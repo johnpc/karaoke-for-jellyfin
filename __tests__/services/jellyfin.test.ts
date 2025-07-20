@@ -183,7 +183,7 @@ describe("JellyfinService", () => {
           Type: "Audio",
         },
         {
-          Id: "song2", 
+          Id: "song2",
           Name: "Another Song",
           Artists: ["Test Artist"], // Exact artist match
           Album: "Album",
@@ -194,7 +194,7 @@ describe("JellyfinService", () => {
           Id: "song3",
           Name: "Test", // Exact title match
           Artists: ["Artist C"],
-          Album: "Album", 
+          Album: "Album",
           RunTimeTicks: 1800000000,
           Type: "Audio",
         },
@@ -204,7 +204,10 @@ describe("JellyfinService", () => {
       mockFetch
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => ({ Items: [mockSongs[0], mockSongs[2]], TotalRecordCount: 2 }),
+          json: async () => ({
+            Items: [mockSongs[0], mockSongs[2]],
+            TotalRecordCount: 2,
+          }),
         } as Response)
         // Mock artist search returning song 2 (has "test" in artist name)
         .mockResolvedValueOnce({
@@ -268,11 +271,17 @@ describe("JellyfinService", () => {
       mockFetch
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => ({ Items: mockSongs.slice(0, 5), TotalRecordCount: 5 }),
+          json: async () => ({
+            Items: mockSongs.slice(0, 5),
+            TotalRecordCount: 5,
+          }),
         } as Response)
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => ({ Items: mockSongs.slice(5), TotalRecordCount: 5 }),
+          json: async () => ({
+            Items: mockSongs.slice(5),
+            TotalRecordCount: 5,
+          }),
         } as Response);
 
       const result = await service.searchMedia("test", 3);

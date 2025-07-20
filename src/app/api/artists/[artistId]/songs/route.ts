@@ -9,7 +9,7 @@ import {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ artistId: string }> }
+  { params }: { params: Promise<{ artistId: string }> },
 ) {
   try {
     const { searchParams } = new URL(request.url);
@@ -29,7 +29,7 @@ export async function GET(
     }
 
     // Extract the actual Jellyfin ID from our prefixed ID
-    const jellyfinArtistId = artistId.startsWith("jellyfin_artist_") 
+    const jellyfinArtistId = artistId.startsWith("jellyfin_artist_")
       ? artistId.replace("jellyfin_artist_", "")
       : artistId;
 
@@ -48,7 +48,11 @@ export async function GET(
     }
 
     // Get songs by artist ID using the SDK
-    const songs = await jellyfinService.getSongsByArtistId(jellyfinArtistId, limit, startIndex);
+    const songs = await jellyfinService.getSongsByArtistId(
+      jellyfinArtistId,
+      limit,
+      startIndex,
+    );
 
     return NextResponse.json(
       createPaginatedResponse(

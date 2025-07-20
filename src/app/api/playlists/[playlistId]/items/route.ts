@@ -9,7 +9,7 @@ import {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ playlistId: string }> }
+  { params }: { params: Promise<{ playlistId: string }> },
 ) {
   try {
     const { searchParams } = new URL(request.url);
@@ -29,7 +29,7 @@ export async function GET(
     }
 
     // Extract the actual Jellyfin ID from our prefixed ID
-    const jellyfinPlaylistId = playlistId.startsWith("jellyfin_playlist_") 
+    const jellyfinPlaylistId = playlistId.startsWith("jellyfin_playlist_")
       ? playlistId.replace("jellyfin_playlist_", "")
       : playlistId;
 
@@ -48,7 +48,11 @@ export async function GET(
     }
 
     // Get playlist items using the SDK
-    const items = await jellyfinService.getPlaylistItems(jellyfinPlaylistId, limit, startIndex);
+    const items = await jellyfinService.getPlaylistItems(
+      jellyfinPlaylistId,
+      limit,
+      startIndex,
+    );
 
     return NextResponse.json(
       createPaginatedResponse(

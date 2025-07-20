@@ -29,11 +29,13 @@ The auto-play feature includes intelligent logic to prevent issues:
 ## User Experience
 
 ### 📺 **TV Display**
+
 - **Immediate Playback**: Songs start automatically when added to queue
 - **Visual Feedback**: "Auto-play will start shortly..." message when songs are queued
 - **Status Indicator**: Updated help text shows "Auto-play enabled"
 
 ### 📱 **Mobile Interface**
+
 - **Seamless Experience**: Add songs and they start playing automatically on TV
 - **No Manual Intervention**: No need to switch to TV to start playback
 - **Real-time Updates**: Instant feedback when songs begin playing
@@ -96,6 +98,7 @@ useEffect(() => {
 ### 🎛️ **Manual Override**
 
 Users can still manually control playback:
+
 - **Spacebar**: Toggle play/pause (overrides auto-play)
 - **S Key**: Skip to next song
 - **Host Controls**: Full manual control panel
@@ -135,14 +138,14 @@ Enable console logging to monitor auto-play behavior:
 
 ```javascript
 // Check browser console for these messages:
-"Auto-starting playback for: [Song Title]"
-"Auto-starting first song in queue: [Song Title]"
+"Auto-starting playback for: [Song Title]";
+"Auto-starting first song in queue: [Song Title]";
 ```
 
 ### 📊 **Browser Compatibility**
 
 - ✅ **Chrome**: Full support with user gesture requirement
-- ✅ **Firefox**: Full support with user gesture requirement  
+- ✅ **Firefox**: Full support with user gesture requirement
 - ✅ **Safari**: Full support with user gesture requirement
 - ✅ **Edge**: Full support with user gesture requirement
 
@@ -151,16 +154,19 @@ Enable console logging to monitor auto-play behavior:
 ## Benefits
 
 ### 🎉 **User Experience**
+
 - **Seamless Sessions**: No manual intervention needed to start karaoke
 - **Instant Gratification**: Songs play immediately when added
 - **Reduced Friction**: Eliminates the need to remember keyboard shortcuts
 
 ### 🏠 **Party/Event Usage**
+
 - **Host-Friendly**: Hosts don't need to manage playback manually
 - **Guest Experience**: Guests can add songs and see immediate results
 - **Continuous Flow**: Maintains energy and momentum during events
 
 ### 🔧 **Technical Benefits**
+
 - **Reduced Complexity**: Fewer manual steps for users
 - **Better UX**: More intuitive and expected behavior
 - **Reliability**: Consistent playback behavior across sessions
@@ -168,11 +174,13 @@ Enable console logging to monitor auto-play behavior:
 ## Future Enhancements
 
 ### 🚀 **Planned Features**
+
 - **Auto-play Settings**: Toggle auto-play on/off
 - **Delay Configuration**: Customizable auto-play delays
 - **Smart Queuing**: Intelligent song ordering and auto-advance
 
 ### 🎵 **Advanced Features**
+
 - **Crossfade**: Smooth transitions between songs
 - **Pre-loading**: Load next song while current is playing
 - **Volume Ramping**: Gradual volume increase on auto-play
@@ -180,11 +188,13 @@ Enable console logging to monitor auto-play behavior:
 ## Migration Notes
 
 ### 📈 **Upgrading from Manual Play**
+
 - Existing keyboard shortcuts still work
 - No breaking changes to existing functionality
 - Auto-play is additive, not replacing manual controls
 
 ### 🔄 **Backward Compatibility**
+
 - All existing features remain functional
 - Manual play/pause still available
 - Host controls unchanged

@@ -5,9 +5,6 @@ const next = require("next");
 const { Server } = require("socket.io");
 const fetch = require("node-fetch");
 
-// Import the session manager
-const { getSessionManager } = require("./src/services/session.ts");
-
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
 const port = process.env.PORT || 3000;
@@ -20,27 +17,64 @@ app.prepare().then(() => {
   const server = createServer(async (req, res) => {
     try {
       // Handle debug endpoint before Next.js
-      if (req.url === '/debug/websocket-state' && req.method === 'GET') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-          currentSession: currentSession ? {
-            id: currentSession.id,
-            name: currentSession.name,
-            queueLength: currentSession.queue?.length || 0,
-            currentSong: currentSession.currentSong ? {
-              title: currentSession.currentSong.mediaItem.title,
-              status: currentSession.currentSong.status
-            } : null,
-            connectedUsers: currentSession.connectedUsers?.length || 0,
-            queue: currentSession.queue?.map(item => ({
-              title: item.mediaItem.title,
-              artist: item.mediaItem.artist,
-              status: item.status,
-              addedBy: item.addedBy
-            })) || []
-          } : null,
-          connectedUsersCount: connectedUsers.size
-        }, null, 2));
+      if (req.url === "/debug/websocket-state" && req.method === "GET") {
+        res.writeHead(200, { "Content-Type": "application/json" });
+
+        // Get unique users by name for display
+        const uniqueUsers = currentSession
+          ? currentSession.connectedUsers.reduce((acc, user) => {
+              if (!acc.find((u) => u.name === user.name)) {
+                acc.push({
+                  name: user.name,
+                  isHost: user.isHost,
+                  connectedAt: user.connectedAt,
+                  lastSeen: user.lastSeen,
+                  socketId: user.socketId,
+                });
+              }
+              return acc;
+            }, [])
+          : [];
+
+        res.end(
+          JSON.stringify(
+            {
+              currentSession: currentSession
+                ? {
+                    id: currentSession.id,
+                    name: currentSession.name,
+                    queueLength: currentSession.queue?.length || 0,
+                    currentSong: currentSession.currentSong
+                      ? {
+                          title: currentSession.currentSong.mediaItem.title,
+                          status: currentSession.currentSong.status,
+                        }
+                      : null,
+                    connectedUsers: currentSession.connectedUsers?.length || 0,
+                    uniqueUsers: uniqueUsers,
+                    uniqueUserCount: uniqueUsers.length,
+                    queue:
+                      currentSession.queue?.map((item) => ({
+                        title: item.mediaItem.title,
+                        artist: item.mediaItem.artist,
+                        status: item.status,
+                        addedBy: item.addedBy,
+                      })) || [],
+                  }
+                : null,
+              connectedUsersMapSize: connectedUsers.size,
+              duplicateDetection: {
+                totalConnections: currentSession?.connectedUsers?.length || 0,
+                uniqueUsers: uniqueUsers.length,
+                duplicatesRemoved:
+                  (currentSession?.connectedUsers?.length || 0) -
+                  uniqueUsers.length,
+              },
+            },
+            null,
+            2,
+          ),
+        );
         return;
       }
 
@@ -68,6 +102,44 @@ app.prepare().then(() => {
   let currentSession = null;
   const connectedUsers = new Map();
 
+  // Periodic cleanup of stale connections
+  const cleanupStaleConnections = () => {
+    if (!currentSession) return;
+
+    const now = new Date();
+    const staleThreshold = 5 * 60 * 1000; // 5 minutes
+
+    const initialCount = currentSession.connectedUsers.length;
+
+    // Remove users who haven't been seen in a while
+    currentSession.connectedUsers = currentSession.connectedUsers.filter(
+      (user) => {
+        const timeSinceLastSeen = now - new Date(user.lastSeen);
+        const isStale = timeSinceLastSeen > staleThreshold;
+
+        if (isStale) {
+          console.log(
+            `Removing stale user: ${user.name} (last seen ${Math.round(timeSinceLastSeen / 1000)}s ago)`,
+          );
+          // Also remove from connectedUsers map
+          connectedUsers.delete(user.socketId);
+        }
+
+        return !isStale;
+      },
+    );
+
+    const removedCount = initialCount - currentSession.connectedUsers.length;
+    if (removedCount > 0) {
+      console.log(
+        `Cleaned up ${removedCount} stale connections. Active users: ${currentSession.connectedUsers.length}`,
+      );
+    }
+  };
+
+  // Run cleanup every 2 minutes
+  setInterval(cleanupStaleConnections, 2 * 60 * 1000);
+
   // Basic WebSocket connection handling with session management
   io.on("connection", (socket) => {
     console.log("Client connected:", socket.id);
@@ -77,6 +149,7 @@ app.prepare().then(() => {
     // Auto-join for TV display
     if (socket.handshake.query && socket.handshake.query.client === "tv") {
       const userId = `tv_${Date.now()}`;
+      const userName = "TV Display";
       currentUserId = userId;
       currentSessionId = "main-session";
       console.log(`Auto-joining TV client ${userId} to main-session`);
@@ -93,10 +166,34 @@ app.prepare().then(() => {
         };
       }
 
+      // DEDUPLICATION: Remove any existing TV Display users
+      const existingTvIndex = currentSession.connectedUsers.findIndex(
+        (u) => u.name === userName,
+      );
+
+      if (existingTvIndex !== -1) {
+        const existingTv = currentSession.connectedUsers[existingTvIndex];
+        console.log(
+          `Removing duplicate TV Display (old socket: ${existingTv.socketId})`,
+        );
+
+        // Remove from both session and connectedUsers map
+        currentSession.connectedUsers.splice(existingTvIndex, 1);
+
+        // Find and remove old socket from connectedUsers map
+        for (const [socketId, user] of connectedUsers.entries()) {
+          if (user.name === userName) {
+            connectedUsers.delete(socketId);
+            console.log(`Cleaned up old TV socket mapping: ${socketId}`);
+            break;
+          }
+        }
+      }
+
       // Add TV user to session
       const user = {
         id: userId,
-        name: "TV Display",
+        name: userName,
         socketId: socket.id,
         isHost: true,
         connectedAt: new Date(),
@@ -123,7 +220,7 @@ app.prepare().then(() => {
         },
       });
 
-      console.log("TV client auto-joined to main-session");
+      console.log("TV client auto-joined to main-session (deduplicated)");
     }
 
     socket.on("join-session", (data) => {
@@ -149,6 +246,32 @@ app.prepare().then(() => {
         console.log("Joining existing session:", currentSession.id);
       }
 
+      // DEDUPLICATION: Remove any existing users with the same name
+      const existingUserIndex = currentSession.connectedUsers.findIndex(
+        (u) => u.name === userName,
+      );
+
+      if (existingUserIndex !== -1) {
+        const existingUser = currentSession.connectedUsers[existingUserIndex];
+        console.log(
+          `Removing duplicate user: ${userName} (old socket: ${existingUser.socketId})`,
+        );
+
+        // Remove from both session and connectedUsers map
+        currentSession.connectedUsers.splice(existingUserIndex, 1);
+
+        // Find and remove old socket from connectedUsers map
+        for (const [socketId, user] of connectedUsers.entries()) {
+          if (user.name === userName) {
+            connectedUsers.delete(socketId);
+            console.log(
+              `Cleaned up old socket mapping for ${userName}: ${socketId}`,
+            );
+            break;
+          }
+        }
+      }
+
       // Add user to session
       const user = {
         id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -156,6 +279,7 @@ app.prepare().then(() => {
         socketId: socket.id,
         isHost: currentSession.connectedUsers.length === 0,
         connectedAt: new Date(),
+        lastSeen: new Date(),
       };
 
       currentSession.connectedUsers.push(user);
@@ -165,7 +289,7 @@ app.prepare().then(() => {
       console.log(
         "Session now has",
         currentSession.connectedUsers.length,
-        "users",
+        "users (deduplicated)",
       );
 
       // Send session state to client
@@ -185,7 +309,9 @@ app.prepare().then(() => {
       console.log("Notifying other clients in room:", sessionId);
       socket.to(sessionId).emit("user-joined", user);
 
-      console.log(`User ${userName} joined session ${sessionId}`);
+      console.log(
+        `User ${userName} joined session ${sessionId} (deduplicated)`,
+      );
     });
 
     socket.on("add-song", async (data) => {
@@ -244,46 +370,48 @@ app.prepare().then(() => {
 
       // SYNC WITH SESSION MANAGER: Also add to the API session manager
       try {
-        const response = await fetch('http://localhost:3000/api/queue', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("http://localhost:3000/api/queue", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            action: 'add-song',
+            action: "add-song",
             mediaItem: mediaItem,
             userId: user.id,
             userName: user.name,
-            position: position
-          })
+            position: position,
+          }),
         });
-        
+
         if (!response.ok) {
-          console.log('Failed to sync with session manager, creating session...');
+          console.log(
+            "Failed to sync with session manager, creating session...",
+          );
           // Try to create session first
-          await fetch('http://localhost:3000/api/queue', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          await fetch("http://localhost:3000/api/queue", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              action: 'create-session',
-              userName: user.name
-            })
+              action: "create-session",
+              userName: user.name,
+            }),
           });
-          
+
           // Then try adding the song again
-          await fetch('http://localhost:3000/api/queue', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          await fetch("http://localhost:3000/api/queue", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              action: 'add-song',
+              action: "add-song",
               mediaItem: mediaItem,
               userId: user.id,
               userName: user.name,
-              position: position
-            })
+              position: position,
+            }),
           });
         }
-        console.log('Successfully synced with session manager');
+        console.log("Successfully synced with session manager");
       } catch (error) {
-        console.log('Failed to sync with session manager:', error.message);
+        console.log("Failed to sync with session manager:", error.message);
       }
 
       console.log("Broadcasting queue update to session:", currentSession.id);
@@ -579,14 +707,17 @@ app.prepare().then(() => {
       if (nextSong) {
         nextSong.status = "playing";
         currentSession.currentSong = nextSong;
-        
+
         // Ensure playback state is ready for new song
         currentSession.playbackState.isPlaying = true;
         currentSession.playbackState.currentTime = 0; // Explicitly reset to 0
-        
+
         io.to(sessionId).emit("song-started", nextSong);
         io.to(sessionId).emit("queue-updated", currentSession.queue);
-        io.to(sessionId).emit("playback-state-changed", currentSession.playbackState);
+        io.to(sessionId).emit(
+          "playback-state-changed",
+          currentSession.playbackState,
+        );
       }
     });
 
@@ -628,18 +759,24 @@ app.prepare().then(() => {
         console.log("Starting next song:", nextSong.mediaItem.title);
         nextSong.status = "playing";
         currentSession.currentSong = nextSong;
-        
+
         // Ensure playback state is ready for new song
         currentSession.playbackState.isPlaying = true;
         currentSession.playbackState.currentTime = 0; // Explicitly reset to 0
-        
+
         io.to(sessionId).emit("song-started", nextSong);
         io.to(sessionId).emit("queue-updated", currentSession.queue);
-        io.to(sessionId).emit("playback-state-changed", currentSession.playbackState);
+        io.to(sessionId).emit(
+          "playback-state-changed",
+          currentSession.playbackState,
+        );
       } else {
         console.log("No more songs in queue");
         // Broadcast updated playback state even if no next song
-        io.to(sessionId).emit("playback-state-changed", currentSession.playbackState);
+        io.to(sessionId).emit(
+          "playback-state-changed",
+          currentSession.playbackState,
+        );
       }
     });
 

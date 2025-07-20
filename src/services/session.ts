@@ -191,7 +191,10 @@ export class KaraokeSessionManager {
 
     // Wait for any ongoing queue operations to complete
     if (this.queueOperationInProgress) {
-      return { success: false, message: "Queue operation in progress, please try again" };
+      return {
+        success: false,
+        message: "Queue operation in progress, please try again",
+      };
     }
 
     this.queueOperationInProgress = true;
@@ -252,7 +255,10 @@ export class KaraokeSessionManager {
 
     // Wait for any ongoing queue operations to complete
     if (this.queueOperationInProgress) {
-      return { success: false, message: "Queue operation in progress, please try again" };
+      return {
+        success: false,
+        message: "Queue operation in progress, please try again",
+      };
     }
 
     this.queueOperationInProgress = true;
@@ -424,7 +430,9 @@ export class KaraokeSessionManager {
 
     // Prevent concurrent song transitions
     if (this.songTransitionInProgress) {
-      console.log("Song transition already in progress, ignoring endCurrentSong");
+      console.log(
+        "Song transition already in progress, ignoring endCurrentSong",
+      );
       return;
     }
 
@@ -470,7 +478,7 @@ export class KaraokeSessionManager {
 
   skipCurrentSong(userId: string): QueueOperationResult {
     console.log(`Skip song requested by user ${userId}`);
-    
+
     if (!this.session) {
       return { success: false, message: "No active session" };
     }
@@ -508,7 +516,9 @@ export class KaraokeSessionManager {
     try {
       // Double-check that we still have a current song after acquiring the lock
       if (!this.session.currentSong) {
-        console.log("Skip failed: Current song disappeared after acquiring lock");
+        console.log(
+          "Skip failed: Current song disappeared after acquiring lock",
+        );
         return { success: false, message: "No song currently playing" };
       }
 
@@ -533,7 +543,9 @@ export class KaraokeSessionManager {
         currentTime: 0,
       };
 
-      console.log(`Song ${currentSongId} successfully skipped, emitting events`);
+      console.log(
+        `Song ${currentSongId} successfully skipped, emitting events`,
+      );
       this.updateSessionActivity();
       this.emit("song-ended", skippedSong);
       this.emit("queue-updated", this.session.queue);

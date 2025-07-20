@@ -1,4 +1,6 @@
 .prettierignore
+.dockerignore
+Dockerfile
 .gitignore
 *.svg
 *.png
@@ -6,3 +8,5 @@
 *.lrc
 *.ico
 *.log
+*.xml
+*.sh

@@ -69,7 +69,8 @@ export function ConfirmationDialog({
     }
   };
 
-  const { icon, bgColor, borderColor, titleColor, messageColor } = getIconAndColors();
+  const { icon, bgColor, borderColor, titleColor, messageColor } =
+    getIconAndColors();
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -77,12 +78,12 @@ export function ConfirmationDialog({
         className={`${bgColor} ${borderColor} border rounded-lg p-6 max-w-sm w-full mx-4 shadow-lg animate-in fade-in-0 zoom-in-95 duration-200`}
       >
         <div className="flex items-start space-x-3">
-          <div className="flex-shrink-0 mt-0.5">
-            {icon}
-          </div>
+          <div className="flex-shrink-0 mt-0.5">{icon}</div>
           <div className="flex-1 min-w-0">
             <h3 className={`font-semibold ${titleColor}`}>{title}</h3>
-            <p className={`text-sm mt-1 ${messageColor} break-words`}>{message}</p>
+            <p className={`text-sm mt-1 ${messageColor} break-words`}>
+              {message}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -92,11 +93,11 @@ export function ConfirmationDialog({
             <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
-        
+
         {autoCloseDelay > 0 && (
           <div className="mt-4">
             <div className="w-full bg-gray-200 rounded-full h-1">
-              <div 
+              <div
                 className="bg-purple-600 h-1 rounded-full"
                 style={{
                   animation: `shrink ${autoCloseDelay}ms linear forwards`,
@@ -106,7 +107,7 @@ export function ConfirmationDialog({
           </div>
         )}
       </div>
-      
+
       <style jsx>{`
         @keyframes shrink {
           from {

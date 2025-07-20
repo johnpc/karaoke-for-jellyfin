@@ -51,7 +51,7 @@ export class JellyfinSDKService {
       // Use fetch instead of axios instance to avoid base URL issues
       const usersUrl = `${this.baseUrl}/Users`;
       const response = await fetch(usersUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
           "X-Emby-Token": this.apiKey,
           "Content-Type": "application/json",
@@ -100,7 +100,11 @@ export class JellyfinSDKService {
   /**
    * Search for artists by name using the official SDK
    */
-  async searchArtists(query: string, limit: number = 50, startIndex: number = 0): Promise<Artist[]> {
+  async searchArtists(
+    query: string,
+    limit: number = 50,
+    startIndex: number = 0,
+  ): Promise<Artist[]> {
     if (!this.api) {
       throw new Error("API not initialized");
     }
@@ -113,8 +117,10 @@ export class JellyfinSDKService {
     }
 
     try {
-      console.log(`Searching for artists: "${query}" (limit: ${limit}, startIndex: ${startIndex})`);
-      
+      console.log(
+        `Searching for artists: "${query}" (limit: ${limit}, startIndex: ${startIndex})`,
+      );
+
       // Use fetch instead of axios instance to avoid base URL issues
       const params = new URLSearchParams({
         searchTerm: query,
@@ -124,10 +130,10 @@ export class JellyfinSDKService {
         fields: "Overview,ImageTags",
         recursive: "true",
       });
-      
+
       const artistsUrl = `${this.baseUrl}/Artists?${params}`;
       const response = await fetch(artistsUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
           "X-Emby-Token": this.apiKey,
           "Content-Type": "application/json",
@@ -140,10 +146,10 @@ export class JellyfinSDKService {
 
       const data = await response.json();
       console.log(`Jellyfin returned ${data.Items?.length || 0} artists`);
-      
+
       const artists = this.transformArtists(data.Items || []);
       console.log(`Transformed ${artists.length} artists`);
-      
+
       return artists;
     } catch (error) {
       console.error("Jellyfin artist search error:", error);
@@ -154,7 +160,11 @@ export class JellyfinSDKService {
   /**
    * Get all songs by a specific artist ID using the official SDK
    */
-  async getSongsByArtistId(artistId: string, limit: number = 50, startIndex: number = 0): Promise<MediaItem[]> {
+  async getSongsByArtistId(
+    artistId: string,
+    limit: number = 50,
+    startIndex: number = 0,
+  ): Promise<MediaItem[]> {
     if (!this.api) {
       throw new Error("API not initialized");
     }
@@ -167,8 +177,10 @@ export class JellyfinSDKService {
     }
 
     try {
-      console.log(`Getting songs for artist ID: ${artistId} (limit: ${limit}, startIndex: ${startIndex})`);
-      
+      console.log(
+        `Getting songs for artist ID: ${artistId} (limit: ${limit}, startIndex: ${startIndex})`,
+      );
+
       // Use fetch instead of axios instance to avoid base URL issues
       const params = new URLSearchParams({
         includeItemTypes: "Audio",
@@ -181,10 +193,10 @@ export class JellyfinSDKService {
         sortBy: "Album,SortName",
         sortOrder: "Ascending",
       });
-      
+
       const itemsUrl = `${this.baseUrl}/Items?${params}`;
       const response = await fetch(itemsUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
           "X-Emby-Token": this.apiKey,
           "Content-Type": "application/json",
@@ -196,11 +208,13 @@ export class JellyfinSDKService {
       }
 
       const data = await response.json();
-      console.log(`Jellyfin returned ${data.Items?.length || 0} songs for artist ${artistId}`);
-      
+      console.log(
+        `Jellyfin returned ${data.Items?.length || 0} songs for artist ${artistId}`,
+      );
+
       const songs = this.transformMediaItems(data.Items || []);
       console.log(`Transformed ${songs.length} songs`);
-      
+
       return songs;
     } catch (error) {
       console.error("Jellyfin get songs by artist error:", error);
@@ -211,7 +225,11 @@ export class JellyfinSDKService {
   /**
    * Search for audio items by title using the official SDK
    */
-  async searchByTitle(query: string, limit: number = 50, startIndex: number = 0): Promise<MediaItem[]> {
+  async searchByTitle(
+    query: string,
+    limit: number = 50,
+    startIndex: number = 0,
+  ): Promise<MediaItem[]> {
     if (!this.api) {
       throw new Error("API not initialized");
     }
@@ -224,8 +242,10 @@ export class JellyfinSDKService {
     }
 
     try {
-      console.log(`Searching by title: "${query}" (limit: ${limit}, startIndex: ${startIndex})`);
-      
+      console.log(
+        `Searching by title: "${query}" (limit: ${limit}, startIndex: ${startIndex})`,
+      );
+
       // Use fetch instead of axios instance to avoid base URL issues
       const params = new URLSearchParams({
         searchTerm: query,
@@ -236,10 +256,10 @@ export class JellyfinSDKService {
         userId: this.userId!,
         fields: "Artists,Album,RunTimeTicks",
       });
-      
+
       const itemsUrl = `${this.baseUrl}/Items?${params}`;
       const response = await fetch(itemsUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
           "X-Emby-Token": this.apiKey,
           "Content-Type": "application/json",
@@ -251,14 +271,16 @@ export class JellyfinSDKService {
       }
 
       const data = await response.json();
-      console.log(`Jellyfin returned ${data.Items?.length || 0} items for title search`);
-      
+      console.log(
+        `Jellyfin returned ${data.Items?.length || 0} items for title search`,
+      );
+
       const items = this.transformMediaItems(data.Items || []);
-      
+
       // Filter by title for better relevance
       const queryLower = query.toLowerCase();
-      const filtered = items.filter(item => 
-        item.title.toLowerCase().includes(queryLower)
+      const filtered = items.filter((item) =>
+        item.title.toLowerCase().includes(queryLower),
       );
 
       console.log(`After title filtering: ${filtered.length} items`);
@@ -299,10 +321,10 @@ export class JellyfinSDKService {
         sortBy: "SortName",
         sortOrder: "Ascending",
       });
-      
+
       const itemsUrl = `${this.baseUrl}/Items?${params}`;
       const response = await fetch(itemsUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
           "X-Emby-Token": this.apiKey,
           "Content-Type": "application/json",
@@ -364,13 +386,13 @@ export class JellyfinSDKService {
       // Use the full URL for health check instead of relying on axios base URL
       const healthUrl = `${this.baseUrl}/System/Info`;
       const response = await fetch(healthUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
           "X-Emby-Token": this.apiKey,
           "Content-Type": "application/json",
         },
       });
-      
+
       return response.ok;
     } catch (error) {
       console.error("Jellyfin health check failed:", error);
@@ -383,7 +405,7 @@ export class JellyfinSDKService {
    */
   private transformArtists(items: BaseItemDto[]): Artist[] {
     return items
-      .filter(item => item.Type === "MusicArtist")
+      .filter((item) => item.Type === "MusicArtist")
       .map((item) => this.transformArtist(item))
       .filter(Boolean) as Artist[];
   }
@@ -400,7 +422,7 @@ export class JellyfinSDKService {
       id: `jellyfin_artist_${item.Id}`,
       name: item.Name || "Unknown Artist",
       jellyfinId: item.Id || "",
-      imageUrl: item.ImageTags?.Primary 
+      imageUrl: item.ImageTags?.Primary
         ? `${this.baseUrl}/Items/${item.Id}/Images/Primary?maxHeight=300&maxWidth=300&quality=90`
         : undefined,
     };
@@ -451,7 +473,10 @@ export class JellyfinSDKService {
   /**
    * Get all music playlists from Jellyfin
    */
-  async getPlaylists(limit: number = 50, startIndex: number = 0): Promise<Playlist[]> {
+  async getPlaylists(
+    limit: number = 50,
+    startIndex: number = 0,
+  ): Promise<Playlist[]> {
     if (!this.api) {
       throw new Error("API not initialized");
     }
@@ -464,8 +489,10 @@ export class JellyfinSDKService {
     }
 
     try {
-      console.log(`Getting playlists (limit: ${limit}, startIndex: ${startIndex})`);
-      
+      console.log(
+        `Getting playlists (limit: ${limit}, startIndex: ${startIndex})`,
+      );
+
       // Use fetch to get playlists
       const params = new URLSearchParams({
         includeItemTypes: "Playlist",
@@ -477,10 +504,10 @@ export class JellyfinSDKService {
         sortBy: "SortName",
         sortOrder: "Ascending",
       });
-      
+
       const playlistsUrl = `${this.baseUrl}/Items?${params}`;
       const response = await fetch(playlistsUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
           "X-Emby-Token": this.apiKey,
           "Content-Type": "application/json",
@@ -493,10 +520,10 @@ export class JellyfinSDKService {
 
       const data = await response.json();
       console.log(`Jellyfin returned ${data.Items?.length || 0} playlists`);
-      
+
       const playlists = this.transformPlaylists(data.Items || []);
       console.log(`Transformed ${playlists.length} playlists`);
-      
+
       return playlists;
     } catch (error) {
       console.error("Jellyfin get playlists error:", error);
@@ -507,7 +534,11 @@ export class JellyfinSDKService {
   /**
    * Get songs from a specific playlist
    */
-  async getPlaylistItems(playlistId: string, limit: number = 50, startIndex: number = 0): Promise<MediaItem[]> {
+  async getPlaylistItems(
+    playlistId: string,
+    limit: number = 50,
+    startIndex: number = 0,
+  ): Promise<MediaItem[]> {
     if (!this.api) {
       throw new Error("API not initialized");
     }
@@ -520,8 +551,10 @@ export class JellyfinSDKService {
     }
 
     try {
-      console.log(`Getting playlist items for playlist ID: ${playlistId} (limit: ${limit}, startIndex: ${startIndex})`);
-      
+      console.log(
+        `Getting playlist items for playlist ID: ${playlistId} (limit: ${limit}, startIndex: ${startIndex})`,
+      );
+
       // Use fetch to get playlist items
       const params = new URLSearchParams({
         limit: limit.toString(),
@@ -529,10 +562,10 @@ export class JellyfinSDKService {
         userId: this.userId!,
         fields: "Artists,Album,RunTimeTicks",
       });
-      
+
       const playlistItemsUrl = `${this.baseUrl}/Playlists/${playlistId}/Items?${params}`;
       const response = await fetch(playlistItemsUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
           "X-Emby-Token": this.apiKey,
           "Content-Type": "application/json",
@@ -544,13 +577,17 @@ export class JellyfinSDKService {
       }
 
       const data = await response.json();
-      console.log(`Jellyfin returned ${data.Items?.length || 0} items for playlist ${playlistId}`);
-      
+      console.log(
+        `Jellyfin returned ${data.Items?.length || 0} items for playlist ${playlistId}`,
+      );
+
       // Filter only audio items and transform them
-      const audioItems = (data.Items || []).filter((item: BaseItemDto) => item.Type === "Audio");
+      const audioItems = (data.Items || []).filter(
+        (item: BaseItemDto) => item.Type === "Audio",
+      );
       const songs = this.transformMediaItems(audioItems);
       console.log(`Transformed ${songs.length} songs from playlist`);
-      
+
       return songs;
     } catch (error) {
       console.error("Jellyfin get playlist items error:", error);
@@ -563,12 +600,12 @@ export class JellyfinSDKService {
    */
   private transformPlaylists(items: BaseItemDto[]): Playlist[] {
     return items
-      .filter(item => item.Type === "Playlist")
-      .map(item => ({
+      .filter((item) => item.Type === "Playlist")
+      .map((item) => ({
         id: `jellyfin_playlist_${item.Id}`,
         name: item.Name || "Unknown Playlist",
         jellyfinId: item.Id || "",
-        imageUrl: item.ImageTags?.Primary 
+        imageUrl: item.ImageTags?.Primary
           ? `${this.baseUrl}/Items/${item.Id}/Images/Primary?maxHeight=300&maxWidth=300&quality=90`
           : undefined,
         trackCount: item.ChildCount || 0,

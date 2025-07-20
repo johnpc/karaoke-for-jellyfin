@@ -53,7 +53,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Search by artist only
-    const songs = await jellyfinService.searchByArtist(query.trim(), limit, startIndex);
+    const songs = await jellyfinService.searchByArtist(
+      query.trim(),
+      limit,
+      startIndex,
+    );
 
     return NextResponse.json(
       createPaginatedResponse(

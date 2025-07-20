@@ -56,7 +56,7 @@ export default function TVDisplay() {
     ) {
       console.log("Auto-starting playback for:", currentSong.mediaItem.title);
       setHasTriggeredAutoPlay(true);
-      
+
       // Small delay to ensure everything is ready
       const autoPlayTimer = setTimeout(() => {
         playbackControl({
@@ -68,7 +68,13 @@ export default function TVDisplay() {
 
       return () => clearTimeout(autoPlayTimer);
     }
-  }, [currentSong, isConnected, playbackState, playbackControl, hasTriggeredAutoPlay]);
+  }, [
+    currentSong,
+    isConnected,
+    playbackState,
+    playbackControl,
+    hasTriggeredAutoPlay,
+  ]);
 
   // Reset auto-play flag when song changes
   useEffect(() => {
@@ -79,16 +85,14 @@ export default function TVDisplay() {
   useEffect(() => {
     // If we don't have a current song but we have songs in queue,
     // and we're connected, try to start the first song
-    if (
-      !currentSong &&
-      queue.length > 0 &&
-      isConnected &&
-      session
-    ) {
-      const firstPendingSong = queue.find(song => song.status === "pending");
+    if (!currentSong && queue.length > 0 && isConnected && session) {
+      const firstPendingSong = queue.find((song) => song.status === "pending");
       if (firstPendingSong) {
-        console.log("Auto-starting first song in queue:", firstPendingSong.mediaItem.title);
-        
+        console.log(
+          "Auto-starting first song in queue:",
+          firstPendingSong.mediaItem.title,
+        );
+
         // Small delay to ensure everything is ready
         const queueAutoPlayTimer = setTimeout(() => {
           playbackControl({
@@ -184,10 +188,7 @@ export default function TVDisplay() {
     // Send periodic time updates to keep server in sync
     // Only send updates every 2 seconds to avoid spam
     const now = Date.now();
-    if (
-      !lastUpdateRef.current ||
-      now - lastUpdateRef.current > 2000
-    ) {
+    if (!lastUpdateRef.current || now - lastUpdateRef.current > 2000) {
       playbackControl({
         action: "time-update",
         value: currentTime,
@@ -221,8 +222,8 @@ export default function TVDisplay() {
       {/* QR Code */}
       <div className="absolute top-16 right-4 z-40">
         <div className="text-center">
-          <QRCode 
-            url="https://karaoke.jpc.io" 
+          <QRCode
+            url="https://karaoke.jpc.io"
             size={80}
             className="opacity-60 hover:opacity-100 transition-opacity duration-300"
           />
@@ -295,7 +296,8 @@ export default function TVDisplay() {
       {/* Keyboard Shortcuts Help */}
       <div className="absolute bottom-4 left-4 text-gray-500 text-sm">
         <div className="bg-black bg-opacity-50 rounded px-3 py-2">
-          Auto-play enabled • H for controls • Q for queue • Space to play/pause • S to skip
+          Auto-play enabled • H for controls • Q for queue • Space to play/pause
+          • S to skip
         </div>
       </div>
     </div>

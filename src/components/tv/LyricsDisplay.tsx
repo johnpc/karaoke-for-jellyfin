@@ -111,7 +111,9 @@ export function LyricsDisplay({
         <p className="text-xl text-gray-400 mb-1">{song.mediaItem.artist}</p>
 
         {song.mediaItem.album && (
-          <p className="text-sm text-gray-500 opacity-60">{song.mediaItem.album}</p>
+          <p className="text-sm text-gray-500 opacity-60">
+            {song.mediaItem.album}
+          </p>
         )}
 
         <div className="flex items-center justify-center mt-2 text-sm text-gray-500">
@@ -128,7 +130,9 @@ export function LyricsDisplay({
           </div>
 
           {nextLine && (
-            <div className="text-3xl text-gray-400 opacity-70 leading-relaxed">{nextLine}</div>
+            <div className="text-3xl text-gray-400 opacity-70 leading-relaxed">
+              {nextLine}
+            </div>
           )}
         </div>
 
@@ -173,7 +177,7 @@ export function LyricsDisplay({
               style={{ width: `${Math.min(progress, 100)}%` }}
             ></div>
           </div>
-          
+
           <div className="flex items-center justify-between text-sm text-gray-500 mt-2">
             <span>{formatTime(currentTime)}</span>
             <span>{formatDuration(song.mediaItem.duration)}</span>

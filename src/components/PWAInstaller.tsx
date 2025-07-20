@@ -13,26 +13,28 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function PWAInstaller() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
     // Register service worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("/sw.js")
           .then((registration) => {
-            console.log('SW registered: ', registration);
+            console.log("SW registered: ", registration);
           })
           .catch((registrationError) => {
-            console.log('SW registration failed: ', registrationError);
+            console.log("SW registration failed: ", registrationError);
           });
       });
     }
 
     // Check if app is already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    if (window.matchMedia("(display-mode: standalone)").matches) {
       setIsInstalled(true);
     }
 
@@ -50,12 +52,15 @@ export function PWAInstaller() {
       setDeferredPrompt(null);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleAppInstalled);
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt,
+      );
+      window.removeEventListener("appinstalled", handleAppInstalled);
     };
   }, []);
 
@@ -64,13 +69,13 @@ export function PWAInstaller() {
 
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-      console.log('User accepted the install prompt');
+
+    if (outcome === "accepted") {
+      console.log("User accepted the install prompt");
     } else {
-      console.log('User dismissed the install prompt');
+      console.log("User dismissed the install prompt");
     }
-    
+
     setDeferredPrompt(null);
     setShowInstallPrompt(false);
   };
@@ -93,8 +98,12 @@ export function PWAInstaller() {
               <ArrowDownTrayIcon className="w-6 h-6 text-purple-600" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">Install Karaoke App</h3>
-              <p className="text-sm text-gray-600">Add to your home screen for quick access</p>
+              <h3 className="font-semibold text-gray-900">
+                Install Karaoke App
+              </h3>
+              <p className="text-sm text-gray-600">
+                Add to your home screen for quick access
+              </p>
             </div>
           </div>
           <button
@@ -104,7 +113,7 @@ export function PWAInstaller() {
             <XMarkIcon className="w-5 h-5 text-gray-400" />
           </button>
         </div>
-        
+
         <div className="flex space-x-2">
           <button
             onClick={handleInstallClick}
