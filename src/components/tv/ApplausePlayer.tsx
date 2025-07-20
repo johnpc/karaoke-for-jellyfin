@@ -23,6 +23,8 @@ export function ApplausePlayer({
 
   useEffect(() => {
     if (isPlaying && audioRef.current) {
+      console.log("🎵 Applause triggered - playing audio");
+      
       // Randomly select an applause sound
       const randomSound = applauseSounds[Math.floor(Math.random() * applauseSounds.length)];
       
@@ -34,11 +36,13 @@ export function ApplausePlayer({
       // Play applause - this should work because it's triggered by a socket event
       // which is considered user interaction by the browser
       audioRef.current.play().then(() => {
-        console.log('Applause playing successfully via socket trigger');
+        console.log('🎵 Applause playing successfully via socket trigger');
       }).catch((error) => {
-        console.log('Applause playback failed:', error.message);
+        console.log('🎵 Applause playback failed:', error.message);
         // This is expected on first load before user interaction
       });
+    } else if (isPlaying) {
+      console.log("🎵 Applause triggered but no audio ref available");
     }
   }, [isPlaying, volume]);
 

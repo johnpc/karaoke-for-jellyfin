@@ -45,10 +45,11 @@ export default function TVDisplay() {
 
   // Handle song completion from socket events
   const handleSongCompleted = useCallback((data: { song: QueueItem; rating: any }) => {
-    console.log("Song completed via socket, starting transition sequence", data);
+    console.log("🎵 Song completed via socket, starting transition sequence", data);
     
     // Find next song in queue
     const nextSong = queue.find(song => song.status === "pending");
+    console.log("🎵 Next song found:", nextSong?.mediaItem.title || "None");
     
     // Start applause and rating phase
     setTransitionState({
@@ -58,6 +59,8 @@ export default function TVDisplay() {
       rating: data.rating,
       transitionStartTime: Date.now()
     });
+    
+    console.log("🎵 Transition state set to applause with rating:", data.rating.grade);
   }, [queue]);
 
   // Set up song completion handler
@@ -94,16 +97,18 @@ export default function TVDisplay() {
 
   // Handle song completion and transitions
   const handleRatingComplete = () => {
-    console.log("Rating animation complete");
+    console.log("🎵 Rating animation complete");
     
     if (transitionState.nextSong) {
       // Show next song splash
+      console.log("🎵 Showing next song splash for:", transitionState.nextSong.mediaItem.title);
       setTransitionState(prev => ({
         ...prev,
         displayState: "next-up"
       }));
     } else {
       // No next song, go to waiting
+      console.log("🎵 No next song, returning to waiting state");
       setTransitionState({
         displayState: "waiting"
       });
@@ -112,7 +117,7 @@ export default function TVDisplay() {
 
   // Handle next song splash completion
   const handleNextSongComplete = () => {
-    console.log("Next song splash complete, starting next song");
+    console.log("🎵 Next song splash complete, requesting next song from server");
     
     // Transition to playing the next song
     setTransitionState({
@@ -121,6 +126,7 @@ export default function TVDisplay() {
     
     // Trigger playback of next song via socket
     setTimeout(() => {
+      console.log("🎵 Emitting start-next-song to server");
       startNextSong();
     }, 500);
   };

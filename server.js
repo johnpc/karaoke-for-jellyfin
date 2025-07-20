@@ -796,24 +796,21 @@ app.prepare().then(() => {
         };
       }
 
-      // Broadcast song completion with rating data
-      const sessionId = currentSession.id || "main-session";
-      io.to(sessionId).emit("song-completed", { 
-        song: completedSong, 
-        rating: rating 
-      });
-      
-      // Also emit the traditional song-ended event for backward compatibility
-      io.to(sessionId).emit("song-ended", completedSong);
-
       // Find next song but don't start it immediately - let the client handle transitions
       const nextSong = currentSession.queue.find(
         (item) => item.status === "pending",
       );
+
+      // Broadcast song ended with rating data for transitions
+      const sessionId = currentSession.id || "main-session";
+      io.to(sessionId).emit("song-ended", { 
+        song: completedSong, 
+        rating: rating,
+        nextSong: nextSong || null
+      });
       
       if (nextSong) {
         console.log("Next song ready:", nextSong.mediaItem.title);
-        // Don't start the next song immediately - the client will handle the transition
         io.to(sessionId).emit("queue-updated", currentSession.queue);
       } else {
         console.log("No more songs in queue");

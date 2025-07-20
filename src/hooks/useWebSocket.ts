@@ -145,15 +145,19 @@ export function useWebSocket(): WebSocketHookReturn {
       setCurrentSong(song);
     });
 
-    socket.on("song-ended", (song) => {
-      console.log("Song ended:", song);
-      setCurrentSong(null);
-    });
-
-    socket.on("song-completed", (data) => {
-      console.log("Song completed with rating:", data);
-      if (songCompletedHandlerRef.current) {
-        songCompletedHandlerRef.current(data);
+    socket.on("song-ended", (data) => {
+      console.log("Song ended:", data);
+      
+      if (data && typeof data === 'object' && data.rating) {
+        // This is a completion with rating data - trigger transitions
+        console.log("Song ended with rating data:", data);
+        if (songCompletedHandlerRef.current) {
+          songCompletedHandlerRef.current(data);
+        }
+      } else {
+        // This is a simple song end (skip, etc.) - just clear current song
+        console.log("Song ended without rating (skip/manual)");
+        setCurrentSong(null);
       }
     });
 
