@@ -114,7 +114,7 @@ export function SearchInterface({
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search for songs, artists, or albums..."
+            placeholder="Search songs by title or artist..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base text-gray-900 placeholder-gray-500"
@@ -146,7 +146,7 @@ export function SearchInterface({
               No songs found
             </h3>
             <p className="text-gray-500 text-center">
-              Try searching with different keywords or check your spelling
+              Try searching by song title or artist name, or check your spelling
             </p>
           </div>
         )}
@@ -158,7 +158,7 @@ export function SearchInterface({
               Browse Music
             </h3>
             <p className="text-gray-500 text-center">
-              Search for songs to add to the karaoke queue
+              Search by song title or artist name to add songs to the queue
             </p>
           </div>
         )}

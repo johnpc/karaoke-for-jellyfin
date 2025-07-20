@@ -99,6 +99,7 @@ export class JellyfinService {
 
   /**
    * Search for audio items in Jellyfin library
+   * Searches both song titles and artist names
    */
   async searchMedia(query: string, limit: number = 50): Promise<MediaItem[]> {
     if (!this.userId) {
@@ -109,14 +110,88 @@ export class JellyfinService {
     }
 
     try {
+      // Perform multiple searches to cover both titles and artists
+      const searchPromises = [
+        // Search by song title
+        this.performSearch(query, limit, "Name"),
+        // Search by artist name
+        this.performSearch(query, limit, "Artists"),
+      ];
+
+      const searchResults = await Promise.all(searchPromises);
+      
+      // Combine and deduplicate results
+      const allResults = searchResults.flat();
+      const uniqueResults = new Map<string, MediaItem>();
+      
+      // Use Map to deduplicate by ID, keeping the first occurrence
+      allResults.forEach(item => {
+        if (!uniqueResults.has(item.id)) {
+          uniqueResults.set(item.id, item);
+        }
+      });
+
+      // Convert back to array and limit results
+      const finalResults = Array.from(uniqueResults.values());
+      
+      // Sort results by relevance (exact matches first, then partial matches)
+      const queryLower = query.toLowerCase();
+      finalResults.sort((a, b) => {
+        const aTitle = a.title.toLowerCase();
+        const bTitle = b.title.toLowerCase();
+        const aArtist = a.artist.toLowerCase();
+        const bArtist = b.artist.toLowerCase();
+        
+        // Exact title matches first
+        if (aTitle === queryLower && bTitle !== queryLower) return -1;
+        if (bTitle === queryLower && aTitle !== queryLower) return 1;
+        
+        // Exact artist matches second
+        if (aArtist === queryLower && bArtist !== queryLower) return -1;
+        if (bArtist === queryLower && aArtist !== queryLower) return 1;
+        
+        // Title starts with query
+        if (aTitle.startsWith(queryLower) && !bTitle.startsWith(queryLower)) return -1;
+        if (bTitle.startsWith(queryLower) && !aTitle.startsWith(queryLower)) return 1;
+        
+        // Artist starts with query
+        if (aArtist.startsWith(queryLower) && !bArtist.startsWith(queryLower)) return -1;
+        if (bArtist.startsWith(queryLower) && !aArtist.startsWith(queryLower)) return 1;
+        
+        // Alphabetical by title as fallback
+        return aTitle.localeCompare(bTitle);
+      });
+
+      return finalResults.slice(0, limit);
+    } catch (error) {
+      console.error("Jellyfin search error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Perform a search with specific field targeting
+   */
+  private async performSearch(
+    query: string, 
+    limit: number, 
+    searchField: "Name" | "Artists"
+  ): Promise<MediaItem[]> {
+    try {
       const searchParams = new URLSearchParams({
         searchTerm: query,
         includeItemTypes: "Audio",
         recursive: "true",
-        limit: limit.toString(),
+        limit: (limit * 2).toString(), // Get more results to account for deduplication
         userId: this.userId!,
         fields: "Artists,Album,RunTimeTicks",
       });
+
+      // Add field-specific search hints if supported by your Jellyfin version
+      if (searchField === "Artists") {
+        // Some Jellyfin versions support more specific artist searching
+        searchParams.set("searchTerm", query);
+      }
 
       const response = await fetch(
         `${this.baseUrl}/Items?${searchParams.toString()}`,
@@ -133,10 +208,22 @@ export class JellyfinService {
       }
 
       const data: JellyfinSearchResponse = await response.json();
-      return this.transformMediaItems(data.Items);
+      const items = this.transformMediaItems(data.Items);
+      
+      // Filter results based on the search field for better relevance
+      const queryLower = query.toLowerCase();
+      return items.filter(item => {
+        if (searchField === "Name") {
+          return item.title.toLowerCase().includes(queryLower);
+        } else if (searchField === "Artists") {
+          return item.artist.toLowerCase().includes(queryLower);
+        }
+        return true;
+      });
     } catch (error) {
-      console.error("Jellyfin search error:", error);
-      throw error;
+      console.error(`Jellyfin ${searchField} search error:`, error);
+      // Return empty array on error to not break the combined search
+      return [];
     }
   }
 
