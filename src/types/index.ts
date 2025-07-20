@@ -13,6 +13,7 @@ export interface MediaItem {
   jellyfinId: string;
   streamUrl: string;
   lyricsPath?: string;
+  hasLyrics?: boolean; // From Jellyfin's HasLyrics field
   metadata?: MediaMetadata;
 }
 

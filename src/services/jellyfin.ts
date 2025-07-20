@@ -18,6 +18,7 @@ export interface JellyfinMediaItem {
   RunTimeTicks?: number;
   MediaType: string;
   Type: string;
+  HasLyrics?: boolean; // Jellyfin's authoritative lyrics availability field
   UserData?: {
     PlaybackPositionTicks: number;
   };
@@ -947,6 +948,7 @@ export class JellyfinService {
       jellyfinId: item.Id,
       streamUrl: this.getStreamUrl(item.Id),
       lyricsPath: this.detectLyricsPath(item),
+      hasLyrics: item.HasLyrics || false, // Use Jellyfin's authoritative HasLyrics field
     };
   }
 

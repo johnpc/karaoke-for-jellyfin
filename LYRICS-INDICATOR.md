@@ -4,7 +4,7 @@ This document explains the lyrics availability indicator feature that helps user
 
 ## Overview
 
-The lyrics indicator is a visual badge that appears next to song titles throughout the application, showing whether a song has karaoke lyrics available or is audio-only.
+The lyrics indicator is a visual badge that appears next to song titles throughout the application, showing whether a song has karaoke lyrics available or is audio-only. The indicator uses Jellyfin's authoritative `HasLyrics` field for accurate, real-time information.
 
 ## Visual Design
 
@@ -54,10 +54,51 @@ The indicator supports three sizes:
 
 ### Logic
 
-The indicator checks for the presence of `song.lyricsPath`:
+The indicator uses Jellyfin's authoritative `HasLyrics` field with fallback:
 ```typescript
-const hasLyrics = Boolean(song.lyricsPath);
+const hasLyrics = song.hasLyrics ?? Boolean(song.lyricsPath);
 ```
+
+## Data Source
+
+### Jellyfin's HasLyrics Field
+
+The primary data source is Jellyfin's `HasLyrics` field, which is included in all media item responses:
+
+```json
+{
+  "Name": "Song Title",
+  "Id": "3c7d944ef8283e090833a3f97363b4ee",
+  "HasLyrics": true,
+  "Artists": ["Artist Name"],
+  "Album": "Album Name"
+}
+```
+
+### MediaItem Type
+
+The `hasLyrics` field is added to our MediaItem type:
+
+```typescript
+interface MediaItem {
+  id: string;
+  title: string;
+  artist: string;
+  album?: string;
+  duration: number;
+  jellyfinId: string;
+  streamUrl: string;
+  lyricsPath?: string;
+  hasLyrics?: boolean; // From Jellyfin's HasLyrics field
+  metadata?: MediaMetadata;
+}
+```
+
+### Data Flow
+
+1. **Jellyfin API Response** → Contains `HasLyrics: boolean`
+2. **JellyfinService.transformMediaItem()** → Maps to `hasLyrics` field
+3. **LyricsIndicator Component** → Uses `hasLyrics` for display logic
 
 ## Locations
 
@@ -106,16 +147,22 @@ The lyrics indicator appears in the following locations:
 
 ## Technical Details
 
-### Data Source
+### Performance Benefits
 
-The indicator relies on the `lyricsPath` field in the `MediaItem` type:
+Using Jellyfin's `HasLyrics` field provides several advantages:
+
+1. **No Additional API Calls**: Lyrics availability is determined from existing data
+2. **Instant Display**: No loading states or delays
+3. **Authoritative Source**: Jellyfin has already scanned and verified lyrics files
+4. **Reduced Network Traffic**: No separate lyrics availability checks
+5. **Better UX**: Immediate feedback without loading spinners
+
+### Fallback Logic
+
+If `hasLyrics` is not available (older Jellyfin versions), the component falls back to checking `lyricsPath`:
 
 ```typescript
-interface MediaItem {
-  // ... other fields
-  lyricsPath?: string; // Optional path to lyrics file
-  // ... other fields
-}
+const hasLyrics = song.hasLyrics ?? Boolean(song.lyricsPath);
 ```
 
 ### Styling
@@ -139,6 +186,25 @@ The component uses Tailwind CSS classes for consistent styling:
 Uses inline SVG icons for optimal performance:
 - **Karaoke**: Microphone/speaker icon
 - **Audio Only**: Speaker with X overlay icon
+
+## Advantages Over API-Based Approach
+
+### Why Jellyfin's HasLyrics is Better
+
+1. **Authoritative**: Jellyfin scans the actual media files and lyrics
+2. **Real-time**: Updated when lyrics files are added/removed
+3. **Performance**: No additional network requests needed
+4. **Reliability**: No race conditions or API failures
+5. **Consistency**: Same data source used throughout Jellyfin ecosystem
+
+### Previous API-Based Issues
+
+The original approach of checking `/api/lyrics/[songId]` had several problems:
+- **Performance**: Required additional API calls for each song
+- **Race Conditions**: Multiple concurrent requests could overwhelm the server
+- **Loading States**: Users saw spinners and delays
+- **Optimistic Assumptions**: `lyricsPath` presence didn't guarantee actual lyrics
+- **Network Overhead**: Unnecessary bandwidth usage
 
 ## Future Enhancements
 
@@ -181,8 +247,9 @@ The indicator includes several accessibility features:
 ### Manual Testing Checklist
 
 - [ ] Indicator appears in all listed locations
-- [ ] Green badge shows for songs with `lyricsPath`
-- [ ] Gray badge shows for songs without `lyricsPath`
+- [ ] Green badge shows for songs with `hasLyrics: true`
+- [ ] Gray badge shows for songs with `hasLyrics: false`
+- [ ] Fallback works for songs without `hasLyrics` field
 - [ ] Tooltips display correct messages
 - [ ] Different sizes render correctly
 - [ ] Responsive design works on mobile and desktop
@@ -193,21 +260,24 @@ The indicator includes several accessibility features:
 To test the feature:
 1. Ensure some songs in your Jellyfin library have lyrics files
 2. Ensure some songs do not have lyrics files
-3. Search for both types of songs
-4. Add both types to the queue
-5. Verify indicators appear correctly throughout the interface
+3. Verify Jellyfin's `HasLyrics` field is correctly set
+4. Search for both types of songs
+5. Add both types to the queue
+6. Verify indicators appear correctly throughout the interface
 
 ## Troubleshooting
 
 ### Common Issues
 
 1. **Indicator Not Showing**
-   - Check that `lyricsPath` field is properly populated in MediaItem
-   - Verify component is imported and used correctly
+   - Check that `hasLyrics` field is properly populated in MediaItem
+   - Verify Jellyfin version supports `HasLyrics` field
+   - Check fallback to `lyricsPath` is working
 
 2. **Wrong State Displayed**
-   - Verify lyrics files exist at the specified `lyricsPath`
-   - Check file permissions and accessibility
+   - Verify Jellyfin has scanned the library recently
+   - Check that lyrics files are in the correct location
+   - Ensure Jellyfin has proper permissions to read lyrics files
 
 3. **Styling Issues**
    - Ensure Tailwind CSS classes are available
@@ -219,7 +289,16 @@ Add this to component for debugging:
 ```typescript
 console.log('Lyrics check:', {
   title: song.title,
+  hasLyrics: song.hasLyrics,
   lyricsPath: song.lyricsPath,
-  hasLyrics: Boolean(song.lyricsPath)
+  finalHasLyrics: song.hasLyrics ?? Boolean(song.lyricsPath)
 });
 ```
+
+### Jellyfin Configuration
+
+Ensure Jellyfin is properly configured for lyrics:
+1. **Library Scan**: Run a full library scan after adding lyrics files
+2. **File Permissions**: Ensure Jellyfin can read lyrics files
+3. **Supported Formats**: Use supported lyrics formats (.lrc, .txt, etc.)
+4. **File Naming**: Follow Jellyfin's lyrics file naming conventions
