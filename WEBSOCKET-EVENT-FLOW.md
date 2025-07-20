@@ -63,10 +63,10 @@ sequenceDiagram
     Note over Client: Start transition sequence
     Client->>Client: Start applause state
     Client->>Applause: Play applause audio
-    Client->>Client: Show rating animation (4s)
+    Client->>Client: Show rating animation (15s)
     
     Note over Client: Rating animation completes
-    Client->>Client: Show next song splash (3s)
+    Client->>Client: Show next song splash (15s)
     
     Note over Client: Splash completes
     Client->>Server: emit("start-next-song")
@@ -119,12 +119,12 @@ stateDiagram-v2
    - Lyrics display visible
    - Audio playing
 
-2. **Applause State** (4 seconds):
+2. **Applause State** (15 seconds):
    - Applause audio plays
    - Rating animation shows
    - Song data still available for display
 
-3. **Next-Up State** (3 seconds):
+3. **Next-Up State** (15 seconds):
    - Next song information displayed
    - Countdown timer
    - Microphone reminder

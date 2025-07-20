@@ -372,13 +372,13 @@ export default function TVDisplay() {
           song={transitionState.completedSong}
           rating={transitionState.rating}
           onComplete={handleRatingComplete}
-          duration={4000}
+          duration={15000}
         />
       ) : transitionState.displayState === "next-up" && transitionState.nextSong ? (
         <NextSongSplash
           nextSong={transitionState.nextSong}
           onComplete={handleNextSongComplete}
-          duration={3000}
+          duration={15000}
         />
       ) : (
         <WaitingScreen
