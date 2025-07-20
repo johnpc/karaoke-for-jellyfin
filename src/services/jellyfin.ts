@@ -33,6 +33,7 @@ export class JellyfinService {
   private apiKey: string;
   private username: string;
   private userId: string | null = null;
+  private artistSearchCache: Map<string, MediaItem[]> | null = null;
 
   constructor() {
     this.baseUrl = process.env.JELLYFIN_SERVER_URL?.replace(/\/$/, "") || "";
@@ -170,8 +171,162 @@ export class JellyfinService {
   }
 
   /**
-   * Perform a search with specific field targeting
+   * Search for audio items by title only
    */
+  async searchByTitle(query: string, limit: number = 50): Promise<MediaItem[]> {
+    if (!this.userId) {
+      const authenticated = await this.authenticate();
+      if (!authenticated) {
+        throw new Error("Failed to authenticate with Jellyfin");
+      }
+    }
+
+    try {
+      const result = await this.performSearch(query, limit, "Name");
+      console.log(`Title search for "${query}" returned ${result.length} results`);
+      return result;
+    } catch (error) {
+      console.error("Jellyfin title search error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Search for audio items by artist only with pagination support
+   */
+  async searchByArtist(query: string, limit: number = 50, startIndex: number = 0): Promise<MediaItem[]> {
+    if (!this.userId) {
+      const authenticated = await this.authenticate();
+      if (!authenticated) {
+        throw new Error("Failed to authenticate with Jellyfin");
+      }
+    }
+
+    try {
+      console.log(`Searching for artist: "${query}" (limit: ${limit}, startIndex: ${startIndex})`);
+      
+      // Due to Jellyfin API limitations with artist search, we need to:
+      // 1. Fetch ALL audio items (or a very large batch)
+      // 2. Filter by artist client-side
+      // 3. Apply pagination to the filtered results
+      
+      // For better performance, we'll cache results per query
+      const cacheKey = `artist_search_${query.toLowerCase()}`;
+      
+      // Check if we have cached results for this query
+      if (!this.artistSearchCache) {
+        this.artistSearchCache = new Map();
+      }
+      
+      let allMatchingItems: MediaItem[] = [];
+      
+      if (this.artistSearchCache.has(cacheKey)) {
+        console.log(`Using cached results for artist "${query}"`);
+        allMatchingItems = this.artistSearchCache.get(cacheKey) || [];
+      } else {
+        console.log(`Fetching all songs for artist "${query}" - this may take a moment...`);
+        
+        // Fetch all audio items in batches to avoid memory issues
+        const batchSize = 1000;
+        let currentStartIndex = 0;
+        let hasMoreItems = true;
+        const allItems: MediaItem[] = [];
+        
+        while (hasMoreItems) {
+          console.log(`Fetching batch ${Math.floor(currentStartIndex / batchSize) + 1} starting at index ${currentStartIndex}`);
+          
+          const searchParams = new URLSearchParams({
+            includeItemTypes: "Audio",
+            recursive: "true",
+            limit: batchSize.toString(),
+            startIndex: currentStartIndex.toString(),
+            userId: this.userId!,
+            fields: "Artists,Album,RunTimeTicks",
+            sortBy: "SortName",
+            sortOrder: "Ascending",
+          });
+
+          const response = await fetch(
+            `${this.baseUrl}/Items?${searchParams.toString()}`,
+            {
+              headers: {
+                "X-Emby-Token": this.apiKey,
+                "Content-Type": "application/json",
+              },
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error(`Artist search failed: ${response.status}`);
+          }
+
+          const data: JellyfinSearchResponse = await response.json();
+          const batchItems = this.transformMediaItems(data.Items || []);
+          
+          console.log(`Batch ${Math.floor(currentStartIndex / batchSize) + 1}: Got ${batchItems.length} items`);
+          allItems.push(...batchItems);
+          
+          // Check if we have more items to fetch
+          hasMoreItems = batchItems.length === batchSize;
+          currentStartIndex += batchSize;
+          
+          // Safety check to prevent infinite loops
+          if (currentStartIndex > 50000) {
+            console.warn("Reached maximum fetch limit of 50,000 items");
+            break;
+          }
+        }
+        
+        console.log(`Fetched ${allItems.length} total audio items`);
+        
+        // Filter by artist name
+        const queryLower = query.toLowerCase();
+        allMatchingItems = allItems.filter(item => {
+          return item.artist.toLowerCase().includes(queryLower);
+        });
+
+        console.log(`Found ${allMatchingItems.length} songs by artists matching "${query}"`);
+        
+        // Sort by relevance (exact matches first, then partial matches)
+        allMatchingItems.sort((a, b) => {
+          const aArtist = a.artist.toLowerCase();
+          const bArtist = b.artist.toLowerCase();
+          
+          // Exact artist matches first
+          if (aArtist === queryLower && bArtist !== queryLower) return -1;
+          if (bArtist === queryLower && aArtist !== queryLower) return 1;
+          
+          // Artist starts with query
+          if (aArtist.startsWith(queryLower) && !bArtist.startsWith(queryLower)) return -1;
+          if (bArtist.startsWith(queryLower) && !aArtist.startsWith(queryLower)) return 1;
+          
+          // Alphabetical by artist, then by title
+          const artistCompare = aArtist.localeCompare(bArtist);
+          if (artistCompare !== 0) return artistCompare;
+          
+          return a.title.localeCompare(b.title);
+        });
+        
+        // Cache the results for this query (cache for 5 minutes)
+        this.artistSearchCache.set(cacheKey, allMatchingItems);
+        setTimeout(() => {
+          this.artistSearchCache?.delete(cacheKey);
+          console.log(`Cleared cache for artist search "${query}"`);
+        }, 5 * 60 * 1000); // 5 minutes
+      }
+
+      // Apply pagination to the filtered and sorted results
+      const paginatedResults = allMatchingItems.slice(startIndex, startIndex + limit);
+      
+      console.log(`Returning ${paginatedResults.length} results for page (startIndex: ${startIndex}, limit: ${limit})`);
+      console.log(`Total matching songs for "${query}": ${allMatchingItems.length}`);
+      
+      return paginatedResults;
+    } catch (error) {
+      console.error("Jellyfin artist search error:", error);
+      throw error;
+    }
+  }
   private async performSearch(
     query: string, 
     limit: number, 
@@ -187,11 +342,8 @@ export class JellyfinService {
         fields: "Artists,Album,RunTimeTicks",
       });
 
-      // Add field-specific search hints if supported by your Jellyfin version
-      if (searchField === "Artists") {
-        // Some Jellyfin versions support more specific artist searching
-        searchParams.set("searchTerm", query);
-      }
+      console.log(`Performing ${searchField} search for: "${query}"`);
+      console.log(`Search URL: ${this.baseUrl}/Items?${searchParams.toString()}`);
 
       const response = await fetch(
         `${this.baseUrl}/Items?${searchParams.toString()}`,
@@ -208,18 +360,32 @@ export class JellyfinService {
       }
 
       const data: JellyfinSearchResponse = await response.json();
-      const items = this.transformMediaItems(data.Items);
+      console.log(`Jellyfin returned ${data.Items?.length || 0} items for ${searchField} search`);
+      
+      const items = this.transformMediaItems(data.Items || []);
+      console.log(`Transformed ${items.length} items`);
       
       // Filter results based on the search field for better relevance
       const queryLower = query.toLowerCase();
-      return items.filter(item => {
+      const filtered = items.filter(item => {
         if (searchField === "Name") {
-          return item.title.toLowerCase().includes(queryLower);
+          const matches = item.title.toLowerCase().includes(queryLower);
+          if (matches) {
+            console.log(`Title match: "${item.title}" contains "${query}"`);
+          }
+          return matches;
         } else if (searchField === "Artists") {
-          return item.artist.toLowerCase().includes(queryLower);
+          const matches = item.artist.toLowerCase().includes(queryLower);
+          if (matches) {
+            console.log(`Artist match: "${item.artist}" contains "${query}"`);
+          }
+          return matches;
         }
         return true;
       });
+
+      console.log(`After filtering: ${filtered.length} items for ${searchField} search`);
+      return filtered;
     } catch (error) {
       console.error(`Jellyfin ${searchField} search error:`, error);
       // Return empty array on error to not break the combined search

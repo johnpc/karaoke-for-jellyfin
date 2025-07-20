@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import QRCodeLib from "qrcode";
 
 interface QRCodeProps {
@@ -39,12 +40,13 @@ export function QRCode({ url, size = 80, className = "" }: QRCodeProps) {
 
   return (
     <div className={`${className}`}>
-      <img
+      <Image
         src={qrCodeDataUrl}
         alt={`QR Code for ${url}`}
         width={size}
         height={size}
         className="rounded-lg bg-gray-900 bg-opacity-80 p-2 backdrop-blur-sm border border-gray-700"
+        unoptimized // QR codes are already optimized data URLs
       />
     </div>
   );
