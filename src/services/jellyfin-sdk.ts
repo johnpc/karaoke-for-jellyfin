@@ -48,14 +48,21 @@ export class JellyfinSDKService {
     }
 
     try {
-      // Get all users to find the target user
-      const usersResponse = await this.api.axiosInstance.get("/Users", {
+      // Use fetch instead of axios instance to avoid base URL issues
+      const usersUrl = `${this.baseUrl}/Users`;
+      const response = await fetch(usersUrl, {
+        method: 'GET',
         headers: {
           "X-Emby-Token": this.apiKey,
+          "Content-Type": "application/json",
         },
       });
 
-      const users = usersResponse.data;
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const users = await response.json();
       console.log(
         "Available users:",
         users?.map((u: any) => u.Name),
@@ -108,22 +115,30 @@ export class JellyfinSDKService {
     try {
       console.log(`Searching for artists: "${query}" (limit: ${limit}, startIndex: ${startIndex})`);
       
-      // Use the official SDK's artists API
-      const response = await this.api.axiosInstance.get("/Artists", {
-        params: {
-          searchTerm: query,
-          startIndex,
-          limit,
-          userId: this.userId,
-          fields: "Overview,ImageTags",
-          recursive: true,
-        },
+      // Use fetch instead of axios instance to avoid base URL issues
+      const params = new URLSearchParams({
+        searchTerm: query,
+        startIndex: startIndex.toString(),
+        limit: limit.toString(),
+        userId: this.userId!,
+        fields: "Overview,ImageTags",
+        recursive: "true",
+      });
+      
+      const artistsUrl = `${this.baseUrl}/Artists?${params}`;
+      const response = await fetch(artistsUrl, {
+        method: 'GET',
         headers: {
           "X-Emby-Token": this.apiKey,
+          "Content-Type": "application/json",
         },
       });
 
-      const data = response.data;
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
       console.log(`Jellyfin returned ${data.Items?.length || 0} artists`);
       
       const artists = this.transformArtists(data.Items || []);
@@ -154,25 +169,33 @@ export class JellyfinSDKService {
     try {
       console.log(`Getting songs for artist ID: ${artistId} (limit: ${limit}, startIndex: ${startIndex})`);
       
-      // Use the official SDK's items API to get songs by artist
-      const response = await this.api.axiosInstance.get("/Items", {
-        params: {
-          includeItemTypes: "Audio",
-          recursive: true,
-          artistIds: artistId,
-          limit,
-          startIndex,
-          userId: this.userId,
-          fields: "Artists,Album,RunTimeTicks",
-          sortBy: "Album,SortName",
-          sortOrder: "Ascending",
-        },
+      // Use fetch instead of axios instance to avoid base URL issues
+      const params = new URLSearchParams({
+        includeItemTypes: "Audio",
+        recursive: "true",
+        artistIds: artistId,
+        limit: limit.toString(),
+        startIndex: startIndex.toString(),
+        userId: this.userId!,
+        fields: "Artists,Album,RunTimeTicks",
+        sortBy: "Album,SortName",
+        sortOrder: "Ascending",
+      });
+      
+      const itemsUrl = `${this.baseUrl}/Items?${params}`;
+      const response = await fetch(itemsUrl, {
+        method: 'GET',
         headers: {
           "X-Emby-Token": this.apiKey,
+          "Content-Type": "application/json",
         },
       });
 
-      const data = response.data;
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
       console.log(`Jellyfin returned ${data.Items?.length || 0} songs for artist ${artistId}`);
       
       const songs = this.transformMediaItems(data.Items || []);
@@ -203,22 +226,31 @@ export class JellyfinSDKService {
     try {
       console.log(`Searching by title: "${query}" (limit: ${limit}, startIndex: ${startIndex})`);
       
-      const response = await this.api.axiosInstance.get("/Items", {
-        params: {
-          searchTerm: query,
-          includeItemTypes: "Audio",
-          recursive: true,
-          limit,
-          startIndex,
-          userId: this.userId,
-          fields: "Artists,Album,RunTimeTicks",
-        },
+      // Use fetch instead of axios instance to avoid base URL issues
+      const params = new URLSearchParams({
+        searchTerm: query,
+        includeItemTypes: "Audio",
+        recursive: "true",
+        limit: limit.toString(),
+        startIndex: startIndex.toString(),
+        userId: this.userId!,
+        fields: "Artists,Album,RunTimeTicks",
+      });
+      
+      const itemsUrl = `${this.baseUrl}/Items?${params}`;
+      const response = await fetch(itemsUrl, {
+        method: 'GET',
         headers: {
           "X-Emby-Token": this.apiKey,
+          "Content-Type": "application/json",
         },
       });
 
-      const data = response.data;
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
       console.log(`Jellyfin returned ${data.Items?.length || 0} items for title search`);
       
       const items = this.transformMediaItems(data.Items || []);
@@ -256,23 +288,32 @@ export class JellyfinSDKService {
     }
 
     try {
-      const response = await this.api.axiosInstance.get("/Items", {
-        params: {
-          includeItemTypes: "Audio",
-          recursive: true,
-          startIndex,
-          limit,
-          userId: this.userId,
-          fields: "Artists,Album,RunTimeTicks",
-          sortBy: "SortName",
-          sortOrder: "Ascending",
-        },
+      // Use fetch instead of axios instance to avoid base URL issues
+      const params = new URLSearchParams({
+        includeItemTypes: "Audio",
+        recursive: "true",
+        startIndex: startIndex.toString(),
+        limit: limit.toString(),
+        userId: this.userId!,
+        fields: "Artists,Album,RunTimeTicks",
+        sortBy: "SortName",
+        sortOrder: "Ascending",
+      });
+      
+      const itemsUrl = `${this.baseUrl}/Items?${params}`;
+      const response = await fetch(itemsUrl, {
+        method: 'GET',
         headers: {
           "X-Emby-Token": this.apiKey,
+          "Content-Type": "application/json",
         },
       });
 
-      const data = response.data;
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
       console.log("Jellyfin raw response:", {
         totalRecordCount: data.TotalRecordCount,
         itemsLength: data.Items?.length,
@@ -320,12 +361,17 @@ export class JellyfinSDKService {
     }
 
     try {
-      const response = await this.api.axiosInstance.get("/System/Info", {
+      // Use the full URL for health check instead of relying on axios base URL
+      const healthUrl = `${this.baseUrl}/System/Info`;
+      const response = await fetch(healthUrl, {
+        method: 'GET',
         headers: {
           "X-Emby-Token": this.apiKey,
+          "Content-Type": "application/json",
         },
       });
-      return response.status === 200;
+      
+      return response.ok;
     } catch (error) {
       console.error("Jellyfin health check failed:", error);
       return false;
