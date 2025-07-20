@@ -241,22 +241,6 @@ export function AudioPlayer({
     <>
       {/* Hidden audio element */}
       <audio ref={audioRef} preload="auto" style={{ display: "none" }} />
-
-      {/* Audio status indicator (for debugging) */}
-      {process.env.NODE_ENV === "development" && (
-        <div className="fixed top-20 right-4 z-50 bg-black bg-opacity-75 text-white p-2 rounded text-xs max-w-xs">
-          <div>Song: {song?.mediaItem?.title || "None"}</div>
-          <div>ID: {currentSongId || "None"}</div>
-          <div>State: {playbackState?.isPlaying ? "Playing" : "Paused"}</div>
-          <div>
-            Volume: {playbackState?.volume || 0}%{" "}
-            {playbackState?.isMuted ? "(Muted)" : ""}
-          </div>
-          <div>Time: {Math.round(playbackState?.currentTime || 0)}s</div>
-          {isLoading && <div className="text-yellow-400">Loading...</div>}
-          {error && <div className="text-red-400">Error: {error}</div>}
-        </div>
-      )}
     </>
   );
 }

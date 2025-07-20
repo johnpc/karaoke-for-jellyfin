@@ -8,6 +8,7 @@ import { HostControls } from "@/components/tv/HostControls";
 import { WaitingScreen } from "@/components/tv/WaitingScreen";
 import { AudioPlayer } from "@/components/tv/AudioPlayer";
 import { NextUpSidebar } from "@/components/tv/NextUpSidebar";
+import { QRCode } from "@/components/tv/QRCode";
 
 export default function TVDisplay() {
   const [showHostControls, setShowHostControls] = useState(false);
@@ -212,6 +213,20 @@ export default function TVDisplay() {
             }`}
           />
           {isConnected ? "Connected" : "Disconnected"}
+        </div>
+      </div>
+
+      {/* QR Code */}
+      <div className="absolute top-16 right-4 z-40">
+        <div className="text-center">
+          <QRCode 
+            url="https://karaoke.jpc.io" 
+            size={80}
+            className="opacity-60 hover:opacity-100 transition-opacity duration-300"
+          />
+          <div className="text-xs text-gray-400 mt-1 opacity-60">
+            Scan to join
+          </div>
         </div>
       </div>
 
