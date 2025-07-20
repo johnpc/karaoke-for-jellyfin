@@ -25,7 +25,7 @@ export function NextUpSidebar({ queue, currentSong }: NextUpSidebarProps) {
             {nextSong.mediaItem.title}
           </div>
           <div className="text-gray-400 text-xs truncate">
-            {nextSong.mediaItem.artist}
+            {nextSong.mediaItem.artist} • {nextSong.addedBy}
           </div>
         </div>
       </div>
