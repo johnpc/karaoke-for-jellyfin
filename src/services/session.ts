@@ -30,6 +30,9 @@ import {
 export class KaraokeSessionManager {
   private session: KaraokeSession | null = null;
   private eventListeners: Map<string, Function[]> = new Map();
+  private skipInProgress: boolean = false;
+  private songTransitionInProgress: boolean = false;
+  private queueOperationInProgress: boolean = false;
 
   constructor() {
     this.initializeEventTypes();
@@ -186,24 +189,31 @@ export class KaraokeSessionManager {
       return { success: false, message: "No active session" };
     }
 
-    const user = this.session.connectedUsers.find((u) => u.id === userId);
-    if (!user) {
-      return { success: false, message: "User not found in session" };
+    // Wait for any ongoing queue operations to complete
+    if (this.queueOperationInProgress) {
+      return { success: false, message: "Queue operation in progress, please try again" };
     }
 
-    // Check user's song limit
-    const userSongs = this.session.queue.filter(
-      (item) => item.addedBy === userId && item.status === "pending",
-    );
-
-    if (userSongs.length >= this.session.hostControls.maxSongsPerUser) {
-      return {
-        success: false,
-        message: `Maximum ${this.session.hostControls.maxSongsPerUser} songs per user`,
-      };
-    }
+    this.queueOperationInProgress = true;
 
     try {
+      const user = this.session.connectedUsers.find((u) => u.id === userId);
+      if (!user) {
+        return { success: false, message: "User not found in session" };
+      }
+
+      // Check user's song limit
+      const userSongs = this.session.queue.filter(
+        (item) => item.addedBy === userId && item.status === "pending",
+      );
+
+      if (userSongs.length >= this.session.hostControls.maxSongsPerUser) {
+        return {
+          success: false,
+          message: `Maximum ${this.session.hostControls.maxSongsPerUser} songs per user`,
+        };
+      }
+
       this.session.queue = addToQueue(
         this.session.queue,
         mediaItem,
@@ -227,6 +237,8 @@ export class KaraokeSessionManager {
         success: false,
         message: error instanceof Error ? error.message : "Failed to add song",
       };
+    } finally {
+      this.queueOperationInProgress = false;
     }
   }
 
@@ -238,46 +250,57 @@ export class KaraokeSessionManager {
       return { success: false, message: "No active session" };
     }
 
-    const queueItem = this.session.queue.find(
-      (item) => item.id === queueItemId,
-    );
-    if (!queueItem) {
-      return { success: false, message: "Song not found in queue" };
+    // Wait for any ongoing queue operations to complete
+    if (this.queueOperationInProgress) {
+      return { success: false, message: "Queue operation in progress, please try again" };
     }
 
-    const user = this.session.connectedUsers.find((u) => u.id === userId);
-    const isHost = user?.isHost || false;
+    this.queueOperationInProgress = true;
 
-    // Check permissions
-    // if (!isHost && queueItem.addedBy !== userId) {
-    //   return { success: false, message: 'You can only remove your own songs' }
-    // }
+    try {
+      const queueItem = this.session.queue.find(
+        (item) => item.id === queueItemId,
+      );
+      if (!queueItem) {
+        return { success: false, message: "Song not found in queue" };
+      }
 
-    if (!isHost && !this.session.hostControls.allowUserRemove) {
+      const user = this.session.connectedUsers.find((u) => u.id === userId);
+      const isHost = user?.isHost || false;
+
+      // Check permissions
+      // if (!isHost && queueItem.addedBy !== userId) {
+      //   return { success: false, message: 'You can only remove your own songs' }
+      // }
+
+      if (!isHost && !this.session.hostControls.allowUserRemove) {
+        return {
+          success: false,
+          message: "Users are not allowed to remove songs",
+        };
+      }
+
+      // Don't allow removing currently playing song
+      if (queueItem.status === "playing") {
+        return {
+          success: false,
+          message: "Cannot remove currently playing song",
+        };
+      }
+
+      this.session.queue = removeFromQueue(this.session.queue, queueItemId);
+
+      this.updateSessionActivity();
+      this.emit("queue-updated", this.session.queue);
+
       return {
-        success: false,
-        message: "Users are not allowed to remove songs",
+        success: true,
+        message: "Song removed from queue",
+        newQueue: this.session.queue,
       };
+    } finally {
+      this.queueOperationInProgress = false;
     }
-
-    // Don't allow removing currently playing song
-    if (queueItem.status === "playing") {
-      return {
-        success: false,
-        message: "Cannot remove currently playing song",
-      };
-    }
-
-    this.session.queue = removeFromQueue(this.session.queue, queueItemId);
-
-    this.updateSessionActivity();
-    this.emit("queue-updated", this.session.queue);
-
-    return {
-      success: true,
-      message: "Song removed from queue",
-      newQueue: this.session.queue,
-    };
   }
 
   reorderQueue(
@@ -337,92 +360,136 @@ export class KaraokeSessionManager {
       return null;
     }
 
-    console.log("Current queue:", this.session.queue);
-    const nextSong = getNextSong(this.session.queue);
-    console.log("Next song from getNextSong:", nextSong);
-    if (!nextSong) {
-      console.log("No next song available");
+    // Prevent concurrent song transitions
+    if (this.songTransitionInProgress) {
+      console.log("Song transition already in progress, ignoring request");
       return null;
     }
 
-    // Mark previous song as completed
-    if (this.session.currentSong) {
-      console.log(
-        "Marking previous song as completed:",
-        this.session.currentSong.id,
-      );
-      this.session.queue = markSongAsCompleted(
-        this.session.queue,
-        this.session.currentSong.id,
-      );
+    this.songTransitionInProgress = true;
+
+    try {
+      console.log("Current queue:", this.session.queue);
+      const nextSong = getNextSong(this.session.queue);
+      console.log("Next song from getNextSong:", nextSong);
+      if (!nextSong) {
+        console.log("No next song available");
+        return null;
+      }
+
+      // Mark previous song as completed
+      if (this.session.currentSong) {
+        console.log(
+          "Marking previous song as completed:",
+          this.session.currentSong.id,
+        );
+        this.session.queue = markSongAsCompleted(
+          this.session.queue,
+          this.session.currentSong.id,
+        );
+      }
+
+      // Mark the next song as playing
+      console.log("Marking song as playing:", nextSong.id);
+      this.session.queue = markSongAsPlaying(this.session.queue, nextSong.id);
+
+      // Get the updated song object from the queue
+      const updatedSong = this.session.queue.find(
+        (item) => item.id === nextSong.id,
+      )!;
+      console.log("Updated song object:", updatedSong);
+      this.session.currentSong = updatedSong;
+
+      // Reset playback state
+      this.session.playbackState = {
+        ...this.session.playbackState,
+        isPlaying: true,
+        currentTime: 0,
+      };
+      console.log("Updated playback state:", this.session.playbackState);
+
+      this.updateSessionActivity();
+      this.emit("song-started", updatedSong);
+      this.emit("queue-updated", this.session.queue);
+      this.emit("playback-state-changed", this.session.playbackState);
+
+      return updatedSong;
+    } finally {
+      this.songTransitionInProgress = false;
     }
-
-    // Mark the next song as playing
-    console.log("Marking song as playing:", nextSong.id);
-    this.session.queue = markSongAsPlaying(this.session.queue, nextSong.id);
-
-    // Get the updated song object from the queue
-    const updatedSong = this.session.queue.find(
-      (item) => item.id === nextSong.id,
-    )!;
-    console.log("Updated song object:", updatedSong);
-    this.session.currentSong = updatedSong;
-
-    // Reset playback state
-    this.session.playbackState = {
-      ...this.session.playbackState,
-      isPlaying: true,
-      currentTime: 0,
-    };
-    console.log("Updated playback state:", this.session.playbackState);
-
-    this.updateSessionActivity();
-    this.emit("song-started", updatedSong);
-    this.emit("queue-updated", this.session.queue);
-    this.emit("playback-state-changed", this.session.playbackState);
-
-    return updatedSong;
   }
 
   endCurrentSong(): void {
     if (!this.session || !this.session.currentSong) return;
 
-    const completedSong = this.session.currentSong;
+    // Prevent concurrent song transitions
+    if (this.songTransitionInProgress) {
+      console.log("Song transition already in progress, ignoring endCurrentSong");
+      return;
+    }
 
-    // Mark song as completed
-    this.session.queue = markSongAsCompleted(
-      this.session.queue,
-      completedSong.id,
-    );
+    this.songTransitionInProgress = true;
 
-    // Clear current song
-    this.session.currentSong = null;
+    try {
+      const completedSong = this.session.currentSong;
 
-    // Stop playback
-    this.session.playbackState = {
-      ...this.session.playbackState,
-      isPlaying: false,
-      currentTime: 0,
-    };
+      // Mark song as completed
+      this.session.queue = markSongAsCompleted(
+        this.session.queue,
+        completedSong.id,
+      );
 
-    this.updateSessionActivity();
-    this.emit("song-ended", completedSong);
-    this.emit("queue-updated", this.session.queue);
-    this.emit("playback-state-changed", this.session.playbackState);
+      // Clear current song
+      this.session.currentSong = null;
 
-    // Auto-advance if enabled
-    if (this.session.hostControls.autoAdvance) {
-      setTimeout(() => this.startNextSong(), 1000); // 1 second delay
+      // Stop playback
+      this.session.playbackState = {
+        ...this.session.playbackState,
+        isPlaying: false,
+        currentTime: 0,
+      };
+
+      this.updateSessionActivity();
+      this.emit("song-ended", completedSong);
+      this.emit("queue-updated", this.session.queue);
+      this.emit("playback-state-changed", this.session.playbackState);
+
+      // Auto-advance if enabled
+      if (this.session.hostControls.autoAdvance) {
+        setTimeout(() => {
+          // Double-check that we're not in the middle of another transition
+          if (!this.songTransitionInProgress) {
+            this.startNextSong();
+          }
+        }, 1000); // 1 second delay
+      }
+    } finally {
+      this.songTransitionInProgress = false;
     }
   }
 
   skipCurrentSong(userId: string): QueueOperationResult {
+    console.log(`Skip song requested by user ${userId}`);
+    
     if (!this.session) {
       return { success: false, message: "No active session" };
     }
 
     if (!this.session.currentSong) {
+      console.log("Skip failed: No song currently playing");
       return { success: false, message: "No song currently playing" };
+    }
+
+    // Prevent concurrent skip operations
+    if (this.skipInProgress) {
+      console.log("Skip failed: Skip already in progress");
+      return { success: false, message: "Skip already in progress" };
+    }
+
+    // Prevent skip during song transitions
+    if (this.songTransitionInProgress) {
+      console.log("Skip failed: Song transition in progress");
+      return { success: false, message: "Song transition in progress" };
     }
 
     const user = this.session.connectedUsers.find((u) => u.id === userId);
@@ -430,36 +497,66 @@ export class KaraokeSessionManager {
     const isOwner = this.session.currentSong.addedBy === userId;
 
     if (!isHost && !isOwner && !this.session.hostControls.allowUserSkip) {
+      console.log("Skip failed: User not allowed to skip songs");
       return { success: false, message: "You are not allowed to skip songs" };
     }
 
-    // Mark as skipped instead of completed
-    this.session.queue = this.session.queue.map((item) => ({
-      ...item,
-      status:
-        item.id === this.session!.currentSong!.id
-          ? ("skipped" as QueueItemStatus)
-          : item.status,
-    }));
+    console.log(`Processing skip for song: ${this.session.currentSong.id}`);
+    this.skipInProgress = true;
+    this.songTransitionInProgress = true;
 
-    const skippedSong = this.session.currentSong;
-    this.session.currentSong = null;
+    try {
+      // Double-check that we still have a current song after acquiring the lock
+      if (!this.session.currentSong) {
+        console.log("Skip failed: Current song disappeared after acquiring lock");
+        return { success: false, message: "No song currently playing" };
+      }
 
-    this.session.playbackState = {
-      ...this.session.playbackState,
-      isPlaying: false,
-      currentTime: 0,
-    };
+      const currentSongId = this.session.currentSong.id;
+      console.log(`Marking song ${currentSongId} as skipped`);
 
-    this.updateSessionActivity();
-    this.emit("song-ended", skippedSong);
-    this.emit("queue-updated", this.session.queue);
-    this.emit("playback-state-changed", this.session.playbackState);
+      // Mark as skipped instead of completed
+      this.session.queue = this.session.queue.map((item) => ({
+        ...item,
+        status:
+          item.id === currentSongId
+            ? ("skipped" as QueueItemStatus)
+            : item.status,
+      }));
 
-    // Auto-advance to next song
-    setTimeout(() => this.startNextSong(), 500);
+      const skippedSong = this.session.currentSong;
+      this.session.currentSong = null;
 
-    return { success: true, message: "Song skipped" };
+      this.session.playbackState = {
+        ...this.session.playbackState,
+        isPlaying: false,
+        currentTime: 0,
+      };
+
+      console.log(`Song ${currentSongId} successfully skipped, emitting events`);
+      this.updateSessionActivity();
+      this.emit("song-ended", skippedSong);
+      this.emit("queue-updated", this.session.queue);
+      this.emit("playback-state-changed", this.session.playbackState);
+
+      // Auto-advance to next song with a shorter delay than endCurrentSong
+      setTimeout(() => {
+        console.log("Skip auto-advance timeout triggered");
+        // Double-check that we're not in the middle of another transition
+        if (!this.songTransitionInProgress) {
+          console.log("Starting next song after skip");
+          this.startNextSong();
+        } else {
+          console.log("Skip auto-advance cancelled: transition in progress");
+        }
+      }, 300); // Shorter delay for skip
+
+      return { success: true, message: "Song skipped" };
+    } finally {
+      this.skipInProgress = false;
+      this.songTransitionInProgress = false;
+      console.log("Skip operation completed, locks released");
+    }
   }
 
   updatePlaybackState(updates: Partial<PlaybackState>): void {
