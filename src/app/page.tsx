@@ -6,6 +6,7 @@ import { SearchInterface } from "@/components/mobile/SearchInterface";
 import { QueueView } from "@/components/mobile/QueueView";
 import { UserSetup } from "@/components/mobile/UserSetup";
 import { NavigationTabs } from "@/components/mobile/NavigationTabs";
+import { PWAInstaller } from "@/components/PWAInstaller";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"search" | "queue">("search");
@@ -103,6 +104,9 @@ export default function Home() {
           />
         )}
       </div>
+
+      {/* PWA Install Prompt */}
+      <PWAInstaller />
     </div>
   );
 }

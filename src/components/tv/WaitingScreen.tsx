@@ -80,7 +80,7 @@ export function WaitingScreen({
               <div className="text-lg text-gray-400">
                 Visit{" "}
                 <span className="text-purple-400 font-mono">
-                  http://localhost:3003
+                  https://karaoke.jpc.io
                 </span>{" "}
                 on your mobile device
               </div>

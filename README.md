@@ -11,6 +11,8 @@ A web-based karaoke system that integrates with Jellyfin media server to provide
 - **TV Display**: Full-screen lyrics display and playback control
 - **Jellyfin Integration**: Leverages your existing Jellyfin media library
 - **Real-time Sync**: WebSocket-based real-time updates between devices
+- **Progressive Web App**: Install on mobile/desktop for native app experience
+- **Offline Support**: Core functionality works without internet connection
 
 ## Getting Started
 
