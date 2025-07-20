@@ -10,6 +10,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { MediaItem, Artist, Playlist } from "@/types";
 import { ConfirmationDialog } from "./ConfirmationDialog";
+import { LyricsIndicator } from "@/components/LyricsIndicator";
 
 interface SearchInterfaceProps {
   onAddSong: (mediaItem: MediaItem) => void;
@@ -954,9 +955,12 @@ export function SearchInterface({
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-medium text-gray-900 truncate">
-                        {song.title}
-                      </h3>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-base font-medium text-gray-900 truncate">
+                          {song.title}
+                        </h3>
+                        <LyricsIndicator song={song} size="sm" variant="badge" />
+                      </div>
                       <p className="text-sm text-gray-600 truncate">
                         {song.artist}
                         {song.album && ` • ${song.album}`}

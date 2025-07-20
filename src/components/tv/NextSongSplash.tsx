@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { QueueItem } from "@/types";
+import { LyricsIndicator } from "@/components/LyricsIndicator";
 
 interface NextSongSplashProps {
   nextSong: QueueItem;
@@ -69,9 +70,12 @@ export function NextSongSplash({
 
         {/* Song information */}
         <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-8 mb-8 border border-white/10">
-          <h2 className="text-4xl font-bold text-white mb-3 leading-tight">
-            {nextSong.mediaItem.title}
-          </h2>
+          <div className="flex items-center justify-center gap-4 mb-3">
+            <h2 className="text-4xl font-bold text-white leading-tight">
+              {nextSong.mediaItem.title}
+            </h2>
+            <LyricsIndicator song={nextSong.mediaItem} size="lg" variant="badge" />
+          </div>
           <p className="text-2xl text-gray-300 mb-4">
             by {nextSong.mediaItem.artist}
           </p>
