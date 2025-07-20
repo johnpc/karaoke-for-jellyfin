@@ -237,6 +237,7 @@ export type WebSocketMessageType =
   | "queue-updated"
   | "song-started"
   | "song-ended"
+  | "song-completed"
   | "lyrics-sync"
   | "playback-control"
   | "user-joined"
@@ -248,6 +249,7 @@ export interface WebSocketEvents {
   "queue-updated": (queue: QueueItem[]) => void;
   "song-started": (song: QueueItem) => void;
   "song-ended": (song: QueueItem) => void;
+  "song-completed": (data: { song: QueueItem; rating: SongRating }) => void;
   "lyrics-sync": (syncState: LyricsSyncState) => void;
   "playback-control": (command: PlaybackCommand) => void;
   "user-joined": (user: ConnectedUser) => void;

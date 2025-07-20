@@ -22,7 +22,9 @@ interface WebSocketHookReturn {
   playbackControl: (command: PlaybackCommand) => void;
   skipSong: () => void;
   songEnded: () => void;
+  startNextSong: () => void;
   updateLocalPlaybackState: (updates: Partial<PlaybackState>) => void;
+  setSongCompletedHandler: (handler: (data: { song: QueueItem; rating: any }) => void) => void;
   session: KaraokeSession | null;
   queue: QueueItem[];
   currentSong: QueueItem | null;
@@ -40,6 +42,7 @@ export function useWebSocket(): WebSocketHookReturn {
     null,
   );
   const [error, setError] = useState<string | null>(null);
+  const songCompletedHandlerRef = useRef<((data: { song: QueueItem; rating: any }) => void) | null>(null);
 
   // Track reconnection state
   const [isReconnecting, setIsReconnecting] = useState(false);
@@ -145,6 +148,13 @@ export function useWebSocket(): WebSocketHookReturn {
     socket.on("song-ended", (song) => {
       console.log("Song ended:", song);
       setCurrentSong(null);
+    });
+
+    socket.on("song-completed", (data) => {
+      console.log("Song completed with rating:", data);
+      if (songCompletedHandlerRef.current) {
+        songCompletedHandlerRef.current(data);
+      }
     });
 
     socket.on("user-joined", (user) => {
@@ -348,6 +358,16 @@ export function useWebSocket(): WebSocketHookReturn {
     }
   }, []);
 
+  const setSongCompletedHandler = useCallback((handler: (data: { song: QueueItem; rating: any }) => void) => {
+    songCompletedHandlerRef.current = handler;
+  }, []);
+
+  const startNextSong = useCallback(() => {
+    if (socketRef.current) {
+      socketRef.current.emit("start-next-song");
+    }
+  }, []);
+
   const updateLocalPlaybackState = useCallback(
     (updates: Partial<PlaybackState>) => {
       setPlaybackState((prevState) => {
@@ -382,7 +402,9 @@ export function useWebSocket(): WebSocketHookReturn {
     playbackControl,
     skipSong,
     songEnded,
+    startNextSong,
     updateLocalPlaybackState,
+    setSongCompletedHandler,
     session,
     queue,
     currentSong,

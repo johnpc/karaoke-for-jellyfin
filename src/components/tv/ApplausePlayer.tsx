@@ -5,13 +5,11 @@ import { useEffect, useRef } from "react";
 interface ApplausePlayerProps {
   isPlaying: boolean;
   volume?: number; // 0-100
-  onEnded?: () => void;
 }
 
 export function ApplausePlayer({ 
-  isPlaying, 
-  volume = 70, 
-  onEnded 
+  isPlaying,
+  volume = 70
 }: ApplausePlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -32,17 +30,17 @@ export function ApplausePlayer({
       // In production, you'd want to add actual applause audio files to the public/sounds directory
       audioRef.current.src = generateApplauseDataUrl();
       audioRef.current.volume = volume / 100;
-      audioRef.current.play().catch(console.error);
+      
+      // Play applause - this should work because it's triggered by a socket event
+      // which is considered user interaction by the browser
+      audioRef.current.play().then(() => {
+        console.log('Applause playing successfully via socket trigger');
+      }).catch((error) => {
+        console.log('Applause playback failed:', error.message);
+        // This is expected on first load before user interaction
+      });
     }
   }, [isPlaying, volume]);
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (audio && onEnded) {
-      audio.addEventListener('ended', onEnded);
-      return () => audio.removeEventListener('ended', onEnded);
-    }
-  }, [onEnded]);
 
   // Generate a simple applause-like sound using Web Audio API
   const generateApplauseDataUrl = () => {

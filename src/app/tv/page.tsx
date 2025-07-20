@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { LyricsDisplay } from "@/components/tv/LyricsDisplay";
 import { QueuePreview } from "@/components/tv/QueuePreview";
@@ -12,7 +12,7 @@ import { QRCode } from "@/components/tv/QRCode";
 import { RatingAnimation } from "@/components/tv/RatingAnimation";
 import { NextSongSplash } from "@/components/tv/NextSongSplash";
 import { ApplausePlayer } from "@/components/tv/ApplausePlayer";
-import { TVDisplayState, TransitionState } from "@/types";
+import { TVDisplayState, TransitionState, QueueItem } from "@/types";
 import { generateRatingForSong } from "@/lib/ratingGenerator";
 
 export default function TVDisplay() {
@@ -38,8 +38,32 @@ export default function TVDisplay() {
     removeSong,
     reorderQueue,
     updateLocalPlaybackState,
+    startNextSong,
+    setSongCompletedHandler,
     error,
   } = useWebSocket();
+
+  // Handle song completion from socket events
+  const handleSongCompleted = useCallback((data: { song: QueueItem; rating: any }) => {
+    console.log("Song completed via socket, starting transition sequence", data);
+    
+    // Find next song in queue
+    const nextSong = queue.find(song => song.status === "pending");
+    
+    // Start applause and rating phase
+    setTransitionState({
+      displayState: "applause",
+      completedSong: data.song,
+      nextSong,
+      rating: data.rating,
+      transitionStartTime: Date.now()
+    });
+  }, [queue]);
+
+  // Set up song completion handler
+  useEffect(() => {
+    setSongCompletedHandler(handleSongCompleted);
+  }, [setSongCompletedHandler, handleSongCompleted]);
 
   // Handle display state transitions based on current song and queue
   useEffect(() => {
@@ -69,26 +93,6 @@ export default function TVDisplay() {
   }, [currentSong, queue]);
 
   // Handle song completion and transitions
-  const handleSongCompleted = (completedSong: any) => {
-    console.log("Song completed, starting transition sequence");
-    
-    // Generate rating for the completed song
-    const rating = generateRatingForSong(completedSong.mediaItem.duration);
-    
-    // Find next song in queue
-    const nextSong = queue.find(song => song.status === "pending");
-    
-    // Start applause and rating phase
-    setTransitionState({
-      displayState: "applause",
-      completedSong,
-      nextSong,
-      rating,
-      transitionStartTime: Date.now()
-    });
-  };
-
-  // Handle rating animation completion
   const handleRatingComplete = () => {
     console.log("Rating animation complete");
     
@@ -115,13 +119,9 @@ export default function TVDisplay() {
       displayState: "transitioning"
     });
     
-    // Trigger playback of next song
+    // Trigger playback of next song via socket
     setTimeout(() => {
-      playbackControl({
-        action: "play",
-        userId: "tv-display-transition",
-        timestamp: new Date(),
-      });
+      startNextSong();
     }, 500);
   };
 
@@ -282,12 +282,8 @@ export default function TVDisplay() {
 
   // Audio player handlers
   const handleSongEnded = () => {
-    // Song ended naturally, start transition sequence
-    console.log("Song ended naturally, starting transition sequence");
-    if (currentSong) {
-      handleSongCompleted(currentSong);
-    }
-    // Also notify server
+    // Song ended naturally, notify server (server will handle transitions)
+    console.log("Song ended naturally, notifying server");
     songEnded();
   };
 
@@ -312,7 +308,7 @@ export default function TVDisplay() {
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
       {/* Connection Status */}
-      <div className="absolute top-4 right-4 z-50">
+      <div className="absolute top-4 right-4 z-50 space-y-2">
         <div
           className={`flex items-center px-3 py-1 rounded-full text-sm ${
             isConnected
@@ -326,6 +322,12 @@ export default function TVDisplay() {
             }`}
           />
           {isConnected ? "Connected" : "Disconnected"}
+        </div>
+        
+        {/* Audio status indicator */}
+        <div className="flex items-center px-3 py-1 rounded-full text-xs bg-blue-900 text-blue-300">
+          <div className="w-2 h-2 rounded-full mr-2 bg-blue-400" />
+          Audio Ready
         </div>
       </div>
 
