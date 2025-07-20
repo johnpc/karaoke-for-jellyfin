@@ -1,6 +1,6 @@
 // Jellyfin API integration service using the official SDK
 import { Jellyfin, Api } from "@jellyfin/sdk";
-import { MediaItem, Artist } from "@/types";
+import { MediaItem, Artist, Playlist } from "@/types";
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 
 export class JellyfinSDKService {
@@ -446,6 +446,135 @@ export class JellyfinSDKService {
   private detectLyricsPath(item: BaseItemDto): string | undefined {
     // For now, we'll use the Jellyfin ID as the lyrics identifier
     return `jellyfin_${item.Id}`;
+  }
+
+  /**
+   * Get all music playlists from Jellyfin
+   */
+  async getPlaylists(limit: number = 50, startIndex: number = 0): Promise<Playlist[]> {
+    if (!this.api) {
+      throw new Error("API not initialized");
+    }
+
+    if (!this.userId) {
+      const authenticated = await this.authenticate();
+      if (!authenticated) {
+        throw new Error("Failed to authenticate with Jellyfin");
+      }
+    }
+
+    try {
+      console.log(`Getting playlists (limit: ${limit}, startIndex: ${startIndex})`);
+      
+      // Use fetch to get playlists
+      const params = new URLSearchParams({
+        includeItemTypes: "Playlist",
+        recursive: "true",
+        limit: limit.toString(),
+        startIndex: startIndex.toString(),
+        userId: this.userId!,
+        fields: "Overview,ChildCount,DateCreated",
+        sortBy: "SortName",
+        sortOrder: "Ascending",
+      });
+      
+      const playlistsUrl = `${this.baseUrl}/Items?${params}`;
+      const response = await fetch(playlistsUrl, {
+        method: 'GET',
+        headers: {
+          "X-Emby-Token": this.apiKey,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log(`Jellyfin returned ${data.Items?.length || 0} playlists`);
+      
+      const playlists = this.transformPlaylists(data.Items || []);
+      console.log(`Transformed ${playlists.length} playlists`);
+      
+      return playlists;
+    } catch (error) {
+      console.error("Jellyfin get playlists error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get songs from a specific playlist
+   */
+  async getPlaylistItems(playlistId: string, limit: number = 50, startIndex: number = 0): Promise<MediaItem[]> {
+    if (!this.api) {
+      throw new Error("API not initialized");
+    }
+
+    if (!this.userId) {
+      const authenticated = await this.authenticate();
+      if (!authenticated) {
+        throw new Error("Failed to authenticate with Jellyfin");
+      }
+    }
+
+    try {
+      console.log(`Getting playlist items for playlist ID: ${playlistId} (limit: ${limit}, startIndex: ${startIndex})`);
+      
+      // Use fetch to get playlist items
+      const params = new URLSearchParams({
+        limit: limit.toString(),
+        startIndex: startIndex.toString(),
+        userId: this.userId!,
+        fields: "Artists,Album,RunTimeTicks",
+      });
+      
+      const playlistItemsUrl = `${this.baseUrl}/Playlists/${playlistId}/Items?${params}`;
+      const response = await fetch(playlistItemsUrl, {
+        method: 'GET',
+        headers: {
+          "X-Emby-Token": this.apiKey,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log(`Jellyfin returned ${data.Items?.length || 0} items for playlist ${playlistId}`);
+      
+      // Filter only audio items and transform them
+      const audioItems = (data.Items || []).filter((item: BaseItemDto) => item.Type === "Audio");
+      const songs = this.transformMediaItems(audioItems);
+      console.log(`Transformed ${songs.length} songs from playlist`);
+      
+      return songs;
+    } catch (error) {
+      console.error("Jellyfin get playlist items error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Transform Jellyfin playlists to our Playlist format
+   */
+  private transformPlaylists(items: BaseItemDto[]): Playlist[] {
+    return items
+      .filter(item => item.Type === "Playlist")
+      .map(item => ({
+        id: `jellyfin_playlist_${item.Id}`,
+        name: item.Name || "Unknown Playlist",
+        jellyfinId: item.Id || "",
+        imageUrl: item.ImageTags?.Primary 
+          ? `${this.baseUrl}/Items/${item.Id}/Images/Primary?maxHeight=300&maxWidth=300&quality=90`
+          : undefined,
+        trackCount: item.ChildCount || 0,
+        description: item.Overview || undefined,
+        createdAt: item.DateCreated ? new Date(item.DateCreated) : undefined,
+      }));
   }
 }
 

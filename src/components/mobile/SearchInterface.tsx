@@ -8,7 +8,7 @@ import {
   UserIcon,
   ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
-import { MediaItem, Artist } from "@/types";
+import { MediaItem, Artist, Playlist } from "@/types";
 import { ConfirmationDialog } from "./ConfirmationDialog";
 
 interface SearchInterfaceProps {
@@ -16,8 +16,9 @@ interface SearchInterfaceProps {
   isConnected: boolean;
 }
 
-type SearchTab = "title" | "artist";
+type SearchTab = "title" | "artist" | "playlist";
 type ArtistViewMode = "artists" | "songs";
+type PlaylistViewMode = "playlists" | "songs";
 
 export function SearchInterface({
   onAddSong,
@@ -25,10 +26,13 @@ export function SearchInterface({
 }: SearchInterfaceProps) {
   const [activeTab, setActiveTab] = useState<SearchTab>("title");
   const [artistViewMode, setArtistViewMode] = useState<ArtistViewMode>("artists");
+  const [playlistViewMode, setPlaylistViewMode] = useState<PlaylistViewMode>("playlists");
   const [selectedArtist, setSelectedArtist] = useState<Artist | null>(null);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<MediaItem[]>([]);
   const [artistResults, setArtistResults] = useState<Artist[]>([]);
+  const [playlistResults, setPlaylistResults] = useState<Playlist[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -238,6 +242,113 @@ export function SearchInterface({
     }
   }, []);
 
+  // Get all playlists
+  const getPlaylists = useCallback(async (page: number = 1, append: boolean = false) => {
+    console.log(`Getting playlists - page ${page}, append: ${append}`);
+
+    if (page === 1) {
+      setIsLoading(true);
+      setPlaylistResults([]);
+      setHasSearched(true);
+    } else {
+      setIsLoadingMore(true);
+    }
+
+    try {
+      const limit = 50;
+      const startIndex = (page - 1) * limit;
+      
+      const response = await fetch(
+        `/api/playlists?limit=${limit}&startIndex=${startIndex}`,
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        const newResults = data.data || [];
+        console.log(`Received ${newResults.length} playlists`);
+        
+        if (append) {
+          setPlaylistResults(prev => [...prev, ...newResults]);
+        } else {
+          setPlaylistResults(newResults);
+        }
+        
+        // Check if there are more results
+        const hasMore = newResults.length === limit;
+        console.log(`Has more playlist results: ${hasMore}`);
+        setHasMoreResults(hasMore);
+        setCurrentPage(page);
+      } else {
+        setError(data.error?.message || "Failed to get playlists");
+        if (!append) {
+          setPlaylistResults([]);
+        }
+      }
+    } catch (err) {
+      console.error("Get playlists error:", err);
+      setError("Failed to connect to server");
+      if (!append) {
+        setPlaylistResults([]);
+      }
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  }, []);
+
+  // Get songs by playlist ID
+  const getSongsByPlaylist = useCallback(async (playlist: Playlist, page: number = 1, append: boolean = false) => {
+    console.log(`Getting songs for playlist "${playlist.name}" - page ${page}, append: ${append}`);
+
+    if (page === 1) {
+      setIsLoading(true);
+      setSearchResults([]);
+    } else {
+      setIsLoadingMore(true);
+    }
+
+    try {
+      const limit = 50;
+      const startIndex = (page - 1) * limit;
+      
+      const response = await fetch(
+        `/api/playlists/${playlist.id}/items?limit=${limit}&startIndex=${startIndex}`,
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        const newResults = data.data || [];
+        console.log(`Received ${newResults.length} songs for playlist`);
+        
+        if (append) {
+          setSearchResults(prev => [...prev, ...newResults]);
+        } else {
+          setSearchResults(newResults);
+        }
+        
+        // Check if there are more results
+        const hasMore = newResults.length === limit;
+        console.log(`Has more songs for playlist: ${hasMore}`);
+        setHasMoreResults(hasMore);
+        setCurrentPage(page);
+      } else {
+        setError(data.error?.message || "Failed to get songs by playlist");
+        if (!append) {
+          setSearchResults([]);
+        }
+      }
+    } catch (err) {
+      console.error("Get songs by playlist error:", err);
+      setError("Failed to connect to server");
+      if (!append) {
+        setSearchResults([]);
+      }
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  }, []);
+
   // Load more results for infinite scroll
   const loadMoreResults = useCallback(async () => {
     if (!hasMoreResults || isLoadingMore || isLoading) {
@@ -253,12 +364,20 @@ export function SearchInterface({
         console.log(`Loading more songs for artist "${selectedArtist.name}" - page ${currentPage + 1}`);
         await getSongsByArtist(selectedArtist, currentPage + 1, true);
       }
+    } else if (activeTab === "playlist") {
+      if (playlistViewMode === "playlists") {
+        console.log(`Loading more playlists - page ${currentPage + 1}`);
+        await getPlaylists(currentPage + 1, true);
+      } else if (selectedPlaylist) {
+        console.log(`Loading more songs for playlist "${selectedPlaylist.name}" - page ${currentPage + 1}`);
+        await getSongsByPlaylist(selectedPlaylist, currentPage + 1, true);
+      }
     } else {
       if (!searchQuery.trim()) return;
       console.log(`Loading more songs for "${searchQuery}" - page ${currentPage + 1}`);
       await performSongSearch(searchQuery, activeTab, currentPage + 1, true);
     }
-  }, [searchQuery, activeTab, artistViewMode, selectedArtist, currentPage, hasMoreResults, isLoadingMore, isLoading, performSongSearch, performArtistSearch, getSongsByArtist]);
+  }, [searchQuery, activeTab, artistViewMode, playlistViewMode, selectedArtist, selectedPlaylist, currentPage, hasMoreResults, isLoadingMore, isLoading, performSongSearch, performArtistSearch, getSongsByArtist, getPlaylists, getSongsByPlaylist]);
 
   // Infinite scroll handler
   const handleScroll = useCallback(() => {
@@ -269,17 +388,19 @@ export function SearchInterface({
     const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100; // 100px threshold
 
     if (isNearBottom && hasMoreResults && !isLoadingMore && !isLoading) {
-      // Only load more if we have a search query or are viewing songs for an artist
+      // Only load more if we have a search query or are viewing songs for an artist/playlist
       const shouldLoadMore = 
         (activeTab === "title" && searchQuery.trim()) ||
         (activeTab === "artist" && artistViewMode === "artists" && searchQuery.trim()) ||
-        (activeTab === "artist" && artistViewMode === "songs" && selectedArtist);
+        (activeTab === "artist" && artistViewMode === "songs" && selectedArtist) ||
+        (activeTab === "playlist" && playlistViewMode === "playlists") ||
+        (activeTab === "playlist" && playlistViewMode === "songs" && selectedPlaylist);
       
       if (shouldLoadMore) {
         loadMoreResults();
       }
     }
-  }, [hasMoreResults, isLoadingMore, isLoading, searchQuery, activeTab, artistViewMode, selectedArtist, loadMoreResults]);
+  }, [hasMoreResults, isLoadingMore, isLoading, searchQuery, activeTab, artistViewMode, playlistViewMode, selectedArtist, selectedPlaylist, loadMoreResults]);
 
   // Debounce search input
   useEffect(() => {
@@ -333,12 +454,20 @@ export function SearchInterface({
     setSearchQuery("");
     setSearchResults([]);
     setArtistResults([]);
+    setPlaylistResults([]);
     setHasSearched(false);
     setError(null);
     setHasMoreResults(true);
     setCurrentPage(1);
     setArtistViewMode("artists");
+    setPlaylistViewMode("playlists");
     setSelectedArtist(null);
+    setSelectedPlaylist(null);
+
+    // Auto-load playlists when switching to playlist tab
+    if (tab === "playlist") {
+      getPlaylists();
+    }
   };
 
   // Handle artist selection
@@ -355,6 +484,25 @@ export function SearchInterface({
   const handleBackToArtists = () => {
     setArtistViewMode("artists");
     setSelectedArtist(null);
+    setSearchResults([]);
+    setCurrentPage(1);
+    setHasMoreResults(true);
+  };
+
+  // Handle playlist selection
+  const handlePlaylistSelect = async (playlist: Playlist) => {
+    console.log(`Selected playlist: ${playlist.name}`);
+    setSelectedPlaylist(playlist);
+    setPlaylistViewMode("songs");
+    setCurrentPage(1);
+    setHasMoreResults(true);
+    await getSongsByPlaylist(playlist);
+  };
+
+  // Handle back to playlists view
+  const handleBackToPlaylists = () => {
+    setPlaylistViewMode("playlists");
+    setSelectedPlaylist(null);
     setSearchResults([]);
     setCurrentPage(1);
     setHasMoreResults(true);
@@ -436,6 +584,16 @@ export function SearchInterface({
           >
             Search by Artist
           </button>
+          <button
+            onClick={() => handleTabChange("playlist")}
+            className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "playlist"
+                ? "border-purple-500 text-purple-600 bg-purple-50"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            Playlists
+          </button>
         </div>
       </div>
 
@@ -453,17 +611,33 @@ export function SearchInterface({
             </button>
           </div>
         )}
+
+        {/* Back button for playlist songs view */}
+        {activeTab === "playlist" && playlistViewMode === "songs" && (
+          <div className="flex items-center mb-3">
+            <button
+              onClick={handleBackToPlaylists}
+              className="flex items-center text-purple-600 hover:text-purple-700 transition-colors"
+            >
+              <ArrowLeftIcon className="w-5 h-5 mr-2" />
+              <span className="text-sm font-medium">Back to Playlists</span>
+            </button>
+          </div>
+        )}
         
-        <div className="relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder={getPlaceholderText()}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base text-gray-900 placeholder-gray-500"
-          />
-        </div>
+        {/* Search input - hide for playlist list view */}
+        {!(activeTab === "playlist" && playlistViewMode === "playlists") && (
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder={getPlaceholderText()}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base text-gray-900 placeholder-gray-500"
+            />
+          </div>
+        )}
         
         {/* Artist info header when viewing songs */}
         {activeTab === "artist" && artistViewMode === "songs" && selectedArtist && (
@@ -472,6 +646,18 @@ export function SearchInterface({
               <UserIcon className="w-5 h-5 text-purple-600 mr-2" />
               <span className="text-sm font-medium text-purple-900">
                 Songs by {selectedArtist.name}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Playlist info header when viewing songs */}
+        {activeTab === "playlist" && playlistViewMode === "songs" && selectedPlaylist && (
+          <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+            <div className="flex items-center">
+              <MusicalNoteIcon className="w-5 h-5 text-purple-600 mr-2" />
+              <span className="text-sm font-medium text-purple-900">
+                Songs in {selectedPlaylist.name}
               </span>
             </div>
           </div>
@@ -488,7 +674,7 @@ export function SearchInterface({
           </div>
         )}
 
-        {isLoading && searchResults.length === 0 && artistResults.length === 0 && (
+        {isLoading && searchResults.length === 0 && artistResults.length === 0 && playlistResults.length === 0 && (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
             <span className="ml-3 text-gray-600">
@@ -496,6 +682,10 @@ export function SearchInterface({
                 ? "Searching for artists..." 
                 : activeTab === "artist" && artistViewMode === "songs"
                 ? `Finding songs by ${selectedArtist?.name}...`
+                : activeTab === "playlist" && playlistViewMode === "playlists"
+                ? "Loading playlists..."
+                : activeTab === "playlist" && playlistViewMode === "songs"
+                ? `Loading songs from ${selectedPlaylist?.name}...`
                 : "Searching..."}
             </span>
           </div>
@@ -505,27 +695,37 @@ export function SearchInterface({
         {!isLoading && 
          ((activeTab === "artist" && artistViewMode === "artists" && artistResults.length === 0) ||
           (activeTab === "artist" && artistViewMode === "songs" && searchResults.length === 0) ||
+          (activeTab === "playlist" && playlistViewMode === "playlists" && playlistResults.length === 0) ||
+          (activeTab === "playlist" && playlistViewMode === "songs" && searchResults.length === 0) ||
           (activeTab === "title" && searchResults.length === 0)) && 
          hasSearched && (
           <div className="flex flex-col items-center justify-center py-12 px-4">
             {activeTab === "artist" && artistViewMode === "artists" ? (
               <UserIcon className="w-12 h-12 text-gray-400 mb-4" />
+            ) : activeTab === "playlist" && playlistViewMode === "playlists" ? (
+              <MusicalNoteIcon className="w-12 h-12 text-gray-400 mb-4" />
             ) : (
               <MusicalNoteIcon className="w-12 h-12 text-gray-400 mb-4" />
             )}
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               {activeTab === "artist" && artistViewMode === "artists" 
                 ? "No artists found"
+                : activeTab === "playlist" && playlistViewMode === "playlists"
+                ? "No playlists found"
                 : "No songs found"}
             </h3>
             <p className="text-gray-500 text-center">
-              {getEmptyStateText()}
+              {activeTab === "playlist" && playlistViewMode === "playlists"
+                ? "No music playlists found in your Jellyfin library"
+                : activeTab === "playlist" && playlistViewMode === "songs"
+                ? `No songs found in ${selectedPlaylist?.name || "this playlist"}`
+                : getEmptyStateText()}
             </p>
           </div>
         )}
 
         {/* Initial state */}
-        {!isLoading && !hasSearched && (
+        {!isLoading && !hasSearched && activeTab !== "playlist" && (
           <div className="flex flex-col items-center justify-center py-12 px-4">
             {activeTab === "artist" && artistViewMode === "artists" ? (
               <UserIcon className="w-12 h-12 text-gray-400 mb-4" />
@@ -586,8 +786,48 @@ export function SearchInterface({
           </div>
         )}
 
+        {/* Playlist Results */}
+        {activeTab === "playlist" && playlistViewMode === "playlists" && playlistResults.length > 0 && (
+          <div className="divide-y divide-gray-200">
+            {playlistResults.map((playlist) => (
+              <div
+                key={playlist.id}
+                className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                onClick={() => handlePlaylistSelect(playlist)}
+              >
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                    {playlist.imageUrl ? (
+                      <img
+                        src={playlist.imageUrl}
+                        alt={playlist.name}
+                        className="w-12 h-12 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <MusicalNoteIcon className="w-6 h-6 text-purple-600" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-medium text-gray-900 truncate">
+                      {playlist.name}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {playlist.trackCount ? `${playlist.trackCount} songs` : 'Playlist'}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                      <ArrowLeftIcon className="w-4 h-4 text-white transform rotate-180" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Song Results */}
-        {((activeTab === "title") || (activeTab === "artist" && artistViewMode === "songs")) && searchResults.length > 0 && (
+        {((activeTab === "title") || (activeTab === "artist" && artistViewMode === "songs") || (activeTab === "playlist" && playlistViewMode === "songs")) && searchResults.length > 0 && (
           <div className="divide-y divide-gray-200">
             {searchResults.map((song) => (
               <div
@@ -629,6 +869,8 @@ export function SearchInterface({
             <span className="ml-3 text-gray-600 text-sm">
               {activeTab === "artist" && artistViewMode === "artists"
                 ? "Loading more artists..."
+                : activeTab === "playlist" && playlistViewMode === "playlists"
+                ? "Loading more playlists..."
                 : "Loading more songs..."}
             </span>
           </div>
@@ -637,14 +879,19 @@ export function SearchInterface({
         {/* End of results indicator */}
         {hasSearched && 
          ((activeTab === "artist" && artistViewMode === "artists" && artistResults.length > 0) ||
-          ((activeTab === "title" || (activeTab === "artist" && artistViewMode === "songs")) && searchResults.length > 0)) && 
+          (activeTab === "playlist" && playlistViewMode === "playlists" && playlistResults.length > 0) ||
+          ((activeTab === "title" || (activeTab === "artist" && artistViewMode === "songs") || (activeTab === "playlist" && playlistViewMode === "songs")) && searchResults.length > 0)) && 
          !hasMoreResults && !isLoadingMore && (
           <div className="flex items-center justify-center py-6">
             <p className="text-gray-500 text-sm">
               {activeTab === "artist" && artistViewMode === "artists"
                 ? `Found all matching artists (${artistResults.length} total)`
+                : activeTab === "playlist" && playlistViewMode === "playlists"
+                ? `Found all playlists (${playlistResults.length} total)`
                 : activeTab === "artist" && artistViewMode === "songs"
                 ? `Found all songs by ${selectedArtist?.name} (${searchResults.length} total)`
+                : activeTab === "playlist" && playlistViewMode === "songs"
+                ? `Found all songs in ${selectedPlaylist?.name} (${searchResults.length} total)`
                 : `No more songs found (${searchResults.length} total)`
               }
             </p>

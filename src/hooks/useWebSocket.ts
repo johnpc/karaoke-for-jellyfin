@@ -21,6 +21,7 @@ interface WebSocketHookReturn {
   reorderQueue: (queueItemId: string, newPosition: number) => void;
   playbackControl: (command: PlaybackCommand) => void;
   skipSong: () => void;
+  songEnded: () => void;
   updateLocalPlaybackState: (updates: Partial<PlaybackState>) => void;
   session: KaraokeSession | null;
   queue: QueueItem[];
@@ -227,6 +228,12 @@ export function useWebSocket(): WebSocketHookReturn {
     }
   }, []);
 
+  const songEnded = useCallback(() => {
+    if (socketRef.current) {
+      socketRef.current.emit("song-ended");
+    }
+  }, []);
+
   const updateLocalPlaybackState = useCallback(
     (updates: Partial<PlaybackState>) => {
       setPlaybackState((prevState) => {
@@ -260,6 +267,7 @@ export function useWebSocket(): WebSocketHookReturn {
     reorderQueue,
     playbackControl,
     skipSong,
+    songEnded,
     updateLocalPlaybackState,
     session,
     queue,

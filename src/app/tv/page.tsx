@@ -24,6 +24,7 @@ export default function TVDisplay() {
     currentSong,
     playbackState,
     skipSong,
+    songEnded,
     playbackControl,
     removeSong,
     reorderQueue,
@@ -171,8 +172,9 @@ export default function TVDisplay() {
 
   // Audio player handlers
   const handleSongEnded = () => {
-    // Song ended naturally, skip to next
-    skipSong();
+    // Song ended naturally, emit song-ended event to server
+    console.log("Song ended naturally, notifying server");
+    songEnded();
   };
 
   const handleTimeUpdate = (currentTime: number) => {

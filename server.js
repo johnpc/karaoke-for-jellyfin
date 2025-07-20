@@ -481,8 +481,23 @@ app.prepare().then(() => {
       const skippedSong = currentSession.currentSong;
       currentSession.currentSong = null;
 
+      // Reset playback state for the next song
+      if (currentSession.playbackState) {
+        currentSession.playbackState.currentTime = 0;
+        currentSession.playbackState.isPlaying = false;
+      } else {
+        currentSession.playbackState = {
+          isPlaying: false,
+          currentTime: 0,
+          volume: 80,
+          isMuted: false,
+          playbackRate: 1.0,
+        };
+      }
+
       // Broadcast song ended
-      io.to(currentSession.id).emit("song-ended", skippedSong);
+      const sessionId = currentSession.id || "main-session";
+      io.to(sessionId).emit("song-ended", skippedSong);
 
       // Start next song if available
       const nextSong = currentSession.queue.find(
@@ -491,7 +506,67 @@ app.prepare().then(() => {
       if (nextSong) {
         nextSong.status = "playing";
         currentSession.currentSong = nextSong;
-        io.to(currentSession.id).emit("song-started", nextSong);
+        
+        // Ensure playback state is ready for new song
+        currentSession.playbackState.isPlaying = true;
+        currentSession.playbackState.currentTime = 0; // Explicitly reset to 0
+        
+        io.to(sessionId).emit("song-started", nextSong);
+        io.to(sessionId).emit("queue-updated", currentSession.queue);
+        io.to(sessionId).emit("playback-state-changed", currentSession.playbackState);
+      }
+    });
+
+    socket.on("song-ended", () => {
+      console.log("Song ended naturally");
+      if (!currentSession || !currentSession.currentSong) {
+        console.log("No current song to end");
+        return;
+      }
+
+      // Mark current song as completed and move to next
+      const completedSong = currentSession.currentSong;
+      completedSong.status = "completed";
+      currentSession.currentSong = null;
+
+      // Reset playback state for the next song
+      if (currentSession.playbackState) {
+        currentSession.playbackState.currentTime = 0;
+        currentSession.playbackState.isPlaying = false;
+      } else {
+        currentSession.playbackState = {
+          isPlaying: false,
+          currentTime: 0,
+          volume: 80,
+          isMuted: false,
+          playbackRate: 1.0,
+        };
+      }
+
+      // Broadcast song ended
+      const sessionId = currentSession.id || "main-session";
+      io.to(sessionId).emit("song-ended", completedSong);
+
+      // Start next song if available
+      const nextSong = currentSession.queue.find(
+        (item) => item.status === "pending",
+      );
+      if (nextSong) {
+        console.log("Starting next song:", nextSong.mediaItem.title);
+        nextSong.status = "playing";
+        currentSession.currentSong = nextSong;
+        
+        // Ensure playback state is ready for new song
+        currentSession.playbackState.isPlaying = true;
+        currentSession.playbackState.currentTime = 0; // Explicitly reset to 0
+        
+        io.to(sessionId).emit("song-started", nextSong);
+        io.to(sessionId).emit("queue-updated", currentSession.queue);
+        io.to(sessionId).emit("playback-state-changed", currentSession.playbackState);
+      } else {
+        console.log("No more songs in queue");
+        // Broadcast updated playback state even if no next song
+        io.to(sessionId).emit("playback-state-changed", currentSession.playbackState);
       }
     });
 
