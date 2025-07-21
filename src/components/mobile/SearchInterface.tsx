@@ -13,7 +13,7 @@ import { ConfirmationDialog } from "./ConfirmationDialog";
 import { LyricsIndicator } from "@/components/LyricsIndicator";
 
 interface SearchInterfaceProps {
-  onAddSong: (mediaItem: MediaItem) => void;
+  onAddSong: (mediaItem: MediaItem) => Promise<void>;
   isConnected: boolean;
 }
 
@@ -50,6 +50,7 @@ export function SearchInterface({
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [addedSong, setAddedSong] = useState<MediaItem | null>(null);
+  const [confirmationType, setConfirmationType] = useState<"success" | "error">("success");
 
   // Debounced search function for songs
   const performSongSearch = useCallback(
@@ -601,16 +602,16 @@ export function SearchInterface({
     setHasMoreResults(true);
   };
 
-  const handleAddSong = (song: MediaItem) => {
+  const handleAddSong = async (song: MediaItem) => {
     if (!isConnected) {
       setError("Not connected to server");
       return;
     }
 
     try {
-      onAddSong(song);
+      await onAddSong(song);
 
-      // Show confirmation dialog with truncated title if too long
+      // Show success confirmation dialog with truncated title if too long
       const truncatedTitle =
         song.title.length > 40
           ? `${song.title.substring(0, 40)}...`
@@ -620,12 +621,28 @@ export function SearchInterface({
       setConfirmationMessage(
         `"${truncatedTitle}" by ${song.artist} added to queue!`,
       );
+      setConfirmationType("success");
       setShowConfirmation(true);
 
       // Clear any existing error
       setError(null);
     } catch (err) {
-      setError("Failed to add song to queue");
+      // Show error confirmation dialog instead of success
+      const errorMessage = err instanceof Error ? err.message : "Failed to add song to queue";
+      
+      // Check if it's the "join session" error and provide helpful guidance
+      if (errorMessage.includes("join a session first")) {
+        setConfirmationMessage(
+          "You must join a session first. Please refresh the page and try again."
+        );
+      } else {
+        setConfirmationMessage(errorMessage);
+      }
+      
+      setAddedSong(song);
+      setConfirmationType("error");
+      setShowConfirmation(true);
+      setError(errorMessage);
     }
   };
 
@@ -1031,14 +1048,15 @@ export function SearchInterface({
       {/* Confirmation Dialog */}
       <ConfirmationDialog
         isOpen={showConfirmation}
-        title="Song Added!"
+        title={confirmationType === "success" ? "Song Added!" : "Error Adding Song"}
         message={confirmationMessage}
         onClose={() => {
           setShowConfirmation(false);
           setAddedSong(null);
           setConfirmationMessage("");
+          setConfirmationType("success");
         }}
-        type="success"
+        type={confirmationType}
         autoCloseDelay={2500}
       />
     </div>

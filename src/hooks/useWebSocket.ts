@@ -16,7 +16,7 @@ interface WebSocketHookReturn {
   socket: Socket | null;
   isConnected: boolean;
   joinSession: (sessionId: string, userName: string) => void;
-  addSong: (mediaItem: MediaItem, position?: number) => void;
+  addSong: (mediaItem: MediaItem, position?: number) => Promise<void>;
   removeSong: (queueItemId: string) => void;
   reorderQueue: (queueItemId: string, newPosition: number) => void;
   playbackControl: (command: PlaybackCommand) => void;
@@ -306,21 +306,43 @@ export function useWebSocket(): WebSocketHookReturn {
   }, []);
 
   const addSong = useCallback(
-    (mediaItem: MediaItem, position?: number) => {
-      if (socketRef.current?.connected) {
-        socketRef.current.emit("add-song", { mediaItem, position });
-      } else if (lastUserName && socketRef.current) {
-        // If not connected, show a more helpful error
-        setError("Connection lost. Attempting to reconnect...");
+    (mediaItem: MediaItem, position?: number): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        if (socketRef.current?.connected) {
+          // Set up one-time listeners for this specific add-song operation
+          const handleError = (error: { code: string; message: string }) => {
+            if (error.code === "NOT_IN_SESSION" || error.code === "ADD_SONG_FAILED") {
+              socketRef.current?.off("error", handleError);
+              socketRef.current?.off("queue-updated", handleSuccess);
+              reject(new Error(error.message));
+            }
+          };
 
-        // Try to reconnect and rejoin
-        socketRef.current.connect();
+          const handleSuccess = () => {
+            socketRef.current?.off("error", handleError);
+            socketRef.current?.off("queue-updated", handleSuccess);
+            resolve();
+          };
 
-        // Simple alert to tell user what happened
-        alert(
-          "Connection lost. Reconnecting now - please try adding the song again in a moment.",
-        );
-      }
+          // Listen for error and success events
+          socketRef.current.on("error", handleError);
+          socketRef.current.on("queue-updated", handleSuccess);
+
+          // Emit the add-song event
+          socketRef.current.emit("add-song", { mediaItem, position });
+        } else if (lastUserName && socketRef.current) {
+          // If not connected, show a more helpful error
+          setError("Connection lost. Attempting to reconnect...");
+
+          // Try to reconnect and rejoin
+          socketRef.current.connect();
+
+          // Reject with a helpful error message
+          reject(new Error("Connection lost. Please refresh the page and try again."));
+        } else {
+          reject(new Error("Not connected to server. Please refresh the page."));
+        }
+      });
     },
     [lastUserName],
   );
