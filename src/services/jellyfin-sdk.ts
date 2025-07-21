@@ -193,6 +193,7 @@ export class JellyfinSDKService {
         fields: "Artists,Album,RunTimeTicks,HasLyrics", // Added HasLyrics field
         sortBy: "SortName", // Changed from "Album,SortName" to just "SortName" for better song discovery
         sortOrder: "Ascending",
+        filters: "HasLyrics", // Filter to only include items with lyrics
       });
 
       const itemsUrl = `${this.baseUrl}/Items?${params}`;
@@ -264,7 +265,8 @@ export class JellyfinSDKService {
         limit: limit.toString(),
         startIndex: startIndex.toString(),
         userId: this.userId!,
-        fields: "Artists,Album,RunTimeTicks",
+        fields: "Artists,Album,RunTimeTicks,HasLyrics",
+        filters: "HasLyrics", // Filter to only include items with lyrics
       });
 
       const itemsUrl = `${this.baseUrl}/Items?${params}`;
@@ -327,9 +329,10 @@ export class JellyfinSDKService {
         startIndex: startIndex.toString(),
         limit: limit.toString(),
         userId: this.userId!,
-        fields: "Artists,Album,RunTimeTicks",
+        fields: "Artists,Album,RunTimeTicks,HasLyrics",
         sortBy: "SortName",
         sortOrder: "Ascending",
+        filters: "HasLyrics", // Filter to only include items with lyrics
       });
 
       const itemsUrl = `${this.baseUrl}/Items?${params}`;
@@ -442,9 +445,20 @@ export class JellyfinSDKService {
    * Transform Jellyfin media items to our MediaItem format
    */
   private transformMediaItems(items: BaseItemDto[]): MediaItem[] {
-    return items
+    const transformedItems = items
       .map((item) => this.transformMediaItem(item))
       .filter(Boolean) as MediaItem[];
+    
+    // Filter to only include songs with lyrics for karaoke
+    const songsWithLyrics = transformedItems.filter((item) => {
+      const hasLyrics = item.hasLyrics === true;
+      if (!hasLyrics) {
+        console.log(`Filtering out "${item.title}" by ${item.artist} - no lyrics available`);
+      }
+      return hasLyrics;
+    });
+    
+    return songsWithLyrics;
   }
 
   /**
@@ -469,6 +483,7 @@ export class JellyfinSDKService {
       jellyfinId: item.Id || "",
       streamUrl: this.getStreamUrl(item.Id || ""),
       lyricsPath: this.detectLyricsPath(item),
+      hasLyrics: item.HasLyrics === true, // Extract HasLyrics field from Jellyfin
     };
   }
 
@@ -570,7 +585,8 @@ export class JellyfinSDKService {
         limit: limit.toString(),
         startIndex: startIndex.toString(),
         userId: this.userId!,
-        fields: "Artists,Album,RunTimeTicks",
+        fields: "Artists,Album,RunTimeTicks,HasLyrics",
+        filters: "HasLyrics", // Filter to only include items with lyrics
       });
 
       const playlistItemsUrl = `${this.baseUrl}/Playlists/${playlistId}/Items?${params}`;

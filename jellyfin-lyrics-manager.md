@@ -14,13 +14,13 @@ Create a script to manage lyrics for all songs in the Jellyfin music library by:
 - **Path Mapping**: Replace `/downloads/` with `/home/umbrel/umbrel/home/Downloads/`
 
 ## Progress Tracking
-- **Status**: running
-- **Total Songs**: 202
-- **Processed**: 2252
-- **Last Page Token**: 2050
-- **Errors**: 29 errors logged
-- **Success Count**: 2219
-- **Lyrics Found**: 1835
+- **Status**: completed
+- **Total Songs**: 14302
+- **Processed**: 14302
+- **Last Page Token**: None
+- **Errors**: 377 errors logged
+- **Success Count**: 13951
+- **Lyrics Found**: 11916
 
 ## Implementation Notes
 - Use resumable pagination to handle large libraries
@@ -30,23 +30,17 @@ Create a script to manage lyrics for all songs in the Jellyfin music library by:
 - Log all operations for debugging
 
 ## Recent Errors
-- 2025-07-20 22:45:07: SSH write failed for /home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Kenny Rogers/02 Missing You.lrc: ssh_dispatch_run_fatal: Connection to 192.168.7.211 port 22: Operation timed out
+- 2025-07-21 15:11:37: Failed to delete lyrics for /home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/John Denver/10-john_denver-trail_of_tears_(remastered)-f9d7b246.mp3: Command '['ssh', 'umbrel@192.168.7.211', 'find "/home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/John Denver" -name "10-john_denver-trail_of_tears_(remastered)-f9d7b246.*" \\( -name "*.lrc" -o -name "*.txt" \\) -type f']' timed out after 30 seconds
+- 2025-07-21 15:12:11: Failed to write LRC for /home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Old Crow Medicine Show/10 - Trouble That I'm In.mp3: Command '['ssh', 'umbrel@192.168.7.211', 'ls -la "/home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Old Crow Medicine Show/10 - Trouble That I\'m In.lrc"']' timed out after 10 seconds
+- 2025-07-21 15:12:46: Failed to delete lyrics for /home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Kid Cudi/10-kid_cudi-troubled_boy-spank.mp3: Command '['ssh', 'umbrel@192.168.7.211', 'find "/home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Kid Cudi" -name "10-kid_cudi-troubled_boy-spank.*" \\( -name "*.lrc" -o -name "*.txt" \\) -delete']' timed out after 30 seconds
+- 2025-07-21 15:13:45: LRCLib search failed for Bright Eyes - Waste of Paint: HTTPSConnectionPool(host='lrclib.net', port=443): Read timed out. (read timeout=10)
+- 2025-07-21 15:14:48: LRCLib search failed for Modern Baseball - What If: HTTPSConnectionPool(host='lrclib.net', port=443): Read timed out. (read timeout=10)
+- 2025-07-21 15:15:33: SSH delete failed for /home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Motion City Soundtrack/10 Where I Belong.mp3: ssh_dispatch_run_fatal: Connection to 192.168.7.211 port 22: Operation timed out
 
-- 2025-07-20 22:52:33: Failed to write LRC for /home/umbrel/umbrel/home/Downloads/drive2/music/jellyplist/__jellyplist/30WHma5z5Sty54jbtoxYEy.mp3: Command '['ssh', 'umbrel@192.168.7.211', 'ls -la "/home/umbrel/umbrel/home/Downloads/drive2/music/jellyplist/__jellyplist/30WHma5z5Sty54jbtoxYEy.lrc"']' timed out after 10 seconds
-- 2025-07-20 22:54:13: SSH write failed for /home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Matchbox Twenty/02. She's So Mean.lrc: ssh_dispatch_run_fatal: Connection to 192.168.7.211 port 22: Operation timed out
-
-- 2025-07-20 22:59:54: SSH delete failed for /home/umbrel/umbrel/home/Downloads/drive2/spotdl/miike-snow-radio/Miike Snow - The Heart of Me.mp3: ssh_dispatch_run_fatal: Connection to 192.168.7.211 port 22: Operation timed out
-
-- 2025-07-20 23:09:36: SSH write failed for /home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Cage the Elephant/3 - Ain't No Rest for the Wicked.lrc: ssh: connect to host 192.168.7.211 port 22: Operation timed out
-
-- 2025-07-20 23:12:47: SSH delete failed for /home/umbrel/umbrel/home/Downloads/drive2/music/jellyplist/__jellyplist/5A6OHHy73AR5tLxgTc98zz.mp3: ssh: connect to host 192.168.7.211 port 22: Operation timed out
-
-- 2025-07-20 23:14:23: Failed to write LRC for /home/umbrel/umbrel/home/Downloads/drive2/spotdl/miike-snow-radio/Jungle - Busy Earnin'.mp3: Command '['ssh', 'umbrel@192.168.7.211', 'ls -la "/home/umbrel/umbrel/home/Downloads/drive2/spotdl/miike-snow-radio/Jungle - Busy Earnin\'.lrc"']' timed out after 10 seconds
-- 2025-07-20 23:14:34: SSH delete failed for /home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Train/03 Cab.mp3: ssh: connect to host 192.168.7.211 port 22: Operation timed out
-
-- 2025-07-20 23:17:27: SSH delete failed for /home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Grouplove/03-grouplove-deadline.flac: ssh: connect to host 192.168.7.211 port 22: Operation timed out
-
-- 2025-07-20 23:26:42: Failed to write LRC for /home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Colbie Caillat/03 - If You Love Me Let Me Go.flac: Command '['ssh', 'umbrel@192.168.7.211', 'echo "[00:10.93] Waiting here for my phone to ring\n[00:12.79] Phone to ring\n[00:15.49] Wondering are you ever coming back to me again\n[00:22.29] Counting every drop of rain\n[00:24.06] Drop of rain, falling\n[00:26.76] Falling down into the hole you dug for me\n[00:32.13] And you bury me\n[00:36.74] \'Cause you dug so deep\n[00:40.25] But I\'m still within your reach\n[00:48.62] Oh, oh\n[00:52.27] If you really love me\n[00:53.18] You would let me go\n[00:56.70] I\'m tired of always sleeping with your ghost\n[01:02.14] Chasing away the things I need the most\n[01:07.50] If you really love me\n[01:09.37] You would let me go\n[01:14.76] If you love me let me go\n[01:21.97] Every time you come back again, back again\n[01:25.57] The healing ends\n[01:27.33] I push all of my rules aside for you\n[01:32.70] You should see the way authorized, authorized fine for me\n[01:37.33] To get me everything that you never do\n[01:42.70] Still it tears at me\n[01:46.32] \'Cause you cut so deep\n[01:50.83] But I\'m still within your reach\n[01:56.24] Oh, oh\n[01:59.84] If you really love me\n[02:00.71] You would let me go\n[02:05.26] I\'m tired of always sleeping with your ghost\n[02:09.78] Chasing away the things I need the most\n[02:16.26] If you really love me\n[02:17.19] You would let me go\n[02:22.57] If you love me let me go\n[02:24.65] All I need, all I need\n[02:27.38] Wants to be with you\n[02:28.74] But you let me bleed, let me bleed\n[02:34.32] All I need, all I need\n[02:37.93] Wants to be with you\n[02:39.78] But you let me bleed, let me bleed\n[02:45.57] Oh, oh\n[02:48.24] If you really love me\n[02:49.26] You would let me go\n[02:53.75] I\'m tired of always sleeping with your ghost\n[02:58.24] Chasing away the things I need the most\n[03:04.30] If you really love me\n[03:06.16] You would let me go\n[03:16.01] If you love me let me go\n[03:28.37] If you love me let me go\n[03:35.53] " > "/home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Colbie Caillat/03 - If You Love Me Let Me Go.lrc"']' timed out after 30 seconds
+- 2025-07-21 15:16:41: Failed to write LRC for /home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Say Anything/10-say_anything-wire_mom.flac: Command '['ssh', 'umbrel@192.168.7.211', 'echo "[00:02.79] You are a flawed machine,\\" she said. \\"\n[00:05.47] Hope that\'s worth something.\\" We always clashed, even when we wore nothing.\n[00:17.29] I said, \\"\n[00:18.14] Hell yeah, you look so good when you\'re crumbling.\\" The gloss and grandeur of molding tangerines and trashy magazines.\n[00:34.30] You\'re fake, baby, so he can just take you home.\n[00:42.51] Fake, baby.\n[00:51.59] Blood crazy.\n[00:53.31] Pinprick wire mom.\n[00:56.02] Dead daisy.\n[01:08.01] Where do you get off upstaging and replacing me?\n[01:10.73] My eyes are crossed, my will is lost and I\'m wasted.\n[01:15.35] Every queasy thought I\'ve had is inflated.\n[01:23.40] I puke onstage and slip, face plant and I\'m faced with the acid reflux remains of subjective truth.\n[01:36.02] Still, I always knew.\n[02:15.42] Beneath your bombast and the humor of syntax, in carbonite, a human being.\n[02:30.85] Once you saw through me, but now I\'m an employee.\n[02:39.82] So sick of it, tired and wizened and free.\n[02:48.86] " > "/home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Say Anything/10-say_anything-wire_mom.lrc"']' timed out after 30 seconds
+- 2025-07-21 15:19:35: Failed to write LRC for /home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Milky Chance/11 Addicted_demo.mp3: Command '['ssh', 'umbrel@192.168.7.211', 'ls -la "/home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Milky Chance/11 Addicted_demo.lrc"']' timed out after 10 seconds
+- 2025-07-21 15:20:11: Failed to write LRC for /home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Toby Keith/11-toby_keith-all_i_want_for_christmas-333c1303.mp3: Command '['ssh', 'umbrel@192.168.7.211', 'ls -la "/home/umbrel/umbrel/home/Downloads/drive2/lidarr/music/Toby Keith/11-toby_keith-all_i_want_for_christmas-333c1303.lrc"']' timed out after 10 seconds
+- 2025-07-21 15:21:47: Failed to get songs: HTTPSConnectionPool(host='jellyfin.jpc.io', port=443): Max retries exceeded with url: /Items?IncludeItemTypes=Audio&Recursive=true&Fields=Path%2CMediaSources%2CArtists%2CAlbum%2CAlbumArtist&StartIndex=14100&Limit=50&SortBy=SortName&SortOrder=Ascending&ParentId=7e64e319657a9516ec78490da03edccb (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x103e8aa60>: Failed to establish a new connection: [Errno 60] Operation timed out'))
 
 ## Next Steps
 1. Create the main script
