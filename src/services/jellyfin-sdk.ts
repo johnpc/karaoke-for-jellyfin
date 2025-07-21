@@ -159,12 +159,13 @@ export class JellyfinSDKService {
 
   /**
    * Get all songs by a specific artist ID using the official SDK
+   * This method uses artistIds filter which should get all songs where the artist is listed
    */
   async getSongsByArtistId(
     artistId: string,
     limit: number = 50,
     startIndex: number = 0,
-  ): Promise<MediaItem[]> {
+  ): Promise<{ songs: MediaItem[]; totalCount: number }> {
     if (!this.api) {
       throw new Error("API not initialized");
     }
@@ -189,8 +190,8 @@ export class JellyfinSDKService {
         limit: limit.toString(),
         startIndex: startIndex.toString(),
         userId: this.userId!,
-        fields: "Artists,Album,RunTimeTicks",
-        sortBy: "Album,SortName",
+        fields: "Artists,Album,RunTimeTicks,HasLyrics", // Added HasLyrics field
+        sortBy: "SortName", // Changed from "Album,SortName" to just "SortName" for better song discovery
         sortOrder: "Ascending",
       });
 
@@ -208,14 +209,23 @@ export class JellyfinSDKService {
       }
 
       const data = await response.json();
+      const totalCount = data.TotalRecordCount || 0;
+      
       console.log(
         `Jellyfin returned ${data.Items?.length || 0} songs for artist ${artistId}`,
       );
+      console.log(`Total record count: ${totalCount}`);
+
+      // Log some debug info about the query
+      if (startIndex === 0) {
+        console.log(`Artist search query URL: ${itemsUrl}`);
+        console.log(`Total songs available for this artist: ${totalCount}`);
+      }
 
       const songs = this.transformMediaItems(data.Items || []);
       console.log(`Transformed ${songs.length} songs`);
 
-      return songs;
+      return { songs, totalCount };
     } catch (error) {
       console.error("Jellyfin get songs by artist error:", error);
       throw error;

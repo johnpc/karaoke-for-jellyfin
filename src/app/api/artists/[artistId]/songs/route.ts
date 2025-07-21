@@ -48,7 +48,7 @@ export async function GET(
     }
 
     // Get songs by artist ID using the SDK
-    const songs = await jellyfinService.getSongsByArtistId(
+    const result = await jellyfinService.getSongsByArtistId(
       jellyfinArtistId,
       limit,
       startIndex,
@@ -56,10 +56,10 @@ export async function GET(
 
     return NextResponse.json(
       createPaginatedResponse(
-        songs,
+        result.songs,
         Math.floor(startIndex / limit) + 1,
         limit,
-        songs.length,
+        result.totalCount, // Use the actual total count from Jellyfin
       ),
     );
   } catch (error) {
