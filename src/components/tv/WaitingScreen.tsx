@@ -83,7 +83,7 @@ export function WaitingScreen({
               <div className="text-lg text-gray-400 mb-2">
                 Visit{" "}
                 <span className="text-purple-400 font-mono">
-                  https://karaoke.jpc.io
+                  {process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}
                 </span>{" "}
                 on your mobile device
               </div>

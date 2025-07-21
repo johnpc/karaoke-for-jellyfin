@@ -341,7 +341,7 @@ export default function TVDisplay() {
       <div className="absolute top-16 right-4 z-40">
         <div className="text-center">
           <QRCode
-            url="https://karaoke.jpc.io"
+            url={process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}
             size={80}
             className="opacity-60 hover:opacity-100 transition-opacity duration-300"
           />
