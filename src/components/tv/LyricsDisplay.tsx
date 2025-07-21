@@ -82,7 +82,7 @@ export function LyricsDisplay({
       : 0;
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center p-8 relative">
+    <div className="min-h-screen flex flex-col p-8 relative">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-blue-600"></div>
@@ -95,64 +95,68 @@ export function LyricsDisplay({
         ></div>
       </div>
 
-      {/* Song Info Header */}
-      <div className="text-center mb-12 z-10">
-        <div className="flex items-center justify-center mb-4">
-          <MusicalNoteIcon className="w-8 h-8 text-purple-400 mr-3" />
-          <span className="text-2xl text-purple-400 font-medium">
+      {/* Song Info Header - De-emphasized */}
+      <div className="text-center mb-4 z-10 flex-shrink-0">
+        <div className="flex items-center justify-center mb-3">
+          <MusicalNoteIcon className="w-5 h-5 text-purple-400 mr-2 opacity-70" />
+          <span className="text-lg text-purple-400 font-medium opacity-70">
             Now Playing
           </span>
         </div>
 
-        <h1 className="text-6xl font-bold mb-4 text-white leading-tight">
+        <h1 className="text-3xl font-semibold mb-2 text-white leading-tight">
           {song.mediaItem.title}
         </h1>
 
-        <p className="text-3xl text-gray-300 mb-2">{song.mediaItem.artist}</p>
+        <p className="text-xl text-gray-400 mb-1">{song.mediaItem.artist}</p>
 
         {song.mediaItem.album && (
-          <p className="text-xl text-gray-400">{song.mediaItem.album}</p>
+          <p className="text-sm text-gray-500 opacity-60">
+            {song.mediaItem.album}
+          </p>
         )}
 
-        <div className="flex items-center justify-center mt-4 text-lg text-gray-400">
-          <UserIcon className="w-5 h-5 mr-2" />
-          Added by {song.addedBy}
+        <div className="flex items-center justify-center mt-2 text-sm text-gray-500">
+          <UserIcon className="w-4 h-4 mr-1 opacity-60" />
+          <span className="opacity-60">Added by {song.addedBy}</span>
         </div>
       </div>
 
-      {/* Lyrics Display */}
-      <div className="text-center mb-12 z-10 max-w-4xl">
+      {/* Lyrics Display - Enhanced prominence */}
+      <div className="text-center z-10 max-w-5xl mx-auto flex-1 flex flex-col justify-center">
         <div className="mb-8">
-          <div className="text-5xl font-bold text-white leading-relaxed mb-4 min-h-[120px] flex items-center justify-center">
+          <div className="text-6xl font-bold text-white leading-relaxed mb-6 min-h-[160px] flex items-center justify-center px-4">
             {currentLine}
           </div>
 
           {nextLine && (
-            <div className="text-2xl text-gray-500 opacity-60">{nextLine}</div>
+            <div className="text-3xl text-gray-400 opacity-70 leading-relaxed">
+              {nextLine}
+            </div>
           )}
         </div>
 
         {/* Error or loading states */}
         {lyricsError && (
-          <div className="text-xl text-red-400 italic">{lyricsError}</div>
+          <div className="text-2xl text-red-400 italic">{lyricsError}</div>
         )}
 
         {!song.mediaItem.lyricsPath && !lyricsError && (
-          <div className="text-xl text-gray-500 italic">
+          <div className="text-3xl text-gray-500 italic">
             No lyrics available - Enjoy the music!
           </div>
         )}
 
         {/* Lyrics loading indicator */}
         {song.mediaItem.lyricsPath && lyricsLoading && !lyricsError && (
-          <div className="text-xl text-gray-400 italic animate-pulse">
+          <div className="text-2xl text-gray-400 italic animate-pulse">
             Loading lyrics...
           </div>
         )}
 
         {/* Lyrics metadata display */}
         {lyricsFile?.metadata && (
-          <div className="text-sm text-gray-500 mt-4">
+          <div className="text-xs text-gray-600 mt-6 opacity-50">
             {lyricsFile.metadata.creator && (
               <p>Lyrics by: {lyricsFile.metadata.creator}</p>
             )}
@@ -163,69 +167,63 @@ export function LyricsDisplay({
         )}
       </div>
 
-      {/* Progress Bar */}
-      <div className="w-full max-w-4xl mb-8 z-10">
-        <div className="flex items-center justify-between text-lg text-gray-400 mb-2">
-          <span>{formatTime(currentTime)}</span>
-          <span>{formatDuration(song.mediaItem.duration)}</span>
-        </div>
-
-        <div className="w-full bg-gray-800 rounded-full h-3">
-          <div
-            className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full transition-all duration-1000 ease-linear"
-            style={{ width: `${Math.min(progress, 100)}%` }}
-          ></div>
-        </div>
-      </div>
-
-      {/* Playback Status */}
-      <div className="flex items-center justify-center space-x-6 text-lg z-10">
-        <div
-          className={`flex items-center px-4 py-2 rounded-full ${
-            isPlaying
-              ? "bg-green-900 text-green-300"
-              : "bg-yellow-900 text-yellow-300"
-          }`}
-        >
-          <div
-            className={`w-3 h-3 rounded-full mr-2 ${
-              isPlaying ? "bg-green-400" : "bg-yellow-400"
-            }`}
-          />
-          {isPlaying ? "Playing" : "Paused"}
-        </div>
-
-        {playbackState && (
-          <div className="flex items-center text-gray-400">
-            <span>Volume: {playbackState.volume}%</span>
-            {playbackState.isMuted && (
-              <span className="ml-2 text-red-400">(Muted)</span>
-            )}
+      {/* Bottom section with progress and status */}
+      <div className="flex-shrink-0 z-10">
+        {/* Progress Bar - Moved to bottom and simplified */}
+        <div className="w-full max-w-4xl mx-auto mb-4">
+          <div className="w-full bg-gray-800 rounded-full h-2">
+            <div
+              className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-1000 ease-linear"
+              style={{ width: `${Math.min(progress, 100)}%` }}
+            ></div>
           </div>
-        )}
 
-        <div
-          className={`flex items-center px-3 py-1 rounded-full text-sm ${
-            isConnected
-              ? "bg-blue-900 text-blue-300"
-              : "bg-red-900 text-red-300"
-          }`}
-        >
-          {isConnected ? "Live" : "Offline"}
+          <div className="flex items-center justify-between text-sm text-gray-500 mt-2">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatDuration(song.mediaItem.duration)}</span>
+          </div>
         </div>
 
-        {/* Lyrics sync status */}
-        {lyricsFile && (
+        {/* Playback Status - Simplified and moved to bottom */}
+        <div className="flex items-center justify-center space-x-4 text-sm">
           <div
-            className={`flex items-center px-3 py-1 rounded-full text-sm ${
-              syncState?.isActive
-                ? "bg-purple-900 text-purple-300"
-                : "bg-gray-900 text-gray-400"
+            className={`flex items-center px-3 py-1 rounded-full ${
+              isPlaying
+                ? "bg-green-900 text-green-300"
+                : "bg-yellow-900 text-yellow-300"
             }`}
           >
-            {syncState?.isActive ? "Lyrics Synced" : "Lyrics Ready"}
+            <div
+              className={`w-2 h-2 rounded-full mr-2 ${
+                isPlaying ? "bg-green-400" : "bg-yellow-400"
+              }`}
+            />
+            {isPlaying ? "Playing" : "Paused"}
           </div>
-        )}
+
+          <div
+            className={`flex items-center px-3 py-1 rounded-full text-xs ${
+              isConnected
+                ? "bg-blue-900 text-blue-300"
+                : "bg-red-900 text-red-300"
+            }`}
+          >
+            {isConnected ? "Live" : "Offline"}
+          </div>
+
+          {/* Lyrics sync status */}
+          {lyricsFile && (
+            <div
+              className={`flex items-center px-3 py-1 rounded-full text-xs ${
+                syncState?.isActive
+                  ? "bg-purple-900 text-purple-300"
+                  : "bg-gray-900 text-gray-400"
+              }`}
+            >
+              {syncState?.isActive ? "Synced" : "Ready"}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Animated Background Elements */}

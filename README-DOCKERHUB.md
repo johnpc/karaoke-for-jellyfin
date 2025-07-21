@@ -9,7 +9,7 @@ A web-based karaoke system that integrates with Jellyfin media server to provide
 1. **Create a docker-compose.yml file:**
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   karaoke-app:
@@ -21,11 +21,11 @@ services:
       - JELLYFIN_SERVER_URL=http://your-jellyfin-server:8096
       - JELLYFIN_API_KEY=your_jellyfin_api_key_here
       - JELLYFIN_USERNAME=your_jellyfin_username_here
-      
+
       # Application Configuration
       - NEXT_PUBLIC_APP_URL=http://localhost:3000
       - SESSION_SECRET=your_secure_session_secret_here
-      
+
       # Optional: Lyrics Configuration
       - LYRICS_PATH=/app/lyrics
       - JELLYFIN_MEDIA_PATH=/app/media
@@ -41,6 +41,7 @@ services:
 ```
 
 2. **Start the application:**
+
    ```bash
    docker-compose up -d
    ```
@@ -74,15 +75,15 @@ docker run -d \
 
 ## Environment Variables
 
-| Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| `JELLYFIN_SERVER_URL` | URL to your Jellyfin server | Yes | - |
-| `JELLYFIN_API_KEY` | Jellyfin API key | Yes | - |
-| `JELLYFIN_USERNAME` | Jellyfin username | Yes | - |
-| `NEXT_PUBLIC_APP_URL` | Public URL of the app | No | `http://localhost:3000` |
-| `SESSION_SECRET` | Secret for session management | Yes | - |
-| `LYRICS_PATH` | Path to lyrics folder | No | `/app/lyrics` |
-| `JELLYFIN_MEDIA_PATH` | Path to Jellyfin media | No | `/app/media` |
+| Variable              | Description                   | Required | Default                 |
+| --------------------- | ----------------------------- | -------- | ----------------------- |
+| `JELLYFIN_SERVER_URL` | URL to your Jellyfin server   | Yes      | -                       |
+| `JELLYFIN_API_KEY`    | Jellyfin API key              | Yes      | -                       |
+| `JELLYFIN_USERNAME`   | Jellyfin username             | Yes      | -                       |
+| `NEXT_PUBLIC_APP_URL` | Public URL of the app         | No       | `http://localhost:3000` |
+| `SESSION_SECRET`      | Secret for session management | Yes      | -                       |
+| `LYRICS_PATH`         | Path to lyrics folder         | No       | `/app/lyrics`           |
+| `JELLYFIN_MEDIA_PATH` | Path to Jellyfin media        | No       | `/app/media`            |
 
 ## Getting Your Jellyfin API Key
 
@@ -142,6 +143,7 @@ The application exposes a health endpoint at `/api/health` for monitoring.
 ### Logs
 
 View application logs:
+
 ```bash
 docker logs karaoke-app
 ```

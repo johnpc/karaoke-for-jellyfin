@@ -24,3 +24,27 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Enhanced input styling for better text contrast */
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="password"] {
+  color: #111827 !important; /* Dark gray text */
+}
+
+input[type="text"]::placeholder,
+input[type="search"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder {
+  color: #6b7280 !important; /* Medium gray placeholder */
+  opacity: 1;
+}
+
+/* Ensure focus states maintain good contrast */
+input[type="text"]:focus,
+input[type="search"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+  color: #111827 !important;
+}

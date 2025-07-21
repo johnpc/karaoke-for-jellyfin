@@ -2,6 +2,7 @@
 
 import { QueueItem } from "@/types";
 import { XMarkIcon, UserIcon, PlayIcon } from "@heroicons/react/24/outline";
+import { LyricsIndicator } from "@/components/LyricsIndicator";
 
 interface QueuePreviewProps {
   queue: QueueItem[];
@@ -55,9 +56,12 @@ export function QueuePreview({
               <span className="text-purple-400 font-medium">Now Playing</span>
             </div>
             <div className="ml-7">
-              <h3 className="text-xl font-semibold text-white">
-                {currentSong.mediaItem.title}
-              </h3>
+              <div className="flex items-center gap-3 mb-1">
+                <h3 className="text-xl font-semibold text-white">
+                  {currentSong.mediaItem.title}
+                </h3>
+                <LyricsIndicator song={currentSong.mediaItem} size="md" variant="badge" />
+              </div>
               <p className="text-gray-300">{currentSong.mediaItem.artist}</p>
               <div className="flex items-center mt-1 text-sm text-gray-400">
                 <UserIcon className="w-3 h-3 mr-1" />
@@ -91,9 +95,12 @@ export function QueuePreview({
 
                   {/* Song Info */}
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-lg font-medium text-white truncate">
-                      {song.mediaItem.title}
-                    </h4>
+                    <div className="flex items-center gap-3 mb-1">
+                      <h4 className="text-lg font-medium text-white truncate">
+                        {song.mediaItem.title}
+                      </h4>
+                      <LyricsIndicator song={song.mediaItem} size="sm" variant="badge" />
+                    </div>
                     <p className="text-gray-300 truncate">
                       {song.mediaItem.artist}
                       {song.mediaItem.album && ` • ${song.mediaItem.album}`}

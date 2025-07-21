@@ -7,11 +7,13 @@ This document provides instructions for building and running the Karaoke For Jel
 ### Using Docker Compose (Recommended)
 
 1. **Copy the environment file:**
+
    ```bash
    cp .env.local.example .env.local
    ```
 
 2. **Edit `.env.local` with your configuration:**
+
    ```bash
    # Jellyfin Configuration
    JELLYFIN_SERVER_URL=http://host.docker.internal:8096
@@ -28,6 +30,7 @@ This document provides instructions for building and running the Karaoke For Jel
    ```
 
 3. **Start the application:**
+
    ```bash
    docker-compose up -d
    ```
@@ -39,6 +42,7 @@ This document provides instructions for building and running the Karaoke For Jel
 ### Using Docker directly
 
 1. **Build the image:**
+
    ```bash
    docker build -t karaoke-for-jellyfin .
    ```
@@ -63,15 +67,15 @@ This document provides instructions for building and running the Karaoke For Jel
 
 ### Environment Variables
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `JELLYFIN_SERVER_URL` | URL to your Jellyfin server | `http://localhost:8096` | Yes |
-| `JELLYFIN_API_KEY` | Jellyfin API key | - | Yes |
-| `JELLYFIN_USERNAME` | Jellyfin username | - | Yes |
-| `LYRICS_PATH` | Path to lyrics folder | `/app/lyrics` | No |
-| `JELLYFIN_MEDIA_PATH` | Path to Jellyfin media | `/app/media` | No |
-| `NEXT_PUBLIC_APP_URL` | Public URL of the app | `http://localhost:3000` | No |
-| `SESSION_SECRET` | Secret for session management | - | Yes |
+| Variable              | Description                   | Default                 | Required |
+| --------------------- | ----------------------------- | ----------------------- | -------- |
+| `JELLYFIN_SERVER_URL` | URL to your Jellyfin server   | `http://localhost:8096` | Yes      |
+| `JELLYFIN_API_KEY`    | Jellyfin API key              | -                       | Yes      |
+| `JELLYFIN_USERNAME`   | Jellyfin username             | -                       | Yes      |
+| `LYRICS_PATH`         | Path to lyrics folder         | `/app/lyrics`           | No       |
+| `JELLYFIN_MEDIA_PATH` | Path to Jellyfin media        | `/app/media`            | No       |
+| `NEXT_PUBLIC_APP_URL` | Public URL of the app         | `http://localhost:3000` | No       |
+| `SESSION_SECRET`      | Secret for session management | -                       | Yes      |
 
 ### Volume Mounts
 
@@ -83,18 +87,23 @@ This document provides instructions for building and running the Karaoke For Jel
 The application needs to communicate with your Jellyfin server. There are several ways to configure this:
 
 #### Option 1: Host Gateway (Recommended)
+
 Use `host.docker.internal` in your Jellyfin URL and add the host gateway:
+
 ```bash
 --add-host host.docker.internal:host-gateway
 ```
 
 #### Option 2: Host Network
+
 Use host networking to access services on localhost:
+
 ```yaml
 network_mode: host
 ```
 
 #### Option 3: External Network
+
 If Jellyfin is running in another container, use a shared network.
 
 ## Development
@@ -147,6 +156,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -t karaoke-for-jellyfin .
 ### Logs
 
 View application logs:
+
 ```bash
 # Docker Compose
 docker-compose logs -f karaoke-app
@@ -158,6 +168,7 @@ docker logs -f karaoke-app
 ### Health Check
 
 Check if the application is running:
+
 ```bash
 curl http://localhost:3000/api/health
 ```
@@ -180,14 +191,14 @@ curl http://localhost:3000/api/health
 ### Example Production docker-compose.yml
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   karaoke-app:
     build: .
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3000:3000"  # Only bind to localhost
+      - "127.0.0.1:3000:3000" # Only bind to localhost
     environment:
       - NODE_ENV=production
       - JELLYFIN_SERVER_URL=https://your-jellyfin-server.com
@@ -203,7 +214,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: '0.5'
+          cpus: "0.5"
 
 volumes:
   lyrics_data:
@@ -221,6 +232,7 @@ secrets:
 ## Support
 
 If you encounter issues with the Docker setup, please check:
+
 1. Docker and Docker Compose versions
 2. System requirements and available resources
 3. Network connectivity to Jellyfin server

@@ -13,7 +13,27 @@ export interface MediaItem {
   jellyfinId: string;
   streamUrl: string;
   lyricsPath?: string;
+  hasLyrics?: boolean; // From Jellyfin's HasLyrics field
   metadata?: MediaMetadata;
+}
+
+export interface Artist {
+  id: string;
+  name: string;
+  jellyfinId: string;
+  imageUrl?: string;
+  songCount?: number;
+}
+
+export interface Playlist {
+  id: string;
+  name: string;
+  jellyfinId: string;
+  imageUrl?: string;
+  trackCount?: number;
+  description?: string;
+  createdBy?: string;
+  createdAt?: Date;
 }
 
 export interface MediaMetadata {
@@ -179,6 +199,31 @@ export type PlaybackEventType =
   | "seek-performed";
 
 // ============================================================================
+// TV DISPLAY TYPES
+// ============================================================================
+
+export type TVDisplayState = 
+  | "waiting"      // No songs in queue
+  | "playing"      // Song is currently playing
+  | "applause"     // Showing applause and rating after song
+  | "next-up"      // Showing next song splash screen
+  | "transitioning"; // Brief transition state
+
+export interface SongRating {
+  grade: string; // A+, A, A-, B+, B, B-, C+, C, C-, D+, D, F
+  score: number; // 0-100
+  message: string; // "Fantastic!", "Great job!", etc.
+}
+
+export interface TransitionState {
+  displayState: TVDisplayState;
+  completedSong?: QueueItem;
+  nextSong?: QueueItem;
+  rating?: SongRating;
+  transitionStartTime?: number;
+}
+
+// ============================================================================
 // WEBSOCKET TYPES
 // ============================================================================
 
@@ -203,7 +248,7 @@ export type WebSocketMessageType =
 export interface WebSocketEvents {
   "queue-updated": (queue: QueueItem[]) => void;
   "song-started": (song: QueueItem) => void;
-  "song-ended": (song: QueueItem) => void;
+  "song-ended": (data: QueueItem | { song: QueueItem; rating: SongRating; nextSong?: QueueItem }) => void;
   "lyrics-sync": (syncState: LyricsSyncState) => void;
   "playback-control": (command: PlaybackCommand) => void;
   "user-joined": (user: ConnectedUser) => void;

@@ -2,6 +2,7 @@
 
 import { TrashIcon, PlayIcon, UserIcon } from "@heroicons/react/24/outline";
 import { QueueItem, KaraokeSession } from "@/types";
+import { LyricsIndicator } from "@/components/LyricsIndicator";
 
 interface QueueViewProps {
   queue: QueueItem[];
@@ -136,9 +137,12 @@ export function QueueView({
 
                         {/* Song Info */}
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-base font-medium text-gray-900 truncate">
-                            {queueItem.mediaItem.title}
-                          </h3>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-base font-medium text-gray-900 truncate">
+                              {queueItem.mediaItem.title}
+                            </h3>
+                            <LyricsIndicator song={queueItem.mediaItem} size="sm" variant="badge" />
+                          </div>
                           <p className="text-sm text-gray-600 truncate">
                             {queueItem.mediaItem.artist}
                             {queueItem.mediaItem.album &&

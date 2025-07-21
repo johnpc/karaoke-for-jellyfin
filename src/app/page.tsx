@@ -6,6 +6,7 @@ import { SearchInterface } from "@/components/mobile/SearchInterface";
 import { QueueView } from "@/components/mobile/QueueView";
 import { UserSetup } from "@/components/mobile/UserSetup";
 import { NavigationTabs } from "@/components/mobile/NavigationTabs";
+import { PWAInstaller } from "@/components/PWAInstaller";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"search" | "queue">("search");
@@ -34,8 +35,12 @@ export default function Home() {
 
   // Auto-join session when connected and user is set up
   useEffect(() => {
-    if (isConnected && isSetup && userName && !session) {
-      joinSession("main-session", userName);
+    if (isConnected && isSetup && userName) {
+      // Always try to join if we don't have a session or if we just reconnected
+      if (!session) {
+        console.log("Auto-joining session:", userName);
+        joinSession("main-session", userName);
+      }
     }
   }, [isConnected, isSetup, userName, session, joinSession]);
 
@@ -61,11 +66,20 @@ export default function Home() {
           <div className="flex items-center mt-1">
             <div
               className={`w-2 h-2 rounded-full mr-2 ${
-                isConnected ? "bg-green-500" : "bg-red-500"
+                isConnected
+                  ? "bg-green-500"
+                  : error?.includes("Reconnecting") ||
+                      error?.includes("attempt")
+                    ? "bg-yellow-500 animate-pulse"
+                    : "bg-red-500"
               }`}
             />
             <span className="text-sm text-gray-600">
-              {isConnected ? `Connected as ${userName}` : "Connecting..."}
+              {isConnected
+                ? `Connected as ${userName}`
+                : error?.includes("Reconnecting") || error?.includes("attempt")
+                  ? "Reconnecting..."
+                  : "Connecting..."}
             </span>
           </div>
         </div>
@@ -86,7 +100,7 @@ export default function Home() {
       <NavigationTabs
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        queueCount={queue.length}
+        queueCount={queue.filter((item) => item.status === "pending").length}
       />
 
       {/* Main Content */}
@@ -103,6 +117,9 @@ export default function Home() {
           />
         )}
       </div>
+
+      {/* PWA Install Prompt */}
+      <PWAInstaller />
     </div>
   );
 }
