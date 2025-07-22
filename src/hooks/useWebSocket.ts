@@ -48,19 +48,45 @@ export function useWebSocket(): WebSocketHookReturn {
     ((data: { song: QueueItem; rating: any }) => void) | null
   >(null);
 
-  // Track reconnection state
-  const [isReconnecting, setIsReconnecting] = useState(false);
-  const [lastUserName, setLastUserName] = useState<string | null>(null);
+  // Persistent reconnection state
+  const userNameRef = useRef<string | null>(null);
+  const sessionIdRef = useRef<string>("main-session");
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    // Initialize socket connection
-    const socket = io({
+  // Auto-rejoin session after reconnection
+  const rejoinSession = useCallback(() => {
+    if (socketRef.current?.connected && userNameRef.current) {
+      console.log("🔄 Auto-rejoining session:", userNameRef.current);
+      socketRef.current.emit("join-session", {
+        sessionId: sessionIdRef.current,
+        userName: userNameRef.current,
+      });
+    }
+  }, []);
+
+  // Setup heartbeat
+  const setupHeartbeat = useCallback(() => {
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+    }
+    
+    heartbeatIntervalRef.current = setInterval(() => {
+      if (socketRef.current?.connected) {
+        socketRef.current.emit("user-heartbeat");
+      }
+    }, 30000);
+  }, []);
+
+  // Create socket factory function
+  const createSocket = useCallback(() => {
+    return io({
       autoConnect: false,
-      reconnectionAttempts: 10, // Increased attempts
+      reconnectionAttempts: 5, // Reduced attempts since we'll create fresh connections
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 20000,
+      forceNew: true, // Always create a fresh connection
       query: {
         client:
           typeof window !== "undefined" && window.location.pathname === "/tv"
@@ -68,243 +94,332 @@ export function useWebSocket(): WebSocketHookReturn {
             : "mobile",
       },
     });
+  }, []);
 
+  useEffect(() => {
+    const socket = createSocket();
     socketRef.current = socket;
 
-    // Connection event handlers
-    socket.on("connect", () => {
-      console.log("Connected to WebSocket server");
-      setIsConnected(true);
-      setError(null);
+    const setupSocketListeners = (socketInstance: Socket) => {
+      // Connection event handlers
+      socketInstance.on("connect", () => {
+        console.log("✅ Connected to WebSocket server with fresh socket");
+        setIsConnected(true);
+        setError(null);
+        setupHeartbeat();
 
-      // Auto-rejoin session after reconnection
-      if (isReconnecting && lastUserName) {
-        console.log("Auto-rejoining session after reconnection:", lastUserName);
-        socket.emit("join-session", {
-          sessionId: "main-session",
-          userName: lastUserName,
-        });
-        setIsReconnecting(false);
-      }
-    });
-
-    socket.on("disconnect", (reason) => {
-      console.log("Disconnected from WebSocket server:", reason);
-      setIsConnected(false);
-
-      // Mark as reconnecting if it wasn't a manual disconnect
-      if (reason !== "io client disconnect") {
-        setIsReconnecting(true);
-        console.log("Will attempt to rejoin session on reconnection");
-      }
-    });
-
-    socket.on("connect_error", (err) => {
-      console.error("WebSocket connection error:", err);
-      setError(
-        "Failed to connect to server: " + (err.message || "Unknown error"),
-      );
-      setIsConnected(false);
-    });
-
-    socket.on("reconnect", (attemptNumber) => {
-      console.log(`WebSocket reconnected after ${attemptNumber} attempts`);
-      setError(null);
-    });
-
-    socket.on("reconnect_attempt", (attemptNumber) => {
-      console.log(`WebSocket reconnection attempt ${attemptNumber}`);
-      setError(`Reconnecting... (attempt ${attemptNumber})`);
-    });
-
-    socket.on("reconnect_failed", () => {
-      console.error("WebSocket reconnection failed");
-      setError("Failed to reconnect to server after multiple attempts");
-      setIsReconnecting(false);
-    });
-
-    // Session event handlers
-    socket.on("session-updated", (data) => {
-      console.log("Session updated:", data);
-      if (data.session) setSession(data.session);
-      if (data.queue) setQueue(data.queue);
-      if (data.currentSong) setCurrentSong(data.currentSong);
-      if (data.playbackState) setPlaybackState(data.playbackState);
-    });
-
-    socket.on("session-joined", (data) => {
-      console.log("Session joined:", data);
-      if (data.session) setSession(data.session);
-      if (data.queue) setQueue(data.queue || data.session?.queue || []);
-      if (data.currentSong) setCurrentSong(data.currentSong);
-    });
-
-    socket.on("queue-updated", (newQueue) => {
-      console.log("Queue updated:", newQueue);
-      setQueue(newQueue);
-    });
-
-    socket.on("song-started", (song) => {
-      console.log("Song started:", song);
-      setCurrentSong(song);
-    });
-
-    socket.on("song-ended", (data) => {
-      console.log("Song ended:", data);
-
-      if (data && typeof data === "object" && data.rating) {
-        // This is a completion with rating data - trigger transitions
-        console.log("Song ended with rating data:", data);
-        if (songCompletedHandlerRef.current) {
-          songCompletedHandlerRef.current(data);
+        // Auto-rejoin session after reconnection with fresh socket
+        if (userNameRef.current) {
+          console.log("🔄 Auto-rejoining session with fresh connection");
+          // Clear local session state to force a clean rejoin
+          setSession(null);
+          setQueue([]);
+          setCurrentSong(null);
+          setPlaybackState(null);
+          
+          // Rejoin after a small delay to ensure server is ready
+          setTimeout(() => {
+            rejoinSession();
+          }, 500);
         }
-      } else {
-        // This is a simple song end (skip, etc.) - just clear current song
-        console.log("Song ended without rating (skip/manual)");
-        setCurrentSong(null);
-      }
-    });
-
-    socket.on("user-joined", (user) => {
-      console.log("User joined:", user);
-      // Update session users if we have the session
-      setSession((prevSession) => {
-        if (prevSession) {
-          return {
-            ...prevSession,
-            connectedUsers: [...prevSession.connectedUsers, user],
-          };
-        }
-        return prevSession;
       });
-    });
 
-    socket.on("user-left", ({ userId }) => {
-      console.log("User left:", userId);
-      // Update session users if we have the session
-      setSession((prevSession) => {
-        if (prevSession) {
-          return {
-            ...prevSession,
-            connectedUsers: prevSession.connectedUsers.filter(
-              (u) => u.id !== userId,
-            ),
-          };
+      socketInstance.on("disconnect", (reason) => {
+        console.log("❌ Disconnected from WebSocket server:", reason);
+        setIsConnected(false);
+        
+        // Clear heartbeat
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current);
+          heartbeatIntervalRef.current = null;
         }
-        return prevSession;
+
+        // Set appropriate error message
+        if (reason === "io server disconnect") {
+          setError("Server disconnected the connection");
+        } else if (reason === "transport close" || reason === "transport error") {
+          setError("Connection lost - creating fresh connection...");
+          
+          // Create a fresh socket connection after a delay
+          setTimeout(() => {
+            if (userNameRef.current) {
+              console.log("🔄 Creating fresh socket connection...");
+              
+              // Disconnect old socket completely
+              socketInstance.removeAllListeners();
+              socketInstance.disconnect();
+              
+              // Create fresh socket
+              const newSocket = createSocket();
+              socketRef.current = newSocket;
+              setupSocketListeners(newSocket);
+              newSocket.connect();
+            }
+          }, 2000);
+        } else {
+          setError("Disconnected - attempting to reconnect...");
+        }
       });
-    });
 
-    socket.on("playback-state-changed", (state) => {
-      console.log("Playback state changed:", state);
-      setPlaybackState(state);
-    });
+      socketInstance.on("connect_error", (err) => {
+        console.error("❌ WebSocket connection error:", err);
+        setError("Connection failed: " + (err.message || "Unknown error"));
+        setIsConnected(false);
+      });
 
-    socket.on("lyrics-sync", (data) => {
-      console.log("Lyrics sync:", data);
-      // Handle lyrics synchronization
-    });
+      socketInstance.on("reconnect", (attemptNumber) => {
+        console.log(`✅ WebSocket reconnected after ${attemptNumber} attempts`);
+        setError(null);
+      });
 
-    socket.on("error", (errorData) => {
-      console.error("WebSocket error:", errorData);
+      socketInstance.on("reconnect_attempt", (attemptNumber) => {
+        console.log(`🔄 WebSocket reconnection attempt ${attemptNumber}`);
+        setError(`Reconnecting... (attempt ${attemptNumber})`);
+      });
 
-      // Handle "not in session" errors with auto-retry
-      if (errorData.code === "NOT_IN_SESSION" && lastUserName) {
-        console.log("Session lost, attempting to rejoin...");
-        setError("Reconnecting to session...");
-
-        // Clear any existing timeout
-        if (reconnectTimeoutRef.current) {
-          clearTimeout(reconnectTimeoutRef.current);
+      socketInstance.on("reconnect_failed", () => {
+        console.error("❌ WebSocket reconnection failed, creating fresh connection...");
+        
+        // Create a completely fresh connection
+        if (userNameRef.current) {
+          setTimeout(() => {
+            console.log("🔄 Creating fresh socket after reconnect failure...");
+            
+            // Disconnect old socket completely
+            socketInstance.removeAllListeners();
+            socketInstance.disconnect();
+            
+            // Create fresh socket
+            const newSocket = createSocket();
+            socketRef.current = newSocket;
+            setupSocketListeners(newSocket);
+            newSocket.connect();
+          }, 3000);
+        } else {
+          setError("Failed to reconnect. Please refresh the page.");
         }
+      });
 
-        // Retry joining session after a short delay
-        reconnectTimeoutRef.current = setTimeout(() => {
-          if (socketRef.current?.connected) {
-            console.log("Retrying session join for:", lastUserName);
-            socketRef.current.emit("join-session", {
-              sessionId: "main-session",
-              userName: lastUserName,
-            });
+      // Session event handlers
+      socketInstance.on("session-updated", (data) => {
+        console.log("📡 Session updated:", data);
+        if (data.session) setSession(data.session);
+        if (data.queue) setQueue(data.queue);
+        if (data.currentSong) setCurrentSong(data.currentSong);
+        if (data.playbackState) setPlaybackState(data.playbackState);
+      });
+
+      socketInstance.on("session-joined", (data) => {
+        console.log("🎉 Session joined successfully:", data);
+        if (data.session) setSession(data.session);
+        if (data.queue) setQueue(data.queue || data.session?.queue || []);
+        if (data.currentSong) setCurrentSong(data.currentSong);
+        
+        // Clear any error messages on successful join
+        setError(null);
+      });
+
+      socketInstance.on("queue-updated", (newQueue) => {
+        console.log("📝 Queue updated:", newQueue);
+        setQueue(newQueue);
+      });
+
+      socketInstance.on("song-started", (song) => {
+        console.log("🎵 Song started:", song);
+        setCurrentSong(song);
+      });
+
+      socketInstance.on("song-ended", (data) => {
+        console.log("🎵 Song ended:", data);
+
+        if (data && typeof data === "object" && data.rating) {
+          // This is a completion with rating data - trigger transitions
+          console.log("Song ended with rating data:", data);
+          if (songCompletedHandlerRef.current) {
+            songCompletedHandlerRef.current(data);
           }
-        }, 1000);
-      } else {
-        setError(errorData.message);
-      }
-    });
+        } else {
+          // This is a simple song end (skip, etc.) - just clear current song
+          console.log("Song ended without rating (skip/manual)");
+          setCurrentSong(null);
+        }
+      });
 
-    // Connect to server
-    socket.connect();
+      socketInstance.on("user-joined", (user) => {
+        console.log("👤 User joined:", user);
+        // Update session users if we have the session
+        setSession((prevSession) => {
+          if (prevSession) {
+            return {
+              ...prevSession,
+              connectedUsers: [...prevSession.connectedUsers, user],
+            };
+          }
+          return prevSession;
+        });
+      });
+
+      socketInstance.on("user-left", ({ userId }) => {
+        console.log("👋 User left:", userId);
+        // Update session users if we have the session
+        setSession((prevSession) => {
+          if (prevSession) {
+            return {
+              ...prevSession,
+              connectedUsers: prevSession.connectedUsers.filter(
+                (u) => u.id !== userId,
+              ),
+            };
+          }
+          return prevSession;
+        });
+      });
+
+      socketInstance.on("playback-state-changed", (state) => {
+        console.log("⏯️ Playback state changed:", state);
+        setPlaybackState(state);
+      });
+
+      socketInstance.on("lyrics-sync", (data) => {
+        console.log("🎤 Lyrics sync:", data);
+        // Handle lyrics synchronization
+      });
+
+      socketInstance.on("error", (errorData) => {
+        console.error("❌ WebSocket error:", errorData);
+
+        // Handle "not in session" errors by creating fresh connection
+        if (errorData.code === "NOT_IN_SESSION" && userNameRef.current) {
+          console.log("🔄 Session lost, creating fresh connection...");
+          setError("Session lost - reconnecting with fresh connection...");
+
+          // Clear any existing timeout
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+          }
+
+          // Create fresh connection after a delay
+          reconnectTimeoutRef.current = setTimeout(() => {
+            console.log("🔄 Creating fresh socket due to session loss...");
+            
+            // Disconnect old socket completely
+            socketInstance.removeAllListeners();
+            socketInstance.disconnect();
+            
+            // Create fresh socket
+            const newSocket = createSocket();
+            socketRef.current = newSocket;
+            setupSocketListeners(newSocket);
+            newSocket.connect();
+          }, 2000);
+        } else {
+          setError(errorData.message || "An error occurred");
+        }
+      });
+    };
+
+    // Setup listeners for initial socket
+    setupSocketListeners(socket);
 
     // Handle page visibility changes (mobile browser backgrounding)
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible" && lastUserName) {
-        console.log("Page became visible, checking connection...");
+      if (document.visibilityState === "visible") {
+        console.log("📱 Page became visible, checking connection...");
 
         // Small delay to allow socket to reconnect if needed
         setTimeout(() => {
-          if (socket.connected && lastUserName) {
-            // Test connection by sending a heartbeat
-            socket.emit("user-heartbeat");
-
-            // If we don't have a session, rejoin
-            if (!session) {
-              console.log(
-                "No session found after becoming visible, rejoining...",
-              );
-              socket.emit("join-session", {
-                sessionId: "main-session",
-                userName: lastUserName,
-              });
+          const currentSocket = socketRef.current;
+          if (!currentSocket?.connected && userNameRef.current) {
+            console.log("🔄 Socket not connected, creating fresh connection...");
+            
+            // Create completely fresh connection
+            if (currentSocket) {
+              currentSocket.removeAllListeners();
+              currentSocket.disconnect();
             }
-          } else if (!socket.connected) {
-            console.log(
-              "Socket not connected after becoming visible, reconnecting...",
-            );
-            socket.connect();
+            
+            const newSocket = createSocket();
+            socketRef.current = newSocket;
+            setupSocketListeners(newSocket);
+            newSocket.connect();
+          } else if (currentSocket?.connected && userNameRef.current && !session) {
+            console.log("🔄 Connected but no session, rejoining...");
+            rejoinSession();
           }
-        }, 500);
+        }, 1000);
       }
     };
 
-    // Add visibility change listener for mobile browser handling
+    // Handle online/offline events
+    const handleOnline = () => {
+      console.log("🌐 Network back online, creating fresh connection...");
+      const currentSocket = socketRef.current;
+      
+      if (userNameRef.current) {
+        // Always create fresh connection when coming back online
+        if (currentSocket) {
+          currentSocket.removeAllListeners();
+          currentSocket.disconnect();
+        }
+        
+        const newSocket = createSocket();
+        socketRef.current = newSocket;
+        setupSocketListeners(newSocket);
+        newSocket.connect();
+      }
+    };
+
+    const handleOffline = () => {
+      console.log("📵 Network went offline");
+      setError("Network connection lost");
+    };
+
+    // Add event listeners
     if (typeof document !== "undefined") {
       document.addEventListener("visibilitychange", handleVisibilityChange);
     }
+    if (typeof window !== "undefined") {
+      window.addEventListener("online", handleOnline);
+      window.addEventListener("offline", handleOffline);
+    }
+
+    // Connect initial socket to server
+    socket.connect();
 
     // Cleanup on unmount
     return () => {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
-
-      if (typeof document !== "undefined") {
-        document.removeEventListener(
-          "visibilitychange",
-          handleVisibilityChange,
-        );
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
       }
 
-      socket.disconnect();
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      }
+      if (typeof window !== "undefined") {
+        window.removeEventListener("online", handleOnline);
+        window.removeEventListener("offline", handleOffline);
+      }
+
+      // Clean up current socket
+      const currentSocket = socketRef.current;
+      if (currentSocket) {
+        currentSocket.removeAllListeners();
+        currentSocket.disconnect();
+      }
     };
-  }, []); // Remove session dependency to prevent infinite reconnection
+  }, [rejoinSession, setupHeartbeat, createSocket]); // Add dependencies
 
-  // Send heartbeat every 30 seconds
-  useEffect(() => {
-    if (!isConnected || !socketRef.current) return;
-
-    const heartbeatInterval = setInterval(() => {
-      socketRef.current?.emit("user-heartbeat");
-    }, 30000);
-
-    return () => clearInterval(heartbeatInterval);
-  }, [isConnected]);
+  // Send heartbeat every 30 seconds - removed this useEffect since we handle it in setupHeartbeat
 
   // WebSocket action functions (memoized to prevent infinite loops)
   const joinSession = useCallback((sessionId: string, userName: string) => {
     if (socketRef.current) {
-      console.log("Joining session:", sessionId, "as", userName);
-      setLastUserName(userName); // Track username for auto-rejoin
+      console.log("🚀 Joining session:", sessionId, "as", userName);
+      userNameRef.current = userName; // Store username for auto-rejoin
+      sessionIdRef.current = sessionId; // Store session ID
       socketRef.current.emit("join-session", { sessionId, userName });
     }
   }, []);
@@ -337,7 +452,7 @@ export function useWebSocket(): WebSocketHookReturn {
 
           // Emit the add-song event
           socketRef.current.emit("add-song", { mediaItem, position });
-        } else if (lastUserName && socketRef.current) {
+        } else if (userNameRef.current && socketRef.current) {
           // If not connected, show a more helpful error
           setError("Connection lost. Attempting to reconnect...");
 
@@ -347,7 +462,7 @@ export function useWebSocket(): WebSocketHookReturn {
           // Reject with a helpful error message
           reject(
             new Error(
-              "Connection lost. Please refresh the page and try again.",
+              "Connection lost. Please wait for reconnection or refresh the page.",
             ),
           );
         } else {
@@ -357,7 +472,7 @@ export function useWebSocket(): WebSocketHookReturn {
         }
       });
     },
-    [lastUserName],
+    [],
   );
 
   const removeSong = useCallback((queueItemId: string) => {
