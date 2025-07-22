@@ -211,7 +211,7 @@ export class JellyfinSDKService {
 
       const data = await response.json();
       const totalCount = data.TotalRecordCount || 0;
-      
+
       console.log(
         `Jellyfin returned ${data.Items?.length || 0} songs for artist ${artistId}`,
       );
@@ -448,16 +448,18 @@ export class JellyfinSDKService {
     const transformedItems = items
       .map((item) => this.transformMediaItem(item))
       .filter(Boolean) as MediaItem[];
-    
+
     // Filter to only include songs with lyrics for karaoke
     const songsWithLyrics = transformedItems.filter((item) => {
       const hasLyrics = item.hasLyrics === true;
       if (!hasLyrics) {
-        console.log(`Filtering out "${item.title}" by ${item.artist} - no lyrics available`);
+        console.log(
+          `Filtering out "${item.title}" by ${item.artist} - no lyrics available`,
+        );
       }
       return hasLyrics;
     });
-    
+
     return songsWithLyrics;
   }
 

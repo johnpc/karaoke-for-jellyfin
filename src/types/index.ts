@@ -202,11 +202,11 @@ export type PlaybackEventType =
 // TV DISPLAY TYPES
 // ============================================================================
 
-export type TVDisplayState = 
-  | "waiting"      // No songs in queue
-  | "playing"      // Song is currently playing
-  | "applause"     // Showing applause and rating after song
-  | "next-up"      // Showing next song splash screen
+export type TVDisplayState =
+  | "waiting" // No songs in queue
+  | "playing" // Song is currently playing
+  | "applause" // Showing applause and rating after song
+  | "next-up" // Showing next song splash screen
   | "transitioning"; // Brief transition state
 
 export interface SongRating {
@@ -248,7 +248,11 @@ export type WebSocketMessageType =
 export interface WebSocketEvents {
   "queue-updated": (queue: QueueItem[]) => void;
   "song-started": (song: QueueItem) => void;
-  "song-ended": (data: QueueItem | { song: QueueItem; rating: SongRating; nextSong?: QueueItem }) => void;
+  "song-ended": (
+    data:
+      | QueueItem
+      | { song: QueueItem; rating: SongRating; nextSong?: QueueItem },
+  ) => void;
   "lyrics-sync": (syncState: LyricsSyncState) => void;
   "playback-control": (command: PlaybackCommand) => void;
   "user-joined": (user: ConnectedUser) => void;

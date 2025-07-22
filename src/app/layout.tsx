@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ConfigProvider } from "@/contexts/ConfigContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,9 +14,6 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-  ),
   title: "Karaoke For Jellyfin",
   description:
     "A web-based karaoke system that integrates with Jellyfin media server to provide karaoke functionality",
@@ -126,7 +124,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ConfigProvider>{children}</ConfigProvider>
       </body>
     </html>
   );

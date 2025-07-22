@@ -83,7 +83,9 @@ export function WaitingScreen({
               <div className="text-lg text-gray-400 mb-2">
                 Visit{" "}
                 <span className="text-purple-400 font-mono">
-                  {process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}
+                  {typeof window !== "undefined"
+                    ? window.location.origin
+                    : "http://localhost:3000"}
                 </span>{" "}
                 on your mobile device
               </div>

@@ -7,7 +7,7 @@ This directory contains applause sound effects that play between karaoke songs.
 The following files should be added to this directory:
 
 - `applause-1.mp3` - General applause sound
-- `applause-2.mp3` - Enthusiastic applause 
+- `applause-2.mp3` - Enthusiastic applause
 - `applause-3.mp3` - Crowd cheering
 - `applause-crowd.mp3` - Large crowd applause
 
@@ -21,6 +21,7 @@ The following files should be added to this directory:
 ## Sources
 
 You can find royalty-free applause sounds from:
+
 - Freesound.org
 - Zapsplat.com
 - Adobe Stock Audio

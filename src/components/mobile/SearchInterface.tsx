@@ -50,7 +50,9 @@ export function SearchInterface({
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [addedSong, setAddedSong] = useState<MediaItem | null>(null);
-  const [confirmationType, setConfirmationType] = useState<"success" | "error">("success");
+  const [confirmationType, setConfirmationType] = useState<"success" | "error">(
+    "success",
+  );
 
   // Debounced search function for songs
   const performSongSearch = useCallback(
@@ -628,17 +630,18 @@ export function SearchInterface({
       setError(null);
     } catch (err) {
       // Show error confirmation dialog instead of success
-      const errorMessage = err instanceof Error ? err.message : "Failed to add song to queue";
-      
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to add song to queue";
+
       // Check if it's the "join session" error and provide helpful guidance
       if (errorMessage.includes("join a session first")) {
         setConfirmationMessage(
-          "You must join a session first. Please refresh the page and try again."
+          "You must join a session first. Please refresh the page and try again.",
         );
       } else {
         setConfirmationMessage(errorMessage);
       }
-      
+
       setAddedSong(song);
       setConfirmationType("error");
       setShowConfirmation(true);
@@ -976,7 +979,11 @@ export function SearchInterface({
                         <h3 className="text-base font-medium text-gray-900 truncate">
                           {song.title}
                         </h3>
-                        <LyricsIndicator song={song} size="sm" variant="badge" />
+                        <LyricsIndicator
+                          song={song}
+                          size="sm"
+                          variant="badge"
+                        />
                       </div>
                       <p className="text-sm text-gray-600 truncate">
                         {song.artist}
@@ -1048,7 +1055,9 @@ export function SearchInterface({
       {/* Confirmation Dialog */}
       <ConfirmationDialog
         isOpen={showConfirmation}
-        title={confirmationType === "success" ? "Song Added!" : "Error Adding Song"}
+        title={
+          confirmationType === "success" ? "Song Added!" : "Error Adding Song"
+        }
         message={confirmationMessage}
         onClose={() => {
           setShowConfirmation(false);

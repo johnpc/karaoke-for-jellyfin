@@ -24,7 +24,9 @@ interface WebSocketHookReturn {
   songEnded: () => void;
   startNextSong: () => void;
   updateLocalPlaybackState: (updates: Partial<PlaybackState>) => void;
-  setSongCompletedHandler: (handler: (data: { song: QueueItem; rating: any }) => void) => void;
+  setSongCompletedHandler: (
+    handler: (data: { song: QueueItem; rating: any }) => void,
+  ) => void;
   session: KaraokeSession | null;
   queue: QueueItem[];
   currentSong: QueueItem | null;
@@ -42,7 +44,9 @@ export function useWebSocket(): WebSocketHookReturn {
     null,
   );
   const [error, setError] = useState<string | null>(null);
-  const songCompletedHandlerRef = useRef<((data: { song: QueueItem; rating: any }) => void) | null>(null);
+  const songCompletedHandlerRef = useRef<
+    ((data: { song: QueueItem; rating: any }) => void) | null
+  >(null);
 
   // Track reconnection state
   const [isReconnecting, setIsReconnecting] = useState(false);
@@ -147,8 +151,8 @@ export function useWebSocket(): WebSocketHookReturn {
 
     socket.on("song-ended", (data) => {
       console.log("Song ended:", data);
-      
-      if (data && typeof data === 'object' && data.rating) {
+
+      if (data && typeof data === "object" && data.rating) {
         // This is a completion with rating data - trigger transitions
         console.log("Song ended with rating data:", data);
         if (songCompletedHandlerRef.current) {
@@ -311,7 +315,10 @@ export function useWebSocket(): WebSocketHookReturn {
         if (socketRef.current?.connected) {
           // Set up one-time listeners for this specific add-song operation
           const handleError = (error: { code: string; message: string }) => {
-            if (error.code === "NOT_IN_SESSION" || error.code === "ADD_SONG_FAILED") {
+            if (
+              error.code === "NOT_IN_SESSION" ||
+              error.code === "ADD_SONG_FAILED"
+            ) {
               socketRef.current?.off("error", handleError);
               socketRef.current?.off("queue-updated", handleSuccess);
               reject(new Error(error.message));
@@ -338,9 +345,15 @@ export function useWebSocket(): WebSocketHookReturn {
           socketRef.current.connect();
 
           // Reject with a helpful error message
-          reject(new Error("Connection lost. Please refresh the page and try again."));
+          reject(
+            new Error(
+              "Connection lost. Please refresh the page and try again.",
+            ),
+          );
         } else {
-          reject(new Error("Not connected to server. Please refresh the page."));
+          reject(
+            new Error("Not connected to server. Please refresh the page."),
+          );
         }
       });
     },
@@ -384,9 +397,12 @@ export function useWebSocket(): WebSocketHookReturn {
     }
   }, []);
 
-  const setSongCompletedHandler = useCallback((handler: (data: { song: QueueItem; rating: any }) => void) => {
-    songCompletedHandlerRef.current = handler;
-  }, []);
+  const setSongCompletedHandler = useCallback(
+    (handler: (data: { song: QueueItem; rating: any }) => void) => {
+      songCompletedHandlerRef.current = handler;
+    },
+    [],
+  );
 
   const startNextSong = useCallback(() => {
     if (socketRef.current) {

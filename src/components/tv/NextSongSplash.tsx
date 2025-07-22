@@ -10,10 +10,10 @@ interface NextSongSplashProps {
   duration?: number; // Duration in milliseconds
 }
 
-export function NextSongSplash({ 
-  nextSong, 
-  onComplete, 
-  duration = 3000 
+export function NextSongSplash({
+  nextSong,
+  onComplete,
+  duration = 3000,
 }: NextSongSplashProps) {
   const [countdown, setCountdown] = useState(Math.ceil(duration / 1000));
   const [isVisible, setIsVisible] = useState(true);
@@ -21,7 +21,7 @@ export function NextSongSplash({
   useEffect(() => {
     // Countdown timer
     const countdownInterval = setInterval(() => {
-      setCountdown(prev => {
+      setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(countdownInterval);
           return 0;
@@ -45,18 +45,26 @@ export function NextSongSplash({
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   return (
-    <div className={`fixed inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 z-50 flex items-center justify-center transition-opacity duration-300 ${
-      isVisible ? 'opacity-100' : 'opacity-0'
-    }`}>
+    <div
+      className={`fixed inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 z-50 flex items-center justify-center transition-opacity duration-300 ${
+        isVisible ? "opacity-100" : "opacity-0"
+      }`}
+    >
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-purple-500/20 rounded-full animate-pulse" />
-        <div className="absolute top-3/4 right-1/4 w-24 h-24 bg-blue-500/20 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-1/4 left-1/3 w-20 h-20 bg-indigo-500/20 rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
+        <div
+          className="absolute top-3/4 right-1/4 w-24 h-24 bg-blue-500/20 rounded-full animate-pulse"
+          style={{ animationDelay: "1s" }}
+        />
+        <div
+          className="absolute bottom-1/4 left-1/3 w-20 h-20 bg-indigo-500/20 rounded-full animate-pulse"
+          style={{ animationDelay: "2s" }}
+        />
       </div>
 
       <div className="text-center max-w-4xl mx-auto px-8 relative z-10">
@@ -74,7 +82,11 @@ export function NextSongSplash({
             <h2 className="text-4xl font-bold text-white leading-tight">
               {nextSong.mediaItem.title}
             </h2>
-            <LyricsIndicator song={nextSong.mediaItem} size="lg" variant="badge" />
+            <LyricsIndicator
+              song={nextSong.mediaItem}
+              size="lg"
+              variant="badge"
+            />
           </div>
           <p className="text-2xl text-gray-300 mb-4">
             by {nextSong.mediaItem.artist}
@@ -84,17 +96,21 @@ export function NextSongSplash({
               from &ldquo;{nextSong.mediaItem.album}&rdquo;
             </p>
           )}
-          
+
           {/* Singer info */}
           <div className="flex items-center justify-center space-x-4 text-lg">
             <div className="flex items-center space-x-2">
               <span className="text-gray-400">Singer:</span>
-              <span className="text-white font-semibold">{nextSong.addedBy}</span>
+              <span className="text-white font-semibold">
+                {nextSong.addedBy}
+              </span>
             </div>
             <div className="w-1 h-6 bg-gray-600 rounded-full" />
             <div className="flex items-center space-x-2">
               <span className="text-gray-400">Duration:</span>
-              <span className="text-white">{formatDuration(nextSong.mediaItem.duration)}</span>
+              <span className="text-white">
+                {formatDuration(nextSong.mediaItem.duration)}
+              </span>
             </div>
           </div>
         </div>
@@ -123,10 +139,10 @@ export function NextSongSplash({
           {/* Progress bar */}
           <div className="max-w-md mx-auto">
             <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-100"
-                style={{ 
-                  width: `${100 - ((countdown / Math.ceil(duration / 1000)) * 100)}%` 
+                style={{
+                  width: `${100 - (countdown / Math.ceil(duration / 1000)) * 100}%`,
                 }}
               />
             </div>

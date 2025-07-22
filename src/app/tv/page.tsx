@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { useConfig } from "@/contexts/ConfigContext";
 import { LyricsDisplay } from "@/components/tv/LyricsDisplay";
 import { QueuePreview } from "@/components/tv/QueuePreview";
 import { HostControls } from "@/components/tv/HostControls";
@@ -16,11 +17,12 @@ import { TVDisplayState, TransitionState, QueueItem } from "@/types";
 import { generateRatingForSong } from "@/lib/ratingGenerator";
 
 export default function TVDisplay() {
+  const config = useConfig();
   const [showHostControls, setShowHostControls] = useState(false);
   const [showQueuePreview, setShowQueuePreview] = useState(false);
   const [hasTriggeredAutoPlay, setHasTriggeredAutoPlay] = useState(false);
   const [transitionState, setTransitionState] = useState<TransitionState>({
-    displayState: "waiting"
+    displayState: "waiting",
   });
   const lastUpdateRef = useRef<number>(0);
   const lastSongIdRef = useRef<string | null>(null);
@@ -44,24 +46,33 @@ export default function TVDisplay() {
   } = useWebSocket();
 
   // Handle song completion from socket events
-  const handleSongCompleted = useCallback((data: { song: QueueItem; rating: any }) => {
-    console.log("🎵 Song completed via socket, starting transition sequence", data);
-    
-    // Find next song in queue
-    const nextSong = queue.find(song => song.status === "pending");
-    console.log("🎵 Next song found:", nextSong?.mediaItem.title || "None");
-    
-    // Start applause and rating phase
-    setTransitionState({
-      displayState: "applause",
-      completedSong: data.song,
-      nextSong,
-      rating: data.rating,
-      transitionStartTime: Date.now()
-    });
-    
-    console.log("🎵 Transition state set to applause with rating:", data.rating.grade);
-  }, [queue]);
+  const handleSongCompleted = useCallback(
+    (data: { song: QueueItem; rating: any }) => {
+      console.log(
+        "🎵 Song completed via socket, starting transition sequence",
+        data,
+      );
+
+      // Find next song in queue
+      const nextSong = queue.find((song) => song.status === "pending");
+      console.log("🎵 Next song found:", nextSong?.mediaItem.title || "None");
+
+      // Start applause and rating phase
+      setTransitionState({
+        displayState: "applause",
+        completedSong: data.song,
+        nextSong,
+        rating: data.rating,
+        transitionStartTime: Date.now(),
+      });
+
+      console.log(
+        "🎵 Transition state set to applause with rating:",
+        data.rating.grade,
+      );
+    },
+    [queue],
+  );
 
   // Set up song completion handler
   useEffect(() => {
@@ -71,25 +82,25 @@ export default function TVDisplay() {
   // Handle display state transitions based on current song and queue
   useEffect(() => {
     const currentSongId = currentSong?.id || null;
-    
+
     // If we have a current song and it's different from the last one
     if (currentSong && currentSongId !== lastSongIdRef.current) {
       setTransitionState({
-        displayState: "playing"
+        displayState: "playing",
       });
       lastSongIdRef.current = currentSongId;
     }
     // If we don't have a current song but we have songs in queue
     else if (!currentSong && queue.length > 0) {
       setTransitionState({
-        displayState: "waiting"
+        displayState: "waiting",
       });
       lastSongIdRef.current = null;
     }
     // If we have no songs at all
     else if (!currentSong && queue.length === 0) {
       setTransitionState({
-        displayState: "waiting"
+        displayState: "waiting",
       });
       lastSongIdRef.current = null;
     }
@@ -98,37 +109,42 @@ export default function TVDisplay() {
   // Handle song completion and transitions
   const handleRatingComplete = () => {
     console.log("🎵 Rating animation complete");
-    
+
     if (transitionState.nextSong) {
       // Show next song splash
-      console.log("🎵 Showing next song splash for:", transitionState.nextSong.mediaItem.title);
-      setTransitionState(prev => ({
+      console.log(
+        "🎵 Showing next song splash for:",
+        transitionState.nextSong.mediaItem.title,
+      );
+      setTransitionState((prev) => ({
         ...prev,
-        displayState: "next-up"
+        displayState: "next-up",
       }));
     } else {
       // No next song, go to waiting
       console.log("🎵 No next song, returning to waiting state");
       setTransitionState({
-        displayState: "waiting"
+        displayState: "waiting",
       });
     }
   };
 
   // Handle next song splash completion
   const handleNextSongComplete = () => {
-    console.log("🎵 Next song splash complete, requesting next song from server");
-    
+    console.log(
+      "🎵 Next song splash complete, requesting next song from server",
+    );
+
     // Transition to playing the next song
     setTransitionState({
-      displayState: "transitioning"
+      displayState: "transitioning",
     });
-    
+
     // Trigger playback of next song via socket
     setTimeout(() => {
       console.log("🎵 Emitting start-next-song to server");
       startNextSong();
-    }, 500);
+    }, config.autoplayDelay);
   };
 
   useEffect(() => {
@@ -164,7 +180,7 @@ export default function TVDisplay() {
           userId: "tv-display-autoplay",
           timestamp: new Date(),
         });
-      }, 500);
+      }, config.autoplayDelay);
 
       return () => clearTimeout(autoPlayTimer);
     }
@@ -201,7 +217,7 @@ export default function TVDisplay() {
             userId: "tv-display-queue-autoplay",
             timestamp: new Date(),
           });
-        }, 1000);
+        }, config.queueAutoplayDelay);
 
         return () => clearTimeout(queueAutoPlayTimer);
       }
@@ -270,7 +286,7 @@ export default function TVDisplay() {
       const timer = setTimeout(() => {
         setShowHostControls(false);
         setShowQueuePreview(false);
-      }, 10000);
+      }, config.controlsAutoHideDelay);
 
       return () => clearTimeout(timer);
     }
@@ -300,7 +316,11 @@ export default function TVDisplay() {
     // Send periodic time updates to keep server in sync
     // Only send updates every 2 seconds to avoid spam
     const now = Date.now();
-    if (!lastUpdateRef.current || now - lastUpdateRef.current > 2000) {
+    const updateInterval = config.timeUpdateInterval;
+    if (
+      !lastUpdateRef.current ||
+      now - lastUpdateRef.current > updateInterval
+    ) {
       playbackControl({
         action: "time-update",
         value: currentTime,
@@ -329,7 +349,7 @@ export default function TVDisplay() {
           />
           {isConnected ? "Connected" : "Disconnected"}
         </div>
-        
+
         {/* Audio status indicator */}
         <div className="flex items-center px-3 py-1 rounded-full text-xs bg-blue-900 text-blue-300">
           <div className="w-2 h-2 rounded-full mr-2 bg-blue-400" />
@@ -341,7 +361,11 @@ export default function TVDisplay() {
       <div className="absolute top-16 right-4 z-40">
         <div className="text-center">
           <QRCode
-            url={process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}
+            url={
+              typeof window !== "undefined"
+                ? window.location.origin
+                : "http://localhost:3000"
+            }
             size={80}
             className="opacity-60 hover:opacity-100 transition-opacity duration-300"
           />
@@ -367,18 +391,21 @@ export default function TVDisplay() {
           playbackState={playbackState}
           isConnected={isConnected}
         />
-      ) : transitionState.displayState === "applause" && transitionState.completedSong && transitionState.rating ? (
+      ) : transitionState.displayState === "applause" &&
+        transitionState.completedSong &&
+        transitionState.rating ? (
         <RatingAnimation
           song={transitionState.completedSong}
           rating={transitionState.rating}
           onComplete={handleRatingComplete}
-          duration={15000}
+          duration={config.ratingAnimationDuration}
         />
-      ) : transitionState.displayState === "next-up" && transitionState.nextSong ? (
+      ) : transitionState.displayState === "next-up" &&
+        transitionState.nextSong ? (
         <NextSongSplash
           nextSong={transitionState.nextSong}
           onComplete={handleNextSongComplete}
-          duration={15000}
+          duration={config.nextSongDuration}
         />
       ) : (
         <WaitingScreen

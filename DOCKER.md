@@ -23,10 +23,6 @@ This document provides instructions for building and running the Karaoke For Jel
    # Lyrics Configuration (adjust paths as needed)
    LYRICS_PATH=./lyrics
    JELLYFIN_MEDIA_PATH=/path/to/your/jellyfin/media
-
-   # Application Configuration
-   NEXT_PUBLIC_APP_URL=http://localhost:3000
-   SESSION_SECRET=your_secure_session_secret_here
    ```
 
 3. **Start the application:**
@@ -55,8 +51,6 @@ This document provides instructions for building and running the Karaoke For Jel
      -e JELLYFIN_SERVER_URL=http://host.docker.internal:8096 \
      -e JELLYFIN_API_KEY=your_api_key \
      -e JELLYFIN_USERNAME=your_username \
-     -e NEXT_PUBLIC_APP_URL=http://localhost:3000 \
-     -e SESSION_SECRET=your_session_secret \
      -v $(pwd)/lyrics:/app/lyrics:ro \
      -v /path/to/jellyfin/media:/app/media:ro \
      --add-host host.docker.internal:host-gateway \
@@ -67,15 +61,52 @@ This document provides instructions for building and running the Karaoke For Jel
 
 ### Environment Variables
 
-| Variable              | Description                   | Default                 | Required |
-| --------------------- | ----------------------------- | ----------------------- | -------- |
-| `JELLYFIN_SERVER_URL` | URL to your Jellyfin server   | `http://localhost:8096` | Yes      |
-| `JELLYFIN_API_KEY`    | Jellyfin API key              | -                       | Yes      |
-| `JELLYFIN_USERNAME`   | Jellyfin username             | -                       | Yes      |
-| `LYRICS_PATH`         | Path to lyrics folder         | `/app/lyrics`           | No       |
-| `JELLYFIN_MEDIA_PATH` | Path to Jellyfin media        | `/app/media`            | No       |
-| `NEXT_PUBLIC_APP_URL` | Public URL of the app         | `http://localhost:3000` | No       |
-| `SESSION_SECRET`      | Secret for session management | -                       | Yes      |
+#### Core Configuration
+
+| Variable              | Description                 | Default                 | Required |
+| --------------------- | --------------------------- | ----------------------- | -------- |
+| `JELLYFIN_SERVER_URL` | URL to your Jellyfin server | `http://localhost:8096` | Yes      |
+| `JELLYFIN_API_KEY`    | Jellyfin API key            | -                       | Yes      |
+| `JELLYFIN_USERNAME`   | Jellyfin username           | -                       | Yes      |
+| `LYRICS_PATH`         | Path to lyrics folder       | `/app/lyrics`           | No       |
+| `JELLYFIN_MEDIA_PATH` | Path to Jellyfin media      | `/app/media`            | No       |
+
+#### TV Display Timing Configuration (milliseconds)
+
+| Variable                    | Description                            | Default | Required |
+| --------------------------- | -------------------------------------- | ------- | -------- |
+| `RATING_ANIMATION_DURATION` | Rating screen display duration         | `15000` | No       |
+| `NEXT_SONG_DURATION`        | Next song splash screen duration       | `15000` | No       |
+| `CONTROLS_AUTO_HIDE_DELAY`  | Auto-hide TV controls after inactivity | `10000` | No       |
+| `AUTOPLAY_DELAY`            | Initial autoplay delay                 | `500`   | No       |
+| `QUEUE_AUTOPLAY_DELAY`      | Queue autoplay delay                   | `1000`  | No       |
+| `TIME_UPDATE_INTERVAL`      | Time update sync interval              | `2000`  | No       |
+
+#### Timing Configuration Examples
+
+**Fast-Paced Party Setup:**
+
+```bash
+RATING_ANIMATION_DURATION=8000   # 8 seconds
+NEXT_SONG_DURATION=5000          # 5 seconds
+CONTROLS_AUTO_HIDE_DELAY=5000    # 5 seconds
+```
+
+**Relaxed Home Setup:**
+
+```bash
+RATING_ANIMATION_DURATION=20000  # 20 seconds
+NEXT_SONG_DURATION=10000         # 10 seconds
+CONTROLS_AUTO_HIDE_DELAY=15000   # 15 seconds
+```
+
+**Commercial Venue Setup:**
+
+```bash
+RATING_ANIMATION_DURATION=12000  # 12 seconds
+NEXT_SONG_DURATION=8000          # 8 seconds
+TIME_UPDATE_INTERVAL=1000        # 1 second (tighter sync)
+```
 
 ### Volume Mounts
 
@@ -177,10 +208,9 @@ curl http://localhost:3000/api/health
 
 ### Security Considerations
 
-1. **Use strong session secrets**: Generate a secure random string for `SESSION_SECRET`
-2. **Secure API keys**: Store Jellyfin API keys securely (consider using Docker secrets)
-3. **Network security**: Use proper firewall rules and consider using a reverse proxy
-4. **Regular updates**: Keep the Docker image updated with security patches
+1. **Secure API keys**: Store Jellyfin API keys securely (consider using Docker secrets)
+2. **Network security**: Use proper firewall rules and consider using a reverse proxy
+3. **Regular updates**: Keep the Docker image updated with security patches
 
 ### Performance Optimization
 
@@ -203,13 +233,11 @@ services:
       - NODE_ENV=production
       - JELLYFIN_SERVER_URL=https://your-jellyfin-server.com
       - JELLYFIN_API_KEY_FILE=/run/secrets/jellyfin_api_key
-      - SESSION_SECRET_FILE=/run/secrets/session_secret
     volumes:
       - lyrics_data:/app/lyrics:ro
       - media_data:/app/media:ro
     secrets:
       - jellyfin_api_key
-      - session_secret
     deploy:
       resources:
         limits:
@@ -224,8 +252,6 @@ volumes:
 
 secrets:
   jellyfin_api_key:
-    external: true
-  session_secret:
     external: true
 ```
 

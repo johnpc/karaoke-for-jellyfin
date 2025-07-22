@@ -27,7 +27,6 @@ docker run -d \
   -e JELLYFIN_SERVER_URL=http://your-jellyfin-server:8096 \
   -e JELLYFIN_API_KEY=your_api_key \
   -e JELLYFIN_USERNAME=your_username \
-  -e SESSION_SECRET=your_session_secret \
   mrorbitman/karaoke-for-jellyfin:latest
 ```
 

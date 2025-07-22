@@ -26,7 +26,11 @@ export function NextUpSidebar({ queue, currentSong }: NextUpSidebarProps) {
             <div className="text-white font-medium truncate">
               {nextSong.mediaItem.title}
             </div>
-            <LyricsIndicator song={nextSong.mediaItem} size="sm" variant="badge" />
+            <LyricsIndicator
+              song={nextSong.mediaItem}
+              size="sm"
+              variant="badge"
+            />
           </div>
           <div className="text-gray-400 text-xs truncate">
             {nextSong.mediaItem.artist} • {nextSong.addedBy}

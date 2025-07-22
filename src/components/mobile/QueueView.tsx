@@ -141,7 +141,11 @@ export function QueueView({
                             <h3 className="text-base font-medium text-gray-900 truncate">
                               {queueItem.mediaItem.title}
                             </h3>
-                            <LyricsIndicator song={queueItem.mediaItem} size="sm" variant="badge" />
+                            <LyricsIndicator
+                              song={queueItem.mediaItem}
+                              size="sm"
+                              variant="badge"
+                            />
                           </div>
                           <p className="text-sm text-gray-600 truncate">
                             {queueItem.mediaItem.artist}

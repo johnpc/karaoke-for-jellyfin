@@ -9,10 +9,16 @@ services:
       - JELLYFIN_SERVER_URL=${JELLYFIN_SERVER_URL:-http://host.docker.internal:8096}
       - JELLYFIN_API_KEY=${JELLYFIN_API_KEY}
       - JELLYFIN_USERNAME=${JELLYFIN_USERNAME}
-      - LYRICS_PATH=/app/lyrics
-      - JELLYFIN_MEDIA_PATH=/app/media
-      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
-      - SESSION_SECRET=${SESSION_SECRET:-default_session_secret_change_in_production}
+
+      # TV Display Timing Configuration (in milliseconds)
+      - RATING_ANIMATION_DURATION=${RATING_ANIMATION_DURATION:-15000}
+      - NEXT_SONG_DURATION=${NEXT_SONG_DURATION:-15000}
+      - CONTROLS_AUTO_HIDE_DELAY=${CONTROLS_AUTO_HIDE_DELAY:-10000}
+      - AUTOPLAY_DELAY=${AUTOPLAY_DELAY:-500}
+      - QUEUE_AUTOPLAY_DELAY=${QUEUE_AUTOPLAY_DELAY:-1000}
+      - TIME_UPDATE_INTERVAL=${TIME_UPDATE_INTERVAL:-2000}
+
+      # System Configuration
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0

@@ -11,24 +11,24 @@ sequenceDiagram
     participant Audio as Audio Player
 
     Note over Client,Server: Song is currently playing
-    
+
     Audio->>Client: Song ends naturally
     Client->>Server: emit("song-ended")
-    
+
     Note over Server: Server processes song end
     Server->>Server: Generate random rating
     Server->>Server: Mark song as completed
     Server->>Server: Reset playback state
-    
+
     Server->>Client: emit("song-completed", {song, rating})
     Server->>Client: emit("song-ended", completedSong)
-    
+
     Note over Client: PROBLEM: song-ended sets currentSong=null
     Client->>Client: setCurrentSong(null)
-    
+
     Note over Client: song-completed tries to start transitions
     Client->>Client: handleSongCompleted() - but currentSong is null!
-    
+
     Note over Client: Transitions may not work properly
 ```
 
@@ -49,28 +49,28 @@ sequenceDiagram
     participant Applause as Applause Player
 
     Note over Client,Server: Song is currently playing
-    
+
     Audio->>Client: Song ends naturally
     Client->>Server: emit("song-ended")
-    
+
     Note over Server: Server processes song end
     Server->>Server: Generate random rating
     Server->>Server: Mark song as completed
     Server->>Server: Find next song (don't start yet)
-    
+
     Server->>Client: emit("song-ended", {song, rating, nextSong})
-    
+
     Note over Client: Start transition sequence
     Client->>Client: Start applause state
     Client->>Applause: Play applause audio
     Client->>Client: Show rating animation (15s)
-    
+
     Note over Client: Rating animation completes
     Client->>Client: Show next song splash (15s)
-    
+
     Note over Client: Splash completes
     Client->>Server: emit("start-next-song")
-    
+
     Note over Server: Start next song
     Server->>Server: Set next song as current & playing
     Server->>Client: emit("song-started", nextSong)
@@ -81,21 +81,21 @@ sequenceDiagram
 
 ### Client → Server Events
 
-| Event | Payload | Description |
-|-------|---------|-------------|
-| `song-ended` | `null` | Sent when audio player detects song end |
-| `start-next-song` | `null` | Request to start next song after transitions |
-| `playback-control` | `PlaybackCommand` | Play/pause/seek controls |
-| `join-session` | `{sessionId, userName}` | Join karaoke session |
+| Event              | Payload                 | Description                                  |
+| ------------------ | ----------------------- | -------------------------------------------- |
+| `song-ended`       | `null`                  | Sent when audio player detects song end      |
+| `start-next-song`  | `null`                  | Request to start next song after transitions |
+| `playback-control` | `PlaybackCommand`       | Play/pause/seek controls                     |
+| `join-session`     | `{sessionId, userName}` | Join karaoke session                         |
 
 ### Server → Client Events
 
-| Event | Payload | Description |
-|-------|---------|-------------|
-| `song-ended` | `{song, rating, nextSong?}` | Song completed with rating data |
-| `song-started` | `QueueItem` | New song has started playing |
-| `queue-updated` | `QueueItem[]` | Queue has changed |
-| `playback-state-changed` | `PlaybackState` | Playback state updated |
+| Event                    | Payload                     | Description                     |
+| ------------------------ | --------------------------- | ------------------------------- |
+| `song-ended`             | `{song, rating, nextSong?}` | Song completed with rating data |
+| `song-started`           | `QueueItem`                 | New song has started playing    |
+| `queue-updated`          | `QueueItem[]`               | Queue has changed               |
+| `playback-state-changed` | `PlaybackState`             | Playback state updated          |
 
 ## State Management
 
@@ -114,7 +114,7 @@ stateDiagram-v2
 
 ### Client State Flow
 
-1. **Playing State**: 
+1. **Playing State**:
    - Current song is active
    - Lyrics display visible
    - Audio playing
@@ -139,14 +139,17 @@ stateDiagram-v2
 
 ```javascript
 // Instead of emitting both events:
-io.to(sessionId).emit("song-completed", { song: completedSong, rating: rating });
+io.to(sessionId).emit("song-completed", {
+  song: completedSong,
+  rating: rating,
+});
 io.to(sessionId).emit("song-ended", completedSong);
 
 // Emit single event with all data:
-io.to(sessionId).emit("song-ended", { 
-  song: completedSong, 
+io.to(sessionId).emit("song-ended", {
+  song: completedSong,
   rating: rating,
-  nextSong: nextSong || null
+  nextSong: nextSong || null,
 });
 ```
 
@@ -192,14 +195,14 @@ socket.on("song-ended", (data) => {
 
 ```javascript
 // Expected console output:
-"Song ended naturally, notifying server"
-"Generated rating for 'Song Title': A+ (95/100)"
-"Song ended with rating data: {song: {...}, rating: {...}}"
-"Song completed via socket, starting transition sequence"
-"Applause playing successfully via socket trigger"
-"Rating animation complete"
-"Next song splash complete, starting next song"
-"Starting next song: Next Song Title"
+"Song ended naturally, notifying server";
+"Generated rating for 'Song Title': A+ (95/100)";
+"Song ended with rating data: {song: {...}, rating: {...}}";
+"Song completed via socket, starting transition sequence";
+"Applause playing successfully via socket trigger";
+"Rating animation complete";
+"Next song splash complete, starting next song";
+"Starting next song: Next Song Title";
 ```
 
 ## Error Handling
@@ -222,5 +225,5 @@ console.log(window.transitionState);
 console.log(window.socket?.connected);
 
 // Manually trigger applause
-window.dispatchEvent(new CustomEvent('test-applause'));
+window.dispatchEvent(new CustomEvent("test-applause"));
 ```

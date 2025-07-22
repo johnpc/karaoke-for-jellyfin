@@ -60,7 +60,11 @@ export function QueuePreview({
                 <h3 className="text-xl font-semibold text-white">
                   {currentSong.mediaItem.title}
                 </h3>
-                <LyricsIndicator song={currentSong.mediaItem} size="md" variant="badge" />
+                <LyricsIndicator
+                  song={currentSong.mediaItem}
+                  size="md"
+                  variant="badge"
+                />
               </div>
               <p className="text-gray-300">{currentSong.mediaItem.artist}</p>
               <div className="flex items-center mt-1 text-sm text-gray-400">
@@ -99,7 +103,11 @@ export function QueuePreview({
                       <h4 className="text-lg font-medium text-white truncate">
                         {song.mediaItem.title}
                       </h4>
-                      <LyricsIndicator song={song.mediaItem} size="sm" variant="badge" />
+                      <LyricsIndicator
+                        song={song.mediaItem}
+                        size="sm"
+                        variant="badge"
+                      />
                     </div>
                     <p className="text-gray-300 truncate">
                       {song.mediaItem.artist}
