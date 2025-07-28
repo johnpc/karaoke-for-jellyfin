@@ -53,6 +53,7 @@ Mobile-optimized host controls for managing the karaoke session.
 - **Restart Song**: Jump back to the beginning of the current song
 - **Mute Audio**: Quickly silence the system
 - **System Status**: Monitor connection status, active users, and queue length
+- **Cache Management**: View cache status and clear cached data
 
 #### Features
 
@@ -72,6 +73,8 @@ Mobile-optimized host controls for managing the karaoke session.
 - **Real-time Sync**: WebSocket-based real-time updates between devices
 - **Progressive Web App**: Install on mobile/desktop for native app experience
 - **Offline Support**: Core functionality works without internet connection
+- **Smart Caching**: Intelligent cache management with update detection
+- **Cache Clearing**: Built-in tools to resolve update and caching issues
 
 ## Getting Started
 
@@ -162,7 +165,7 @@ The admin interface provides three main control panels:
 
 - **Playback**: Control current song playback, volume, and lyrics timing
 - **Queue**: Monitor upcoming songs and queue status
-- **Emergency**: Quick access to emergency controls and system status
+- **Emergency**: Quick access to emergency controls, system status, and cache management
 
 ### Tips for Hosts
 
@@ -171,6 +174,23 @@ The admin interface provides three main control panels:
 - Monitor the **system status** panel to track active users and connection health
 - **Volume controls** affect the entire system, not just individual songs
 
+### Troubleshooting Updates and Caching
+
+If the app isn't showing the latest updates or behaving unexpectedly:
+
+1. **Check for Updates**: The app will automatically notify you when updates are available
+2. **Quick Cache Clear**: Use the cache status panel in the admin interface for a quick clear
+3. **Full Cache Clear**: Visit `<hostname>/clear-cache` for comprehensive cache management
+4. **Manual Refresh**: Force refresh your browser (Ctrl+F5 or Cmd+Shift+R)
+
+The cache clearing page (`/clear-cache`) provides:
+
+- Complete cache information and statistics
+- Clearing of service worker caches
+- Clearing of browser storage (localStorage, sessionStorage)
+- Clearing of IndexedDB databases
+- Automatic redirect to fresh app instance
+
 ## Project Structure
 
 ```
@@ -178,11 +198,16 @@ src/
 ├── app/
 │   ├── api/          # API routes
 │   ├── admin/        # Admin interface
+│   ├── clear-cache/  # Cache clearing page
 │   ├── tv/           # TV display interface
 │   └── page.tsx      # Mobile interface
 ├── components/
 │   ├── mobile/       # Mobile-specific components
-│   └── tv/           # TV-specific components
+│   ├── tv/           # TV-specific components
+│   ├── CacheStatus.tsx    # Cache management component
+│   └── PWAInstaller.tsx   # PWA installation and updates
+├── hooks/
+│   └── useServiceWorker.ts # Service worker management hook
 ├── lib/              # Utility libraries
 ├── services/         # Business logic services
 └── types/            # TypeScript type definitions
