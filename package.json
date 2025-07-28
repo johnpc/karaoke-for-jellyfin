@@ -8,9 +8,22 @@
     "build": "next build",
     "start": "NODE_ENV=production node server.js",
     "start:next": "next start",
-    "lint": "next lint",
+    "lint": "lint-staged",
+    "lint:check": "next lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",
@@ -38,9 +51,12 @@
     "@types/ws": "^8.18.1",
     "eslint": "^9",
     "eslint-config-next": "15.4.2",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "jest-environment-node": "^29.7.0",
+    "lint-staged": "^16.1.2",
+    "prettier": "^3.6.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
