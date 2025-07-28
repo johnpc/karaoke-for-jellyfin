@@ -12,6 +12,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"search" | "queue">("search");
   const [userName, setUserName] = useState<string>("");
   const [isSetup, setIsSetup] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   const {
     isConnected,
@@ -23,6 +24,11 @@ export default function Home() {
     currentSong,
     error,
   } = useWebSocket();
+
+  // Prevent hydration mismatch by only rendering WebSocket-dependent content on client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     // Check if user has already set up their name
@@ -53,6 +59,15 @@ export default function Home() {
 
   if (!isSetup) {
     return <UserSetup onSetup={handleUserSetup} />;
+  }
+
+  // Prevent hydration mismatch by only rendering WebSocket-dependent content on client
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600 text-lg">Loading...</div>
+      </div>
+    );
   }
 
   return (

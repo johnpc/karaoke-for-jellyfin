@@ -206,7 +206,14 @@ export function useWebSocket(): WebSocketHookReturn {
         if (data.session) setSession(data.session);
         if (data.queue) setQueue(data.queue);
         if (data.currentSong) setCurrentSong(data.currentSong);
-        if (data.playbackState) setPlaybackState(data.playbackState);
+        if (data.playbackState) {
+          // Ensure lyricsOffset is always present
+          const stateWithOffset = {
+            ...data.playbackState,
+            lyricsOffset: data.playbackState.lyricsOffset ?? 0,
+          };
+          setPlaybackState(stateWithOffset);
+        }
       });
 
       socketInstance.on("session-joined", (data) => {
@@ -277,7 +284,12 @@ export function useWebSocket(): WebSocketHookReturn {
 
       socketInstance.on("playback-state-changed", (state) => {
         console.log("⏯️ Playback state changed:", state);
-        setPlaybackState(state);
+        // Ensure lyricsOffset is always present
+        const stateWithOffset = {
+          ...state,
+          lyricsOffset: state.lyricsOffset ?? 0,
+        };
+        setPlaybackState(stateWithOffset);
       });
 
       socketInstance.on("lyrics-sync", (data) => {
@@ -536,6 +548,7 @@ export function useWebSocket(): WebSocketHookReturn {
             volume: 80,
             isMuted: false,
             playbackRate: 1.0,
+            lyricsOffset: 0,
             ...updates,
           };
         }

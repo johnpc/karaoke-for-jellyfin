@@ -217,7 +217,23 @@ export const initializeWebSocket = (server: HTTPServer) => {
 
         try {
           console.log("Processing playback command:", command);
+          console.log("Action type:", typeof command.action);
+          console.log("Action value:", JSON.stringify(command.action));
+          console.log("Action === 'lyrics-offset':", command.action === "lyrics-offset");
+          
           switch (command.action) {
+            case "lyrics-offset":
+              console.log("Processing lyrics-offset command:", command);
+              if (command.value !== undefined) {
+                // Clamp the offset between -10 and +10 seconds
+                const clampedOffset = Math.max(-10, Math.min(10, command.value));
+                console.log("Setting lyrics offset to:", clampedOffset);
+                sessionManager.updatePlaybackState({
+                  lyricsOffset: clampedOffset,
+                });
+                console.log("Updated playback state:", sessionManager.getPlaybackState());
+              }
+              break;
             case "play":
               const currentSong = sessionManager.getCurrentSong();
               console.log("Current song:", currentSong);
@@ -250,6 +266,9 @@ export const initializeWebSocket = (server: HTTPServer) => {
               sessionManager.updatePlaybackState({
                 isMuted: !currentState?.isMuted,
               });
+              break;
+            default:
+              console.log("Unknown playback action:", command.action);
               break;
           }
         } catch (error) {

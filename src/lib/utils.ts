@@ -182,6 +182,7 @@ export function createKaraokeSession(
       volume: 80,
       isMuted: false,
       playbackRate: 1.0,
+      lyricsOffset: 0,
     },
     connectedUsers: [hostUser],
     hostControls: {

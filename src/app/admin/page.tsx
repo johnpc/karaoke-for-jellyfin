@@ -1,17 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useWebSocket } from "@/hooks/useWebSocket";
-import { useConfig } from "@/contexts/ConfigContext";
 import { MobileAdminInterface } from "@/components/mobile/MobileAdminInterface";
 import { UserSetup } from "@/components/mobile/UserSetup";
-import { AudioPlayer } from "@/components/tv/AudioPlayer";
 
 export default function AdminPage() {
-  const config = useConfig();
   const [userName, setUserName] = useState<string>("");
   const [isSetup, setIsSetup] = useState(false);
-  const lastUpdateRef = useRef<number>(0);
+  const [isClient, setIsClient] = useState(false);
 
   const {
     isConnected,
@@ -25,9 +22,12 @@ export default function AdminPage() {
     playbackControl,
     removeSong,
     reorderQueue,
-    updateLocalPlaybackState,
-    songEnded,
   } = useWebSocket();
+
+  // Prevent hydration mismatch by only rendering WebSocket-dependent content on client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     // Check if user has already set up their name
@@ -56,33 +56,6 @@ export default function AdminPage() {
     joinSession("main-session", adminName);
   };
 
-  const handleTimeUpdate = (currentTime: number) => {
-    // Update local playback state immediately for smooth UI updates
-    updateLocalPlaybackState({ currentTime });
-
-    // Send periodic time updates to keep server in sync
-    // Only send updates every 2 seconds to avoid spam
-    const now = Date.now();
-    const updateInterval = config.timeUpdateInterval;
-    if (
-      !lastUpdateRef.current ||
-      now - lastUpdateRef.current > updateInterval
-    ) {
-      playbackControl({
-        action: "time-update",
-        value: currentTime,
-        userId: "mobile-admin",
-        timestamp: new Date(),
-      });
-      lastUpdateRef.current = now;
-    }
-  };
-
-  const handleSongEnded = () => {
-    console.log("Song ended in admin interface");
-    songEnded();
-  };
-
   if (!isSetup) {
     return (
       <UserSetup 
@@ -93,30 +66,28 @@ export default function AdminPage() {
     );
   }
 
+  // Prevent hydration mismatch by only rendering WebSocket-dependent content on client
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-white text-lg">Loading admin interface...</div>
+      </div>
+    );
+  }
+
   return (
-    <>
-      <MobileAdminInterface
-        session={session}
-        currentSong={currentSong}
-        playbackState={playbackState}
-        queue={queue}
-        userName={userName}
-        isConnected={isConnected}
-        error={error}
-        onSkip={skipSong}
-        onPlaybackControl={playbackControl}
-        onRemoveSong={removeSong}
-        onReorderQueue={reorderQueue}
-      />
-      
-      {/* Hidden AudioPlayer for time synchronization */}
-      <AudioPlayer
-        song={currentSong}
-        playbackState={playbackState}
-        onPlaybackControl={playbackControl}
-        onSongEnded={handleSongEnded}
-        onTimeUpdate={handleTimeUpdate}
-      />
-    </>
+    <MobileAdminInterface
+      session={session}
+      currentSong={currentSong}
+      playbackState={playbackState}
+      queue={queue}
+      userName={userName}
+      isConnected={isConnected}
+      error={error}
+      onSkip={skipSong}
+      onPlaybackControl={playbackControl}
+      onRemoveSong={removeSong}
+      onReorderQueue={reorderQueue}
+    />
   );
 }

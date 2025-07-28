@@ -59,7 +59,9 @@ export function LyricsDisplay({
   // Update local state from playback state (real audio timing)
   useEffect(() => {
     if (playbackState) {
-      setCurrentTime(playbackState.currentTime);
+      // Apply lyrics offset to the current time for lyrics synchronization
+      const offsetTime = playbackState.currentTime + (playbackState.lyricsOffset || 0);
+      setCurrentTime(offsetTime);
       setIsPlaying(playbackState.isPlaying);
     }
   }, [playbackState]);
@@ -78,7 +80,7 @@ export function LyricsDisplay({
 
   const progress =
     song.mediaItem.duration > 0
-      ? (currentTime / song.mediaItem.duration) * 100
+      ? ((playbackState?.currentTime || 0) / song.mediaItem.duration) * 100
       : 0;
 
   return (
@@ -179,7 +181,7 @@ export function LyricsDisplay({
           </div>
 
           <div className="flex items-center justify-between text-sm text-gray-500 mt-2">
-            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(playbackState?.currentTime || 0)}</span>
             <span>{formatDuration(song.mediaItem.duration)}</span>
           </div>
         </div>

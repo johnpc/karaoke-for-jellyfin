@@ -131,6 +131,7 @@ export interface PlaybackState {
   volume: number; // 0-100
   isMuted: boolean;
   playbackRate: number; // 1.0 = normal speed
+  lyricsOffset: number; // seconds, -10 to +10
 }
 
 export interface ConnectedUser {
@@ -173,7 +174,8 @@ export type PlaybackAction =
   | "seek"
   | "volume"
   | "mute"
-  | "time-update";
+  | "time-update"
+  | "lyrics-offset";
 
 export interface PlaybackCommand {
   action: PlaybackAction;

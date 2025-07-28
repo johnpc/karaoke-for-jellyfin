@@ -21,6 +21,7 @@ export default function TVDisplay() {
   const [showHostControls, setShowHostControls] = useState(false);
   const [showQueuePreview, setShowQueuePreview] = useState(false);
   const [hasTriggeredAutoPlay, setHasTriggeredAutoPlay] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const [transitionState, setTransitionState] = useState<TransitionState>({
     displayState: "waiting",
   });
@@ -44,6 +45,11 @@ export default function TVDisplay() {
     setSongCompletedHandler,
     error,
   } = useWebSocket();
+
+  // Prevent hydration mismatch by only rendering WebSocket-dependent content on client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Handle song completion from socket events
   const handleSongCompleted = useCallback(
@@ -330,6 +336,15 @@ export default function TVDisplay() {
       lastUpdateRef.current = now;
     }
   };
+
+  // Prevent hydration mismatch by only rendering WebSocket-dependent content on client
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-white text-xl">Loading TV display...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">

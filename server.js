@@ -358,6 +358,7 @@ app.prepare().then(() => {
           currentTime: 0,
           volume: 80,
           isMuted: false,
+          lyricsOffset: 0,
         },
       });
 
@@ -443,6 +444,7 @@ app.prepare().then(() => {
           currentTime: 0,
           volume: 80,
           isMuted: false,
+          lyricsOffset: 0,
         },
       });
 
@@ -664,6 +666,7 @@ app.prepare().then(() => {
                     volume: 80,
                     isMuted: false,
                     playbackRate: 1.0,
+                    lyricsOffset: 0,
                   };
                 } else {
                   currentSession.playbackState.isPlaying = true;
@@ -692,6 +695,7 @@ app.prepare().then(() => {
                   volume: 80,
                   isMuted: false,
                   playbackRate: 1.0,
+                  lyricsOffset: 0,
                 };
               } else {
                 currentSession.playbackState.isPlaying = true;
@@ -714,6 +718,7 @@ app.prepare().then(() => {
                 volume: 80,
                 isMuted: false,
                 playbackRate: 1.0,
+                lyricsOffset: 0,
               };
             } else {
               currentSession.playbackState.isPlaying = false;
@@ -735,6 +740,7 @@ app.prepare().then(() => {
                   volume: command.value,
                   isMuted: false,
                   playbackRate: 1.0,
+                  lyricsOffset: 0,
                 };
               } else {
                 currentSession.playbackState.volume = command.value;
@@ -757,6 +763,7 @@ app.prepare().then(() => {
                   volume: 80,
                   isMuted: false,
                   playbackRate: 1.0,
+                  lyricsOffset: 0,
                 };
               } else {
                 currentSession.playbackState.currentTime = command.value;
@@ -778,6 +785,7 @@ app.prepare().then(() => {
                 volume: 80,
                 isMuted: true,
                 playbackRate: 1.0,
+                lyricsOffset: 0,
               };
             } else {
               currentSession.playbackState.isMuted = true;
@@ -795,6 +803,31 @@ app.prepare().then(() => {
             if (command.value !== undefined && currentSession.playbackState) {
               currentSession.playbackState.currentTime = command.value;
               // Don't broadcast time updates - they're just for server tracking
+            }
+            break;
+          case "lyrics-offset":
+            console.log("Processing lyrics-offset command:", command.value);
+            if (command.value !== undefined) {
+              if (!currentSession.playbackState) {
+                currentSession.playbackState = {
+                  isPlaying: currentSession.currentSong ? true : false,
+                  currentTime: 0,
+                  volume: 80,
+                  isMuted: false,
+                  playbackRate: 1.0,
+                  lyricsOffset: command.value,
+                };
+              } else {
+                currentSession.playbackState.lyricsOffset = command.value;
+                // Keep existing currentTime and other properties
+              }
+
+              const sessionId = currentSession.id || "main-session";
+              io.to(sessionId).emit(
+                "playback-state-changed",
+                currentSession.playbackState,
+              );
+              console.log("Lyrics offset updated to:", command.value);
             }
             break;
           default:
@@ -834,6 +867,7 @@ app.prepare().then(() => {
           volume: 80,
           isMuted: false,
           playbackRate: 1.0,
+          lyricsOffset: 0,
         };
       }
 
@@ -892,6 +926,7 @@ app.prepare().then(() => {
           volume: 80,
           isMuted: false,
           playbackRate: 1.0,
+          lyricsOffset: 0,
         };
       }
 
@@ -946,6 +981,7 @@ app.prepare().then(() => {
             volume: 80,
             isMuted: false,
             playbackRate: 1.0,
+            lyricsOffset: 0,
           };
         } else {
           currentSession.playbackState.isPlaying = true;
