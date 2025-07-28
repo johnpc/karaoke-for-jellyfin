@@ -20,6 +20,7 @@ import {
   QueueListIcon,
   MusicalNoteIcon,
 } from "@heroicons/react/24/outline";
+import { CacheStatus } from "@/components/CacheStatus";
 
 interface MobileAdminInterfaceProps {
   session: KaraokeSession | null;
@@ -107,7 +108,7 @@ export function MobileAdminInterface({
     });
   };
 
-  const pendingQueue = queue.filter((item) => item.status === "pending") || [];
+  const pendingQueue = queue.filter(item => item.status === "pending") || [];
   const currentOffset = playbackState?.lyricsOffset || 0;
 
   // Debug logging
@@ -263,14 +264,14 @@ export function MobileAdminInterface({
                     <span>
                       {Math.floor((playbackState?.currentTime || 0) / 60)}:
                       {String(
-                        Math.floor((playbackState?.currentTime || 0) % 60),
+                        Math.floor((playbackState?.currentTime || 0) % 60)
                       ).padStart(2, "0")}
                     </span>
                     <span>
                       {Math.floor(currentSong.mediaItem.duration / 60)}:
                       {String(currentSong.mediaItem.duration % 60).padStart(
                         2,
-                        "0",
+                        "0"
                       )}
                     </span>
                   </div>
@@ -279,7 +280,7 @@ export function MobileAdminInterface({
                     min="0"
                     max={currentSong.mediaItem.duration}
                     value={playbackState?.currentTime || 0}
-                    onChange={(e) => handleSeek(parseInt(e.target.value))}
+                    onChange={e => handleSeek(parseInt(e.target.value))}
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                   />
                 </div>
@@ -301,7 +302,7 @@ export function MobileAdminInterface({
                       min="0"
                       max="100"
                       value={playbackState?.volume || 80}
-                      onChange={(e) =>
+                      onChange={e =>
                         handleVolumeChange(parseInt(e.target.value))
                       }
                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
@@ -345,7 +346,7 @@ export function MobileAdminInterface({
                       max="10"
                       step="1"
                       value={currentOffset}
-                      onChange={(e) =>
+                      onChange={e =>
                         handleLyricsOffsetChange(parseInt(e.target.value))
                       }
                       className="lyrics-offset-slider w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
@@ -504,6 +505,9 @@ export function MobileAdminInterface({
                 </div>
               </div>
             </div>
+
+            {/* Cache Status */}
+            <CacheStatus showDetails={true} />
           </div>
         )}
       </div>

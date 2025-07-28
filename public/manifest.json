@@ -97,6 +97,32 @@
           "type": "image/png"
         }
       ]
+    },
+    {
+      "name": "Admin Controls",
+      "short_name": "Admin",
+      "description": "Open the admin control interface",
+      "url": "/admin",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Clear Cache",
+      "short_name": "Clear",
+      "description": "Clear cached data and resolve update issues",
+      "url": "/clear-cache",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ],
   "screenshots": [
