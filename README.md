@@ -5,10 +5,11 @@
 
 A web-based karaoke system that integrates with Jellyfin media server to provide karaoke functionality.
 
-The system has two parts:
+The system has three main interfaces:
 
-1. A large "Karaoke" UI where the singer/audience can see the lyrics and sing along, see who is up next, and scan QR code to join the fun. This is intended to be put up on a TV screen. The url is `<hostname>/tv`.
-2. A mobile-optimized interface for searching and adding songs to the queue. When you scan the QR code on the TV, it opens this link (`<hostname>/`).
+1. **Mobile Interface** (`<hostname>/`): Search and queue songs from your phone
+2. **TV Display** (`<hostname>/tv`): Full-screen karaoke experience for the big screen
+3. **Admin Interface** (`<hostname>/admin`): Host controls for managing playback and the karaoke session
 
 ### Mobile Interface
 
@@ -28,12 +29,45 @@ Full-screen karaoke experience with lyrics, performance feedback, and queue mana
 | ![TV Autoplay](./screenshots/tv-1-autoplay-when-song-added.png) | ![TV Lyrics](./screenshots/tv-2-sing-along-with-lyrics.png) | ![TV Rating](./screenshots/tv-3-graded-singing-performance.png)                  | ![TV Next Up](./screenshots/tv-4-next-up-countdown.png)       |
 | Automatic playback when songs are added with host controls      | Full-screen lyrics display with real-time synchronization   | Performance ratings and feedback after each song. (These are just random. Shhh!) | Smooth transitions with next song preview and countdown timer |
 
+### Admin Interface
+
+Mobile-optimized host controls for managing the karaoke session.
+
+#### Playback Controls
+
+- **Play/Pause**: Control song playback
+- **Skip**: Move to the next song in queue
+- **Seek**: Jump to any position in the current song
+- **Volume Control**: Adjust system volume and mute/unmute
+- **Lyrics Timing**: Fine-tune lyrics synchronization with ±10 second adjustment
+
+#### Queue Management
+
+- **View Queue**: See all pending songs with position, title, artist, and duration
+- **Queue Status**: Real-time count of songs in queue
+- **Song Details**: View who added each song to the queue
+
+#### Emergency Controls
+
+- **Emergency Stop**: Immediately stop all playback
+- **Restart Song**: Jump back to the beginning of the current song
+- **Mute Audio**: Quickly silence the system
+- **System Status**: Monitor connection status, active users, and queue length
+
+#### Features
+
+- **Real-time Updates**: All controls sync instantly with the TV display
+- **User Management**: Admin identification with persistent login
+- **Connection Monitoring**: Visual indicators for system connectivity
+- **Mobile Optimized**: Touch-friendly interface designed for phones and tablets
+
 ---
 
 ## Features
 
 - **Mobile Interface**: Search and queue songs from your phone
 - **TV Display**: Full-screen lyrics display and playback control
+- **Admin Interface**: Comprehensive host controls for session management
 - **Jellyfin Integration**: Leverages your existing Jellyfin media library
 - **Real-time Sync**: WebSocket-based real-time updates between devices
 - **Progressive Web App**: Install on mobile/desktop for native app experience
@@ -109,8 +143,33 @@ networks: {}
    npm run dev
    ```
 
-6. Open [http://localhost:3000](http://localhost:3000) for the mobile interface
-7. Open [http://localhost:3000/tv](http://localhost:3000/tv) for the TV display
+6. Open the interfaces:
+   - **Mobile**: [http://localhost:3000](http://localhost:3000)
+   - **TV Display**: [http://localhost:3000/tv](http://localhost:3000/tv)
+   - **Admin**: [http://localhost:3000/admin](http://localhost:3000/admin)
+
+## Usage
+
+### Setting Up a Karaoke Session
+
+1. **Start the TV Display**: Open `<hostname>/tv` on your main display
+2. **Admin Setup**: Open `<hostname>/admin` on your phone/tablet for host controls
+3. **Share with Guests**: Have guests scan the QR code or visit `<hostname>/` to add songs
+
+### Host Controls
+
+The admin interface provides three main control panels:
+
+- **Playback**: Control current song playback, volume, and lyrics timing
+- **Queue**: Monitor upcoming songs and queue status
+- **Emergency**: Quick access to emergency controls and system status
+
+### Tips for Hosts
+
+- Use the **lyrics offset** control if lyrics appear too early or late
+- The **emergency stop** button immediately halts playback for technical issues
+- Monitor the **system status** panel to track active users and connection health
+- **Volume controls** affect the entire system, not just individual songs
 
 ## Project Structure
 
@@ -118,6 +177,7 @@ networks: {}
 src/
 ├── app/
 │   ├── api/          # API routes
+│   ├── admin/        # Admin interface
 │   ├── tv/           # TV display interface
 │   └── page.tsx      # Mobile interface
 ├── components/
