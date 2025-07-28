@@ -5,9 +5,15 @@ import { UserIcon } from "@heroicons/react/24/outline";
 
 interface UserSetupProps {
   onSetup: (name: string) => void;
+  title?: string;
+  subtitle?: string;
 }
 
-export function UserSetup({ onSetup }: UserSetupProps) {
+export function UserSetup({ 
+  onSetup, 
+  title = "Welcome to Karaoke!",
+  subtitle = "Enter your name to join the karaoke session"
+}: UserSetupProps) {
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -33,10 +39,10 @@ export function UserSetup({ onSetup }: UserSetupProps) {
             <UserIcon className="w-8 h-8 text-purple-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Welcome to Karaoke!
+            {title}
           </h1>
           <p className="text-gray-600">
-            Enter your name to join the karaoke session
+            {subtitle}
           </p>
         </div>
 
