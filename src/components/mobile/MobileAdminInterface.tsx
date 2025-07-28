@@ -48,7 +48,9 @@ export function MobileAdminInterface({
   onRemoveSong,
   onReorderQueue,
 }: MobileAdminInterfaceProps) {
-  const [activeTab, setActiveTab] = useState<"playback" | "queue" | "emergency">("playback");
+  const [activeTab, setActiveTab] = useState<
+    "playback" | "queue" | "emergency"
+  >("playback");
 
   const handlePlayPause = () => {
     if (playbackState) {
@@ -119,7 +121,9 @@ export function MobileAdminInterface({
         <div className="px-4 py-3">
           <div className="flex items-center">
             <Cog6ToothIcon className="w-6 h-6 text-purple-600 mr-2" />
-            <h1 className="text-lg font-semibold text-gray-900">Admin Controls</h1>
+            <h1 className="text-lg font-semibold text-gray-900">
+              Admin Controls
+            </h1>
           </div>
           <div className="flex items-center mt-1">
             <div
@@ -187,21 +191,31 @@ export function MobileAdminInterface({
             {/* Current Song */}
             {currentSong && (
               <div className="bg-white rounded-lg p-4 shadow-sm border">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Now Playing</h3>
-                <p className="font-semibold text-gray-900">{currentSong.mediaItem.title}</p>
+                <h3 className="text-sm font-medium text-gray-500 mb-2">
+                  Now Playing
+                </h3>
+                <p className="font-semibold text-gray-900">
+                  {currentSong.mediaItem.title}
+                </p>
                 <p className="text-gray-600">{currentSong.mediaItem.artist}</p>
-                <p className="text-xs text-gray-500 mt-1">Added by {currentSong.addedBy}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Added by {currentSong.addedBy}
+                </p>
               </div>
             )}
 
             {/* Playback Controls */}
             <div className="bg-white rounded-lg p-4 shadow-sm border">
-              <h3 className="text-sm font-medium text-gray-500 mb-4">Controls</h3>
-              
+              <h3 className="text-sm font-medium text-gray-500 mb-4">
+                Controls
+              </h3>
+
               {/* Main Controls */}
               <div className="flex items-center justify-center space-x-4 mb-4">
                 <button
-                  onClick={() => handleSeek((playbackState?.currentTime || 0) - 10)}
+                  onClick={() =>
+                    handleSeek((playbackState?.currentTime || 0) - 10)
+                  }
                   className="p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
                   disabled={!currentSong}
                 >
@@ -248,11 +262,16 @@ export function MobileAdminInterface({
                   <div className="flex justify-between text-xs text-gray-500 mb-1">
                     <span>
                       {Math.floor((playbackState?.currentTime || 0) / 60)}:
-                      {String(Math.floor((playbackState?.currentTime || 0) % 60)).padStart(2, "0")}
+                      {String(
+                        Math.floor((playbackState?.currentTime || 0) % 60),
+                      ).padStart(2, "0")}
                     </span>
                     <span>
                       {Math.floor(currentSong.mediaItem.duration / 60)}:
-                      {String(currentSong.mediaItem.duration % 60).padStart(2, "0")}
+                      {String(currentSong.mediaItem.duration % 60).padStart(
+                        2,
+                        "0",
+                      )}
                     </span>
                   </div>
                   <input
@@ -282,7 +301,9 @@ export function MobileAdminInterface({
                       min="0"
                       max="100"
                       value={playbackState?.volume || 80}
-                      onChange={(e) => handleVolumeChange(parseInt(e.target.value))}
+                      onChange={(e) =>
+                        handleVolumeChange(parseInt(e.target.value))
+                      }
                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                     />
                   </div>
@@ -295,8 +316,10 @@ export function MobileAdminInterface({
 
             {/* Lyrics Offset Control */}
             <div className="bg-white rounded-lg p-4 shadow-sm border">
-              <h3 className="text-sm font-medium text-gray-500 mb-4">Lyrics Timing</h3>
-              
+              <h3 className="text-sm font-medium text-gray-500 mb-4">
+                Lyrics Timing
+              </h3>
+
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => handleLyricsOffsetChange(currentOffset - 1)}
@@ -305,12 +328,13 @@ export function MobileAdminInterface({
                 >
                   <span className="text-lg font-bold text-gray-700">−</span>
                 </button>
-                
+
                 <div className="flex-1">
                   <div className="flex justify-between text-xs text-gray-500 mb-1">
                     <span>-10s</span>
                     <span className="font-medium">
-                      {currentOffset > 0 ? '+' : ''}{currentOffset}s
+                      {currentOffset > 0 ? "+" : ""}
+                      {currentOffset}s
                     </span>
                     <span>+10s</span>
                   </div>
@@ -321,7 +345,9 @@ export function MobileAdminInterface({
                       max="10"
                       step="1"
                       value={currentOffset}
-                      onChange={(e) => handleLyricsOffsetChange(parseInt(e.target.value))}
+                      onChange={(e) =>
+                        handleLyricsOffsetChange(parseInt(e.target.value))
+                      }
                       className="lyrics-offset-slider w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                       style={{
                         background: `linear-gradient(to right, 
@@ -330,7 +356,7 @@ export function MobileAdminInterface({
                           #22c55e ${((currentOffset + 10) / 20) * 50}%, 
                           #22c55e 50%, 
                           #3b82f6 50%, 
-                          #3b82f6 100%)`
+                          #3b82f6 100%)`,
                       }}
                     />
                     {/* Center marker */}
@@ -350,7 +376,7 @@ export function MobileAdminInterface({
                     </div>
                   )}
                 </div>
-                
+
                 <button
                   onClick={() => handleLyricsOffsetChange(currentOffset + 1)}
                   className="flex items-center justify-center w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -369,7 +395,7 @@ export function MobileAdminInterface({
               <h3 className="text-sm font-medium text-gray-500 mb-3">
                 Queue ({pendingQueue.length} songs)
               </h3>
-              
+
               {pendingQueue.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <QueueListIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -387,7 +413,7 @@ export function MobileAdminInterface({
                           {index + 1}
                         </span>
                       </div>
-                      
+
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-900 truncate">
                           {item.mediaItem.title}
@@ -399,7 +425,7 @@ export function MobileAdminInterface({
                           Added by {item.addedBy}
                         </p>
                       </div>
-                      
+
                       <div className="flex-shrink-0 text-xs text-gray-500">
                         {Math.floor(item.mediaItem.duration / 60)}:
                         {String(item.mediaItem.duration % 60).padStart(2, "0")}
@@ -419,7 +445,7 @@ export function MobileAdminInterface({
                 <ExclamationTriangleIcon className="w-5 h-5 mr-2" />
                 <h3 className="text-sm font-medium">Emergency Controls</h3>
               </div>
-              
+
               <p className="text-sm text-gray-600 mb-4">
                 Use these controls only when technical issues occur.
               </p>
@@ -454,11 +480,15 @@ export function MobileAdminInterface({
 
             {/* System Status */}
             <div className="bg-white rounded-lg p-4 shadow-sm border">
-              <h4 className="text-sm font-medium text-gray-900 mb-3">System Status</h4>
+              <h4 className="text-sm font-medium text-gray-900 mb-3">
+                System Status
+              </h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Connection:</span>
-                  <span className={isConnected ? "text-green-600" : "text-red-600"}>
+                  <span
+                    className={isConnected ? "text-green-600" : "text-red-600"}
+                  >
                     {isConnected ? "Connected" : "Disconnected"}
                   </span>
                 </div>
@@ -477,7 +507,7 @@ export function MobileAdminInterface({
           </div>
         )}
       </div>
-      
+
       {/* Custom styles for the lyrics offset slider */}
       <style jsx>{`
         .lyrics-offset-slider::-webkit-slider-thumb {

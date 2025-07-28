@@ -70,7 +70,7 @@ export function useWebSocket(): WebSocketHookReturn {
     if (heartbeatIntervalRef.current) {
       clearInterval(heartbeatIntervalRef.current);
     }
-    
+
     heartbeatIntervalRef.current = setInterval(() => {
       if (socketRef.current?.connected) {
         socketRef.current.emit("user-heartbeat");
@@ -116,7 +116,7 @@ export function useWebSocket(): WebSocketHookReturn {
           setQueue([]);
           setCurrentSong(null);
           setPlaybackState(null);
-          
+
           // Rejoin after a small delay to ensure server is ready
           setTimeout(() => {
             rejoinSession();
@@ -127,7 +127,7 @@ export function useWebSocket(): WebSocketHookReturn {
       socketInstance.on("disconnect", (reason) => {
         console.log("❌ Disconnected from WebSocket server:", reason);
         setIsConnected(false);
-        
+
         // Clear heartbeat
         if (heartbeatIntervalRef.current) {
           clearInterval(heartbeatIntervalRef.current);
@@ -137,18 +137,21 @@ export function useWebSocket(): WebSocketHookReturn {
         // Set appropriate error message
         if (reason === "io server disconnect") {
           setError("Server disconnected the connection");
-        } else if (reason === "transport close" || reason === "transport error") {
+        } else if (
+          reason === "transport close" ||
+          reason === "transport error"
+        ) {
           setError("Connection lost - creating fresh connection...");
-          
+
           // Create a fresh socket connection after a delay
           setTimeout(() => {
             if (userNameRef.current) {
               console.log("🔄 Creating fresh socket connection...");
-              
+
               // Disconnect old socket completely
               socketInstance.removeAllListeners();
               socketInstance.disconnect();
-              
+
               // Create fresh socket
               const newSocket = createSocket();
               socketRef.current = newSocket;
@@ -178,17 +181,19 @@ export function useWebSocket(): WebSocketHookReturn {
       });
 
       socketInstance.on("reconnect_failed", () => {
-        console.error("❌ WebSocket reconnection failed, creating fresh connection...");
-        
+        console.error(
+          "❌ WebSocket reconnection failed, creating fresh connection...",
+        );
+
         // Create a completely fresh connection
         if (userNameRef.current) {
           setTimeout(() => {
             console.log("🔄 Creating fresh socket after reconnect failure...");
-            
+
             // Disconnect old socket completely
             socketInstance.removeAllListeners();
             socketInstance.disconnect();
-            
+
             // Create fresh socket
             const newSocket = createSocket();
             socketRef.current = newSocket;
@@ -221,7 +226,7 @@ export function useWebSocket(): WebSocketHookReturn {
         if (data.session) setSession(data.session);
         if (data.queue) setQueue(data.queue || data.session?.queue || []);
         if (data.currentSong) setCurrentSong(data.currentSong);
-        
+
         // Clear any error messages on successful join
         setError(null);
       });
@@ -313,11 +318,11 @@ export function useWebSocket(): WebSocketHookReturn {
           // Create fresh connection after a delay
           reconnectTimeoutRef.current = setTimeout(() => {
             console.log("🔄 Creating fresh socket due to session loss...");
-            
+
             // Disconnect old socket completely
             socketInstance.removeAllListeners();
             socketInstance.disconnect();
-            
+
             // Create fresh socket
             const newSocket = createSocket();
             socketRef.current = newSocket;
@@ -342,19 +347,25 @@ export function useWebSocket(): WebSocketHookReturn {
         setTimeout(() => {
           const currentSocket = socketRef.current;
           if (!currentSocket?.connected && userNameRef.current) {
-            console.log("🔄 Socket not connected, creating fresh connection...");
-            
+            console.log(
+              "🔄 Socket not connected, creating fresh connection...",
+            );
+
             // Create completely fresh connection
             if (currentSocket) {
               currentSocket.removeAllListeners();
               currentSocket.disconnect();
             }
-            
+
             const newSocket = createSocket();
             socketRef.current = newSocket;
             setupSocketListeners(newSocket);
             newSocket.connect();
-          } else if (currentSocket?.connected && userNameRef.current && !session) {
+          } else if (
+            currentSocket?.connected &&
+            userNameRef.current &&
+            !session
+          ) {
             console.log("🔄 Connected but no session, rejoining...");
             rejoinSession();
           }
@@ -366,14 +377,14 @@ export function useWebSocket(): WebSocketHookReturn {
     const handleOnline = () => {
       console.log("🌐 Network back online, creating fresh connection...");
       const currentSocket = socketRef.current;
-      
+
       if (userNameRef.current) {
         // Always create fresh connection when coming back online
         if (currentSocket) {
           currentSocket.removeAllListeners();
           currentSocket.disconnect();
         }
-        
+
         const newSocket = createSocket();
         socketRef.current = newSocket;
         setupSocketListeners(newSocket);
@@ -408,7 +419,10 @@ export function useWebSocket(): WebSocketHookReturn {
       }
 
       if (typeof document !== "undefined") {
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibilityChange,
+        );
       }
       if (typeof window !== "undefined") {
         window.removeEventListener("online", handleOnline);

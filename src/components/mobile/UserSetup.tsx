@@ -9,10 +9,10 @@ interface UserSetupProps {
   subtitle?: string;
 }
 
-export function UserSetup({ 
-  onSetup, 
+export function UserSetup({
+  onSetup,
   title = "Welcome to Karaoke!",
-  subtitle = "Enter your name to join the karaoke session"
+  subtitle = "Enter your name to join the karaoke session",
 }: UserSetupProps) {
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -38,12 +38,8 @@ export function UserSetup({
           <div className="mx-auto w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
             <UserIcon className="w-8 h-8 text-purple-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            {title}
-          </h1>
-          <p className="text-gray-600">
-            {subtitle}
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{title}</h1>
+          <p className="text-gray-600">{subtitle}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

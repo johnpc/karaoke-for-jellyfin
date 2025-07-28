@@ -37,26 +37,34 @@ export async function GET(request: NextRequest) {
     const playlistFilterRegex = process.env.PLAYLIST_FILTER_REGEX;
     if (playlistFilterRegex) {
       try {
-        const regex = new RegExp(playlistFilterRegex, 'i'); // Case-insensitive by default
-        playlists = playlists.filter(playlist => regex.test(playlist.name));
-        console.log(`Applied playlist filter "${playlistFilterRegex}": ${playlists.length} playlists match`);
+        const regex = new RegExp(playlistFilterRegex, "i"); // Case-insensitive by default
+        playlists = playlists.filter((playlist) => regex.test(playlist.name));
+        console.log(
+          `Applied playlist filter "${playlistFilterRegex}": ${playlists.length} playlists match`,
+        );
       } catch (error) {
-        console.warn('Invalid PLAYLIST_FILTER_REGEX:', playlistFilterRegex, error);
+        console.warn(
+          "Invalid PLAYLIST_FILTER_REGEX:",
+          playlistFilterRegex,
+          error,
+        );
         // Continue without filtering if regex is invalid
       }
     }
 
     // Debug: Log all playlist names before deduplication
-    console.log('Playlists before deduplication:');
+    console.log("Playlists before deduplication:");
     playlists.forEach((playlist, index) => {
-      console.log(`  ${index}: "${playlist.name}" (length: ${playlist.name.length}, id: ${playlist.id})`);
+      console.log(
+        `  ${index}: "${playlist.name}" (length: ${playlist.name.length}, id: ${playlist.id})`,
+      );
     });
 
     // Remove duplicates by name (keep the first occurrence)
     // Normalize names for comparison to handle whitespace, case, and encoding differences
     const normalizedNames = new Set<string>();
-    const uniquePlaylists = playlists.filter(playlist => {
-      // Normalize the name: 
+    const uniquePlaylists = playlists.filter((playlist) => {
+      // Normalize the name:
       // 1. Trim whitespace
       // 2. Convert to lowercase
       // 3. Normalize unicode (NFD)
@@ -65,20 +73,24 @@ export async function GET(request: NextRequest) {
       const normalizedName = playlist.name
         .trim()
         .toLowerCase()
-        .normalize('NFD')
-        .replace(/\s+/g, ' ') // Replace multiple whitespace chars with single space
-        .replace(/[\u00A0\u2000-\u200B\u2028\u2029]/g, ' '); // Replace various unicode spaces with regular space
-      
+        .normalize("NFD")
+        .replace(/\s+/g, " ") // Replace multiple whitespace chars with single space
+        .replace(/[\u00A0\u2000-\u200B\u2028\u2029]/g, " "); // Replace various unicode spaces with regular space
+
       if (normalizedNames.has(normalizedName)) {
-        console.log(`Duplicate playlist found: "${playlist.name}" (normalized: "${normalizedName}")`);
+        console.log(
+          `Duplicate playlist found: "${playlist.name}" (normalized: "${normalizedName}")`,
+        );
         return false; // Skip this duplicate
       }
-      
+
       normalizedNames.add(normalizedName);
       return true; // Keep this playlist
     });
 
-    console.log(`After deduplication: ${uniquePlaylists.length} unique playlists (removed ${playlists.length - uniquePlaylists.length} duplicates)`);
+    console.log(
+      `After deduplication: ${uniquePlaylists.length} unique playlists (removed ${playlists.length - uniquePlaylists.length} duplicates)`,
+    );
 
     return NextResponse.json(
       createPaginatedResponse(

@@ -11,20 +11,22 @@ The system has two parts:
 2. A mobile-optimized interface for searching and adding songs to the queue. When you scan the QR code on the TV, it opens this link (`<hostname>/`).
 
 ### Mobile Interface
+
 Use your phone to search and queue songs while others sing along on the TV.
 
-| Search & Browse | Add Songs | Manage Queue |
-|---|---|---|
-| ![Mobile Search](./screenshots/mobile-1-search-artists-playlists-songs.png) | ![Add Song](./screenshots/mobile-2-add-song-to-queue.png) | ![Queue Management](./screenshots/mobile-3-manage-queue.png) |
-| Search by artist, playlist, or song title with real-time results | Add songs to the queue with server confirmation and loading feedback | View and manage the current queue with drag-to-reorder functionality |
+| Search & Browse                                                             | Add Songs                                                            | Manage Queue                                                         |
+| --------------------------------------------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| ![Mobile Search](./screenshots/mobile-1-search-artists-playlists-songs.png) | ![Add Song](./screenshots/mobile-2-add-song-to-queue.png)            | ![Queue Management](./screenshots/mobile-3-manage-queue.png)         |
+| Search by artist, playlist, or song title with real-time results            | Add songs to the queue with server confirmation and loading feedback | View and manage the current queue with drag-to-reorder functionality |
 
 ### TV Display
+
 Full-screen karaoke experience with lyrics, performance feedback, and queue management.
 
-| Auto-Play & Controls | Sing-Along Lyrics | Performance Rating | Next Song Countdown |
-|---|---|---|---|
-| ![TV Autoplay](./screenshots/tv-1-autoplay-when-song-added.png) | ![TV Lyrics](./screenshots/tv-2-sing-along-with-lyrics.png) | ![TV Rating](./screenshots/tv-3-graded-singing-performance.png) | ![TV Next Up](./screenshots/tv-4-next-up-countdown.png) |
-| Automatic playback when songs are added with host controls | Full-screen lyrics display with real-time synchronization | Performance ratings and feedback after each song. (These are just random. Shhh!) | Smooth transitions with next song preview and countdown timer |
+| Auto-Play & Controls                                            | Sing-Along Lyrics                                           | Performance Rating                                                               | Next Song Countdown                                           |
+| --------------------------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| ![TV Autoplay](./screenshots/tv-1-autoplay-when-song-added.png) | ![TV Lyrics](./screenshots/tv-2-sing-along-with-lyrics.png) | ![TV Rating](./screenshots/tv-3-graded-singing-performance.png)                  | ![TV Next Up](./screenshots/tv-4-next-up-countdown.png)       |
+| Automatic playback when songs are added with host controls      | Full-screen lyrics display with real-time synchronization   | Performance ratings and feedback after each song. (These are just random. Shhh!) | Smooth transitions with next song preview and countdown timer |
 
 ---
 

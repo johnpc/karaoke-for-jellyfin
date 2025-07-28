@@ -58,8 +58,8 @@ export default function AdminPage() {
 
   if (!isSetup) {
     return (
-      <UserSetup 
-        onSetup={handleUserSetup} 
+      <UserSetup
+        onSetup={handleUserSetup}
         title="Admin Setup"
         subtitle="Enter your name to access admin controls"
       />

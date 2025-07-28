@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, ReactNode, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  ReactNode,
+  useEffect,
+  useState,
+} from "react";
 import { AppConfig } from "@/lib/config";
 
 const ConfigContext = createContext<AppConfig | null>(null);
@@ -14,14 +20,14 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
 
   useEffect(() => {
     // Fetch config from API route
-    fetch('/api/config')
-      .then(res => res.json())
-      .then(data => {
-        console.log('🔧 Config loaded from API:', data);
+    fetch("/api/config")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("🔧 Config loaded from API:", data);
         setConfig(data);
       })
-      .catch(error => {
-        console.error('Failed to load config:', error);
+      .catch((error) => {
+        console.error("Failed to load config:", error);
         // Fallback to default values
         setConfig({
           autoplayDelay: 500,
@@ -37,14 +43,16 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
   if (!config) {
     // Return loading state or default config
     return (
-      <ConfigContext.Provider value={{
-        autoplayDelay: 500,
-        queueAutoplayDelay: 1000,
-        controlsAutoHideDelay: 10000,
-        timeUpdateInterval: 2000,
-        ratingAnimationDuration: 15000,
-        nextSongDuration: 15000,
-      }}>
+      <ConfigContext.Provider
+        value={{
+          autoplayDelay: 500,
+          queueAutoplayDelay: 1000,
+          controlsAutoHideDelay: 10000,
+          timeUpdateInterval: 2000,
+          ratingAnimationDuration: 15000,
+          nextSongDuration: 15000,
+        }}
+      >
         {children}
       </ConfigContext.Provider>
     );

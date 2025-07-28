@@ -60,7 +60,8 @@ export function LyricsDisplay({
   useEffect(() => {
     if (playbackState) {
       // Apply lyrics offset to the current time for lyrics synchronization
-      const offsetTime = playbackState.currentTime + (playbackState.lyricsOffset || 0);
+      const offsetTime =
+        playbackState.currentTime + (playbackState.lyricsOffset || 0);
       setCurrentTime(offsetTime);
       setIsPlaying(playbackState.isPlaying);
     }

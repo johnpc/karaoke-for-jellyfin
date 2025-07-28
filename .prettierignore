@@ -10,3 +10,5 @@ Dockerfile
 *.log
 *.xml
 *.sh
+*.mp3
+.env*

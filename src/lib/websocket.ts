@@ -219,19 +219,28 @@ export const initializeWebSocket = (server: HTTPServer) => {
           console.log("Processing playback command:", command);
           console.log("Action type:", typeof command.action);
           console.log("Action value:", JSON.stringify(command.action));
-          console.log("Action === 'lyrics-offset':", command.action === "lyrics-offset");
-          
+          console.log(
+            "Action === 'lyrics-offset':",
+            command.action === "lyrics-offset",
+          );
+
           switch (command.action) {
             case "lyrics-offset":
               console.log("Processing lyrics-offset command:", command);
               if (command.value !== undefined) {
                 // Clamp the offset between -10 and +10 seconds
-                const clampedOffset = Math.max(-10, Math.min(10, command.value));
+                const clampedOffset = Math.max(
+                  -10,
+                  Math.min(10, command.value),
+                );
                 console.log("Setting lyrics offset to:", clampedOffset);
                 sessionManager.updatePlaybackState({
                   lyricsOffset: clampedOffset,
                 });
-                console.log("Updated playback state:", sessionManager.getPlaybackState());
+                console.log(
+                  "Updated playback state:",
+                  sessionManager.getPlaybackState(),
+                );
               }
               break;
             case "play":
