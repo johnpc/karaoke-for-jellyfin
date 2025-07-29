@@ -11,6 +11,7 @@ export class JellyfinSDKService {
   private username: string;
   private userId: string | null = null;
   private artistSearchCache: Map<string, Artist[]> | null = null;
+  private musicLibraryId: string | null = null;
 
   constructor() {
     this.baseUrl = process.env.JELLYFIN_SERVER_URL?.replace(/\/$/, "") || "";
@@ -37,6 +38,47 @@ export class JellyfinSDKService {
 
     // Create API instance with access token
     this.api = this.jellyfin.createApi(this.baseUrl, this.apiKey);
+  }
+
+  /**
+   * Get the Music library ID
+   */
+  private async getMusicLibraryId(): Promise<string | null> {
+    if (this.musicLibraryId) {
+      return this.musicLibraryId;
+    }
+
+    try {
+      const librariesUrl = `${this.baseUrl}/Library/VirtualFolders`;
+      const response = await fetch(librariesUrl, {
+        method: "GET",
+        headers: {
+          "X-Emby-Token": this.apiKey,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const libraries = await response.json();
+      const musicLibrary = libraries.find(
+        (lib: any) => lib.CollectionType === "music"
+      );
+
+      if (musicLibrary) {
+        this.musicLibraryId = musicLibrary.ItemId;
+        console.log(`Found Music library with ID: ${this.musicLibraryId}`);
+        return this.musicLibraryId;
+      } else {
+        console.warn("No Music library found");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error getting Music library ID:", error);
+      return null;
+    }
   }
 
   /**
@@ -121,6 +163,9 @@ export class JellyfinSDKService {
         `Searching for artists: "${query}" (limit: ${limit}, startIndex: ${startIndex})`
       );
 
+      // Get the Music library ID
+      const musicLibraryId = await this.getMusicLibraryId();
+
       // Use fetch instead of axios instance to avoid base URL issues
       const params = new URLSearchParams({
         searchTerm: query,
@@ -130,6 +175,11 @@ export class JellyfinSDKService {
         fields: "Overview,ImageTags",
         recursive: "true",
       });
+
+      // Add parentId if we found the Music library
+      if (musicLibraryId) {
+        params.set("parentId", musicLibraryId);
+      }
 
       const artistsUrl = `${this.baseUrl}/Artists?${params}`;
       const response = await fetch(artistsUrl, {
@@ -180,17 +230,24 @@ export class JellyfinSDKService {
         `Getting all artists (limit: ${limit}, startIndex: ${startIndex})`
       );
 
+      // Get the Music library ID
+      const musicLibraryId = await this.getMusicLibraryId();
+
       // Use fetch instead of axios instance to avoid base URL issues
       const params = new URLSearchParams({
         startIndex: startIndex.toString(),
         limit: limit.toString(),
         userId: this.userId!,
         fields: "Overview,ImageTags",
-        includeItemTypes: "MusicArtist",
         recursive: "true",
         sortBy: "SortName",
         sortOrder: "Ascending",
       });
+
+      // Add parentId if we found the Music library
+      if (musicLibraryId) {
+        params.set("parentId", musicLibraryId);
+      }
 
       const artistsUrl = `${this.baseUrl}/Artists?${params}`;
       const response = await fetch(artistsUrl, {

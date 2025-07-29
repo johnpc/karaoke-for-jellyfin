@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   MagnifyingGlassIcon,
   PlusIcon,
@@ -56,7 +56,6 @@ export function SearchInterface({
   const [hasSearched, setHasSearched] = useState(false);
   const [hasMoreResults, setHasMoreResults] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Confirmation dialog state
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -124,10 +123,15 @@ export function SearchInterface({
           if (append && page > 1) {
             setArtistResults(prev => {
               const combined = [...prev, ...newArtistResults];
-              console.log(
-                `Total artist results after append: ${combined.length}`
+              // Filter out duplicates by artist.id
+              const uniqueArtists = combined.filter(
+                (artist, index, arr) =>
+                  arr.findIndex(a => a.id === artist.id) === index
               );
-              return combined;
+              console.log(
+                `Total artist results after append: ${uniqueArtists.length} (${combined.length - uniqueArtists.length} duplicates removed)`
+              );
+              return uniqueArtists;
             });
           } else {
             setArtistResults(newArtistResults);
@@ -146,10 +150,15 @@ export function SearchInterface({
           if (append && page > 1) {
             setSongResults(prev => {
               const combined = [...prev, ...newSongResults];
-              console.log(
-                `Total song results after append: ${combined.length}`
+              // Filter out duplicates by song.id
+              const uniqueSongs = combined.filter(
+                (song, index, arr) =>
+                  arr.findIndex(s => s.id === song.id) === index
               );
-              return combined;
+              console.log(
+                `Total song results after append: ${uniqueSongs.length} (${combined.length - uniqueSongs.length} duplicates removed)`
+              );
+              return uniqueSongs;
             });
           } else {
             setSongResults(newSongResults);
@@ -228,10 +237,15 @@ export function SearchInterface({
           if (append && page > 1) {
             setSongResults(prev => {
               const combined = [...prev, ...newResults];
-              console.log(
-                `Total songs for artist after append: ${combined.length}`
+              // Filter out duplicates by song.id
+              const uniqueSongs = combined.filter(
+                (song, index, arr) =>
+                  arr.findIndex(s => s.id === song.id) === index
               );
-              return combined;
+              console.log(
+                `Total songs for artist after append: ${uniqueSongs.length} (${combined.length - uniqueSongs.length} duplicates removed)`
+              );
+              return uniqueSongs;
             });
           } else {
             setSongResults(newResults);
@@ -289,7 +303,18 @@ export function SearchInterface({
           console.log(`Received ${newResults.length} playlists`);
 
           if (append) {
-            setPlaylistResults(prev => [...prev, ...newResults]);
+            setPlaylistResults(prev => {
+              const combined = [...prev, ...newResults];
+              // Filter out duplicates by playlist.id
+              const uniquePlaylists = combined.filter(
+                (playlist, index, arr) =>
+                  arr.findIndex(p => p.id === playlist.id) === index
+              );
+              console.log(
+                `Total playlists after append: ${uniquePlaylists.length} (${combined.length - uniquePlaylists.length} duplicates removed)`
+              );
+              return uniquePlaylists;
+            });
           } else {
             setPlaylistResults(newResults);
           }
@@ -347,7 +372,18 @@ export function SearchInterface({
           console.log(`Received ${newResults.length} songs for playlist`);
 
           if (append) {
-            setSongResults(prev => [...prev, ...newResults]);
+            setSongResults(prev => {
+              const combined = [...prev, ...newResults];
+              // Filter out duplicates by song.id
+              const uniqueSongs = combined.filter(
+                (song, index, arr) =>
+                  arr.findIndex(s => s.id === song.id) === index
+              );
+              console.log(
+                `Total songs for playlist after append: ${uniqueSongs.length} (${combined.length - uniqueSongs.length} duplicates removed)`
+              );
+              return uniqueSongs;
+            });
           } else {
             setSongResults(newResults);
           }
@@ -409,8 +445,15 @@ export function SearchInterface({
           if (append && page > 1) {
             setArtistResults(prev => {
               const combined = [...prev, ...newResults];
-              console.log(`Total artists after append: ${combined.length}`);
-              return combined;
+              // Filter out duplicates by artist.id
+              const uniqueArtists = combined.filter(
+                (artist, index, arr) =>
+                  arr.findIndex(a => a.id === artist.id) === index
+              );
+              console.log(
+                `Total artists after append: ${uniqueArtists.length} (${combined.length - uniqueArtists.length} duplicates removed)`
+              );
+              return uniqueArtists;
             });
           } else {
             setArtistResults(newResults);
@@ -494,42 +537,13 @@ export function SearchInterface({
     getSongsByPlaylist,
   ]);
 
-  // Infinite scroll handler
-  const handleScroll = useCallback(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100; // 100px threshold
-
-    if (isNearBottom && hasMoreResults && !isLoadingMore && !isLoading) {
-      // Load more for various scenarios
-      const shouldLoadMore =
-        (activeTab === "search" && artistViewMode === "artists") || // Always allow loading more artists (with or without search)
-        (activeTab === "search" &&
-          artistViewMode === "songs" &&
-          selectedArtist) ||
-        (activeTab === "playlist" && playlistViewMode === "playlists") ||
-        (activeTab === "playlist" &&
-          playlistViewMode === "songs" &&
-          selectedPlaylist);
-
-      if (shouldLoadMore) {
-        loadMoreResults();
-      }
+  // Handle load more button click
+  const handleLoadMore = useCallback(() => {
+    if (!hasMoreResults || isLoadingMore || isLoading) {
+      return;
     }
-  }, [
-    hasMoreResults,
-    isLoadingMore,
-    isLoading,
-    searchQuery,
-    activeTab,
-    artistViewMode,
-    playlistViewMode,
-    selectedArtist,
-    selectedPlaylist,
-    loadMoreResults,
-  ]);
+    loadMoreResults();
+  }, [hasMoreResults, isLoadingMore, isLoading, loadMoreResults]);
 
   // Debounce search input
   useEffect(() => {
@@ -542,15 +556,6 @@ export function SearchInterface({
 
     return () => clearTimeout(timeoutId);
   }, [searchQuery, activeTab, artistViewMode, performUnifiedSearch]);
-
-  // Add scroll event listener
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    container.addEventListener("scroll", handleScroll);
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
 
   // Load all artists on initial load
   useEffect(() => {
@@ -838,7 +843,7 @@ export function SearchInterface({
       </div>
 
       {/* Results */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto">
         {error && (
           <div className="p-4">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -1208,6 +1213,38 @@ export function SearchInterface({
             </span>
           </div>
         )}
+
+        {/* Load More Button */}
+        {hasSearched &&
+          hasMoreResults &&
+          !isLoadingMore &&
+          !isLoading &&
+          ((activeTab === "search" &&
+            artistViewMode === "artists" &&
+            (artistResults.length > 0 || songResults.length > 0)) ||
+            (activeTab === "playlist" &&
+              playlistViewMode === "playlists" &&
+              playlistResults.length > 0) ||
+            (((activeTab === "search" && artistViewMode === "songs") ||
+              (activeTab === "playlist" && playlistViewMode === "songs")) &&
+              songResults.length > 0)) && (
+            <div className="flex items-center justify-center py-6">
+              <button
+                onClick={handleLoadMore}
+                className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors font-medium"
+              >
+                {activeTab === "search" && artistViewMode === "artists"
+                  ? "Load More Results"
+                  : activeTab === "playlist" && playlistViewMode === "playlists"
+                    ? "Load More Playlists"
+                    : activeTab === "search" && artistViewMode === "songs"
+                      ? `Load More Songs by ${selectedArtist?.name}`
+                      : activeTab === "playlist" && playlistViewMode === "songs"
+                        ? `Load More Songs from ${selectedPlaylist?.name}`
+                        : "Load More Songs"}
+              </button>
+            </div>
+          )}
 
         {/* End of results indicator */}
         {hasSearched &&
