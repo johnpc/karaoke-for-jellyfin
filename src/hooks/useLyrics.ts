@@ -54,7 +54,7 @@ export function useLyrics(options: UseLyricsOptions = {}): UseLyricsReturn {
 
     try {
       const response = await fetch(
-        `/api/lyrics/${encodeURIComponent(targetSongId)}`,
+        `/api/lyrics/${encodeURIComponent(targetSongId)}`
       );
       const result: ApiResponse<LyricsFile> = await response.json();
 
@@ -64,7 +64,7 @@ export function useLyrics(options: UseLyricsOptions = {}): UseLyricsReturn {
         console.log(
           "useLyrics - Lyrics loaded successfully:",
           result.data.lines?.length,
-          "lines",
+          "lines"
         );
         setLyricsFile(result.data);
       } else {
@@ -93,7 +93,7 @@ export function useLyrics(options: UseLyricsOptions = {}): UseLyricsReturn {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ currentTime: time }),
-        },
+        }
       );
 
       const result: ApiResponse<LyricsSyncState> = await response.json();

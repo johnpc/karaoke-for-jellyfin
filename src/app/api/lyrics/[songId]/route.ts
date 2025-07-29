@@ -6,7 +6,7 @@ import path from "path";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ songId: string }> },
+  { params }: { params: Promise<{ songId: string }> }
 ) {
   try {
     const { songId } = await params;
@@ -24,7 +24,7 @@ export async function GET(
           },
           timestamp: new Date(),
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -51,7 +51,7 @@ export async function GET(
           },
           timestamp: new Date(),
         },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -71,7 +71,7 @@ export async function GET(
             },
             timestamp: new Date(),
           },
-          { status: 404 },
+          { status: 404 }
         );
       }
 
@@ -102,14 +102,14 @@ export async function GET(
         },
         timestamp: new Date(),
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ songId: string }> },
+  { params }: { params: Promise<{ songId: string }> }
 ) {
   try {
     const { songId } = await params;
@@ -127,7 +127,7 @@ export async function POST(
           },
           timestamp: new Date(),
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -145,7 +145,7 @@ export async function POST(
           },
           timestamp: new Date(),
         },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -168,7 +168,7 @@ export async function POST(
         },
         timestamp: new Date(),
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

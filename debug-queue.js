@@ -31,12 +31,10 @@ async function debugQueue() {
       console.log("\n=== QUEUE ===");
       console.log("Total items:", queue.length);
 
-      const pendingItems = queue.filter((item) => item.status === "pending");
-      const playingItems = queue.filter((item) => item.status === "playing");
-      const completedItems = queue.filter(
-        (item) => item.status === "completed",
-      );
-      const skippedItems = queue.filter((item) => item.status === "skipped");
+      const pendingItems = queue.filter(item => item.status === "pending");
+      const playingItems = queue.filter(item => item.status === "playing");
+      const completedItems = queue.filter(item => item.status === "completed");
+      const skippedItems = queue.filter(item => item.status === "skipped");
 
       console.log("Pending:", pendingItems.length);
       console.log("Playing:", playingItems.length);
@@ -46,7 +44,7 @@ async function debugQueue() {
       console.log("\n=== PENDING SONGS ===");
       pendingItems.forEach((item, index) => {
         console.log(
-          `${index + 1}. "${item.mediaItem.title}" by ${item.mediaItem.artist}`,
+          `${index + 1}. "${item.mediaItem.title}" by ${item.mediaItem.artist}`
         );
         console.log(`   Added by: ${item.addedBy}`);
         console.log(`   Status: ${item.status}`);
@@ -59,7 +57,7 @@ async function debugQueue() {
         console.log("\n=== ALL QUEUE ITEMS ===");
         queue.forEach((item, index) => {
           console.log(
-            `${index + 1}. "${item.mediaItem.title}" by ${item.mediaItem.artist}`,
+            `${index + 1}. "${item.mediaItem.title}" by ${item.mediaItem.artist}`
           );
           console.log(`   Added by: ${item.addedBy}`);
           console.log(`   Status: ${item.status}`);

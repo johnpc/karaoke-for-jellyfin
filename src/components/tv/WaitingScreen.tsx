@@ -18,10 +18,8 @@ export function WaitingScreen({
   session,
   isConnected,
 }: WaitingScreenProps) {
-  const nextSongs = queue
-    .filter((item) => item.status === "pending")
-    .slice(0, 3);
-  const totalSongs = queue.filter((item) => item.status === "pending").length;
+  const nextSongs = queue.filter(item => item.status === "pending").slice(0, 3);
+  const totalSongs = queue.filter(item => item.status === "pending").length;
 
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -181,7 +179,7 @@ export function WaitingScreen({
                 <div className="mt-4">
                   <p className="text-gray-400 mb-2">Connected:</p>
                   <div className="flex flex-wrap gap-2">
-                    {session.connectedUsers.map((user) => (
+                    {session.connectedUsers.map(user => (
                       <div
                         key={user.id}
                         className={`inline-flex items-center px-3 py-1 rounded-full text-sm ${

@@ -127,7 +127,7 @@ export function HostControls({
   };
 
   const pendingQueue =
-    session?.queue.filter((item) => item.status === "pending") || [];
+    session?.queue.filter(item => item.status === "pending") || [];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
@@ -285,14 +285,14 @@ export function HostControls({
                       <span>
                         {Math.floor((playbackState?.currentTime || 0) / 60)}:
                         {String(
-                          Math.floor((playbackState?.currentTime || 0) % 60),
+                          Math.floor((playbackState?.currentTime || 0) % 60)
                         ).padStart(2, "0")}
                       </span>
                       <span>
                         {Math.floor(currentSong.mediaItem.duration / 60)}:
                         {String(currentSong.mediaItem.duration % 60).padStart(
                           2,
-                          "0",
+                          "0"
                         )}
                       </span>
                     </div>
@@ -301,7 +301,7 @@ export function HostControls({
                       min="0"
                       max={currentSong.mediaItem.duration}
                       value={playbackState?.currentTime || 0}
-                      onChange={(e) => handleSeek(parseInt(e.target.value))}
+                      onChange={e => handleSeek(parseInt(e.target.value))}
                       className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                     />
                   </div>
@@ -331,7 +331,7 @@ export function HostControls({
                       min="0"
                       max="100"
                       value={playbackState?.volume || 80}
-                      onChange={(e) =>
+                      onChange={e =>
                         handleVolumeChange(parseInt(e.target.value))
                       }
                       className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
@@ -371,10 +371,10 @@ export function HostControls({
                     <div
                       key={item.id}
                       draggable
-                      onDragStart={(e) => handleDragStart(e, item.id)}
-                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDragStart={e => handleDragStart(e, item.id)}
+                      onDragOver={e => handleDragOver(e, index)}
                       onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, index)}
+                      onDrop={e => handleDrop(e, index)}
                       className={`flex items-center p-3 rounded-lg border transition-all cursor-move ${
                         dragOverIndex === index
                           ? "border-purple-500 bg-purple-900 bg-opacity-20"
@@ -406,7 +406,7 @@ export function HostControls({
                           {Math.floor(item.mediaItem.duration / 60)}:
                           {String(item.mediaItem.duration % 60).padStart(
                             2,
-                            "0",
+                            "0"
                           )}
                         </div>
                         {onRemoveSong && (

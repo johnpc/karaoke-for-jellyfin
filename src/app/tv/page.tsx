@@ -56,11 +56,11 @@ export default function TVDisplay() {
     (data: { song: QueueItem; rating: any }) => {
       console.log(
         "🎵 Song completed via socket, starting transition sequence",
-        data,
+        data
       );
 
       // Find next song in queue
-      const nextSong = queue.find((song) => song.status === "pending");
+      const nextSong = queue.find(song => song.status === "pending");
       console.log("🎵 Next song found:", nextSong?.mediaItem.title || "None");
 
       // Start applause and rating phase
@@ -74,10 +74,10 @@ export default function TVDisplay() {
 
       console.log(
         "🎵 Transition state set to applause with rating:",
-        data.rating.grade,
+        data.rating.grade
       );
     },
-    [queue],
+    [queue]
   );
 
   // Set up song completion handler
@@ -120,9 +120,9 @@ export default function TVDisplay() {
       // Show next song splash
       console.log(
         "🎵 Showing next song splash for:",
-        transitionState.nextSong.mediaItem.title,
+        transitionState.nextSong.mediaItem.title
       );
-      setTransitionState((prev) => ({
+      setTransitionState(prev => ({
         ...prev,
         displayState: "next-up",
       }));
@@ -138,7 +138,7 @@ export default function TVDisplay() {
   // Handle next song splash completion
   const handleNextSongComplete = () => {
     console.log(
-      "🎵 Next song splash complete, requesting next song from server",
+      "🎵 Next song splash complete, requesting next song from server"
     );
 
     // Transition to playing the next song
@@ -209,11 +209,11 @@ export default function TVDisplay() {
     // If we don't have a current song but we have songs in queue,
     // and we're connected, try to start the first song
     if (!currentSong && queue.length > 0 && isConnected && session) {
-      const firstPendingSong = queue.find((song) => song.status === "pending");
+      const firstPendingSong = queue.find(song => song.status === "pending");
       if (firstPendingSong) {
         console.log(
           "Auto-starting first song in queue:",
-          firstPendingSong.mediaItem.title,
+          firstPendingSong.mediaItem.title
         );
 
         // Small delay to ensure everything is ready

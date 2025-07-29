@@ -93,7 +93,7 @@ describe("KaraokeSessionManager", () => {
       sessionManager.updateUserSocketId(user.id, "new_socket_123");
 
       const users = sessionManager.getConnectedUsers();
-      const updatedUser = users.find((u) => u.id === user.id);
+      const updatedUser = users.find(u => u.id === user.id);
       expect(updatedUser?.socketId).toBe("new_socket_123");
     });
   });
@@ -111,7 +111,7 @@ describe("KaraokeSessionManager", () => {
     it("should add a song to the queue", () => {
       const result = sessionManager.addSongToQueue(
         mockMediaItem,
-        regularUser.id,
+        regularUser.id
       );
 
       expect(result.success).toBe(true);
@@ -130,14 +130,14 @@ describe("KaraokeSessionManager", () => {
       // Add first song - should succeed
       const result1 = sessionManager.addSongToQueue(
         mockMediaItem,
-        regularUser.id,
+        regularUser.id
       );
       expect(result1.success).toBe(true);
 
       // Add second song - should fail
       const result2 = sessionManager.addSongToQueue(
         mockMediaItem,
-        regularUser.id,
+        regularUser.id
       );
       expect(result2.success).toBe(false);
       expect(result2.message).toContain("Maximum 1 songs per user");
@@ -146,13 +146,13 @@ describe("KaraokeSessionManager", () => {
     it("should remove a song from the queue", () => {
       const addResult = sessionManager.addSongToQueue(
         mockMediaItem,
-        regularUser.id,
+        regularUser.id
       );
       const queueItem = addResult.queueItem!;
 
       const removeResult = sessionManager.removeSongFromQueue(
         queueItem.id,
-        regularUser.id,
+        regularUser.id
       );
 
       expect(removeResult.success).toBe(true);
@@ -162,14 +162,14 @@ describe("KaraokeSessionManager", () => {
     it("should not allow removing other users songs", () => {
       const addResult = sessionManager.addSongToQueue(
         mockMediaItem,
-        regularUser.id,
+        regularUser.id
       );
       const queueItem = addResult.queueItem!;
 
       const anotherUser = sessionManager.addUser("Another User");
       const removeResult = sessionManager.removeSongFromQueue(
         queueItem.id,
-        anotherUser.id,
+        anotherUser.id
       );
 
       expect(removeResult.success).toBe(false);
@@ -180,7 +180,7 @@ describe("KaraokeSessionManager", () => {
       sessionManager.addSongToQueue(mockMediaItem, regularUser.id);
       sessionManager.addSongToQueue(
         { ...mockMediaItem, id: "media_456", title: "Second Song" },
-        regularUser.id,
+        regularUser.id
       );
 
       const queue = sessionManager.getQueue();
@@ -203,7 +203,7 @@ describe("KaraokeSessionManager", () => {
       const result = sessionManager.reorderQueue(
         firstItem.id,
         0,
-        regularUser.id,
+        regularUser.id
       );
 
       expect(result.success).toBe(false);
@@ -295,8 +295,8 @@ describe("KaraokeSessionManager", () => {
   });
 
   describe("Event System", () => {
-    it("should emit events when session is created", (done) => {
-      sessionManager.on("session-created", (session) => {
+    it("should emit events when session is created", done => {
+      sessionManager.on("session-created", session => {
         expect(session.name).toBe("Test Session");
         done();
       });
@@ -304,10 +304,10 @@ describe("KaraokeSessionManager", () => {
       sessionManager.createSession("Test Session", "Host");
     });
 
-    it("should emit events when user joins", (done) => {
+    it("should emit events when user joins", done => {
       sessionManager.createSession("Test Session", "Host");
 
-      sessionManager.on("user-joined", (user) => {
+      sessionManager.on("user-joined", user => {
         expect(user.name).toBe("Test User");
         done();
       });
@@ -315,11 +315,11 @@ describe("KaraokeSessionManager", () => {
       sessionManager.addUser("Test User");
     });
 
-    it("should emit events when queue is updated", (done) => {
+    it("should emit events when queue is updated", done => {
       sessionManager.createSession("Test Session", "Host");
       const user = sessionManager.addUser("Test User");
 
-      sessionManager.on("queue-updated", (queue) => {
+      sessionManager.on("queue-updated", queue => {
         expect(queue).toHaveLength(1);
         done();
       });

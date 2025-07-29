@@ -19,7 +19,7 @@ export class JellyfinSDKService {
 
     if (!this.baseUrl || !this.apiKey || !this.username) {
       throw new Error(
-        "JELLYFIN_SERVER_URL, JELLYFIN_API_KEY, and JELLYFIN_USERNAME must be configured",
+        "JELLYFIN_SERVER_URL, JELLYFIN_API_KEY, and JELLYFIN_USERNAME must be configured"
       );
     }
 
@@ -65,26 +65,26 @@ export class JellyfinSDKService {
       const users = await response.json();
       console.log(
         "Available users:",
-        users?.map((u: any) => u.Name),
+        users?.map((u: any) => u.Name)
       );
 
       if (users && users.length > 0) {
         // Find user by username (case insensitive)
         const targetUser = users.find(
           (user: any) =>
-            user.Name?.toLowerCase() === this.username.toLowerCase(),
+            user.Name?.toLowerCase() === this.username.toLowerCase()
         );
 
         if (targetUser) {
           this.userId = targetUser.Id;
           console.log(
-            `Authenticated as user: ${targetUser.Name} (ID: ${targetUser.Id})`,
+            `Authenticated as user: ${targetUser.Name} (ID: ${targetUser.Id})`
           );
           return true;
         } else {
           console.error(
             `User "${this.username}" not found. Available users:`,
-            users.map((u: any) => u.Name),
+            users.map((u: any) => u.Name)
           );
           return false;
         }
@@ -103,7 +103,7 @@ export class JellyfinSDKService {
   async searchArtists(
     query: string,
     limit: number = 50,
-    startIndex: number = 0,
+    startIndex: number = 0
   ): Promise<Artist[]> {
     if (!this.api) {
       throw new Error("API not initialized");
@@ -118,7 +118,7 @@ export class JellyfinSDKService {
 
     try {
       console.log(
-        `Searching for artists: "${query}" (limit: ${limit}, startIndex: ${startIndex})`,
+        `Searching for artists: "${query}" (limit: ${limit}, startIndex: ${startIndex})`
       );
 
       // Use fetch instead of axios instance to avoid base URL issues
@@ -164,7 +164,7 @@ export class JellyfinSDKService {
   async getSongsByArtistId(
     artistId: string,
     limit: number = 50,
-    startIndex: number = 0,
+    startIndex: number = 0
   ): Promise<{ songs: MediaItem[]; totalCount: number }> {
     if (!this.api) {
       throw new Error("API not initialized");
@@ -179,7 +179,7 @@ export class JellyfinSDKService {
 
     try {
       console.log(
-        `Getting songs for artist ID: ${artistId} (limit: ${limit}, startIndex: ${startIndex})`,
+        `Getting songs for artist ID: ${artistId} (limit: ${limit}, startIndex: ${startIndex})`
       );
 
       // Use fetch instead of axios instance to avoid base URL issues
@@ -213,7 +213,7 @@ export class JellyfinSDKService {
       const totalCount = data.TotalRecordCount || 0;
 
       console.log(
-        `Jellyfin returned ${data.Items?.length || 0} songs for artist ${artistId}`,
+        `Jellyfin returned ${data.Items?.length || 0} songs for artist ${artistId}`
       );
       console.log(`Total record count: ${totalCount}`);
 
@@ -239,7 +239,7 @@ export class JellyfinSDKService {
   async searchByTitle(
     query: string,
     limit: number = 50,
-    startIndex: number = 0,
+    startIndex: number = 0
   ): Promise<MediaItem[]> {
     if (!this.api) {
       throw new Error("API not initialized");
@@ -254,7 +254,7 @@ export class JellyfinSDKService {
 
     try {
       console.log(
-        `Searching by title: "${query}" (limit: ${limit}, startIndex: ${startIndex})`,
+        `Searching by title: "${query}" (limit: ${limit}, startIndex: ${startIndex})`
       );
 
       // Use fetch instead of axios instance to avoid base URL issues
@@ -284,15 +284,15 @@ export class JellyfinSDKService {
 
       const data = await response.json();
       console.log(
-        `Jellyfin returned ${data.Items?.length || 0} items for title search`,
+        `Jellyfin returned ${data.Items?.length || 0} items for title search`
       );
 
       const items = this.transformMediaItems(data.Items || []);
 
       // Filter by title for better relevance
       const queryLower = query.toLowerCase();
-      const filtered = items.filter((item) =>
-        item.title.toLowerCase().includes(queryLower),
+      const filtered = items.filter(item =>
+        item.title.toLowerCase().includes(queryLower)
       );
 
       console.log(`After title filtering: ${filtered.length} items`);
@@ -308,7 +308,7 @@ export class JellyfinSDKService {
    */
   async getAllAudioItems(
     startIndex: number = 0,
-    limit: number = 100,
+    limit: number = 100
   ): Promise<MediaItem[]> {
     if (!this.api) {
       throw new Error("API not initialized");
@@ -418,8 +418,8 @@ export class JellyfinSDKService {
    */
   private transformArtists(items: BaseItemDto[]): Artist[] {
     return items
-      .filter((item) => item.Type === "MusicArtist")
-      .map((item) => this.transformArtist(item))
+      .filter(item => item.Type === "MusicArtist")
+      .map(item => this.transformArtist(item))
       .filter(Boolean) as Artist[];
   }
 
@@ -446,15 +446,15 @@ export class JellyfinSDKService {
    */
   private transformMediaItems(items: BaseItemDto[]): MediaItem[] {
     const transformedItems = items
-      .map((item) => this.transformMediaItem(item))
+      .map(item => this.transformMediaItem(item))
       .filter(Boolean) as MediaItem[];
 
     // Filter to only include songs with lyrics for karaoke
-    const songsWithLyrics = transformedItems.filter((item) => {
+    const songsWithLyrics = transformedItems.filter(item => {
       const hasLyrics = item.hasLyrics === true;
       if (!hasLyrics) {
         console.log(
-          `Filtering out "${item.title}" by ${item.artist} - no lyrics available`,
+          `Filtering out "${item.title}" by ${item.artist} - no lyrics available`
         );
       }
       return hasLyrics;
@@ -502,7 +502,7 @@ export class JellyfinSDKService {
    */
   async getPlaylists(
     limit: number = 50,
-    startIndex: number = 0,
+    startIndex: number = 0
   ): Promise<Playlist[]> {
     if (!this.api) {
       throw new Error("API not initialized");
@@ -517,7 +517,7 @@ export class JellyfinSDKService {
 
     try {
       console.log(
-        `Getting playlists (limit: ${limit}, startIndex: ${startIndex})`,
+        `Getting playlists (limit: ${limit}, startIndex: ${startIndex})`
       );
 
       // Use fetch to get playlists
@@ -564,7 +564,7 @@ export class JellyfinSDKService {
   async getPlaylistItems(
     playlistId: string,
     limit: number = 50,
-    startIndex: number = 0,
+    startIndex: number = 0
   ): Promise<MediaItem[]> {
     if (!this.api) {
       throw new Error("API not initialized");
@@ -579,7 +579,7 @@ export class JellyfinSDKService {
 
     try {
       console.log(
-        `Getting playlist items for playlist ID: ${playlistId} (limit: ${limit}, startIndex: ${startIndex})`,
+        `Getting playlist items for playlist ID: ${playlistId} (limit: ${limit}, startIndex: ${startIndex})`
       );
 
       // Use fetch to get playlist items
@@ -606,12 +606,12 @@ export class JellyfinSDKService {
 
       const data = await response.json();
       console.log(
-        `Jellyfin returned ${data.Items?.length || 0} items for playlist ${playlistId}`,
+        `Jellyfin returned ${data.Items?.length || 0} items for playlist ${playlistId}`
       );
 
       // Filter only audio items and transform them
       const audioItems = (data.Items || []).filter(
-        (item: BaseItemDto) => item.Type === "Audio",
+        (item: BaseItemDto) => item.Type === "Audio"
       );
       const songs = this.transformMediaItems(audioItems);
       console.log(`Transformed ${songs.length} songs from playlist`);
@@ -628,8 +628,8 @@ export class JellyfinSDKService {
    */
   private transformPlaylists(items: BaseItemDto[]): Playlist[] {
     return items
-      .filter((item) => item.Type === "Playlist")
-      .map((item) => ({
+      .filter(item => item.Type === "Playlist")
+      .map(item => ({
         id: `jellyfin_playlist_${item.Id}`,
         name: item.Name || "Unknown Playlist",
         jellyfinId: item.Id || "",

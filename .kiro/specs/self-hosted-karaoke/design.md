@@ -102,7 +102,7 @@ interface JellyfinService {
   authenticate(
     server: string,
     username: string,
-    password: string,
+    password: string
   ): Promise<AuthToken>;
   searchMedia(query: string, mediaType: "Audio"): Promise<MediaItem[]>;
   getStreamUrl(itemId: string): string;

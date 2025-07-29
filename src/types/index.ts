@@ -253,7 +253,7 @@ export interface WebSocketEvents {
   "song-ended": (
     data:
       | QueueItem
-      | { song: QueueItem; rating: SongRating; nextSong?: QueueItem },
+      | { song: QueueItem; rating: SongRating; nextSong?: QueueItem }
   ) => void;
   "lyrics-sync": (syncState: LyricsSyncState) => void;
   "playback-control": (command: PlaybackCommand) => void;

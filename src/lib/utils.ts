@@ -45,17 +45,17 @@ export function formatMediaItemDisplay(item: MediaItem): string {
 
 export function searchMediaItems(
   items: MediaItem[],
-  query: string,
+  query: string
 ): MediaItem[] {
   if (!query.trim()) return items;
 
   const searchTerm = query.toLowerCase().trim();
 
   return items.filter(
-    (item) =>
+    item =>
       item.title.toLowerCase().includes(searchTerm) ||
       item.artist.toLowerCase().includes(searchTerm) ||
-      (item.album && item.album.toLowerCase().includes(searchTerm)),
+      (item.album && item.album.toLowerCase().includes(searchTerm))
   );
 }
 
@@ -66,7 +66,7 @@ export function searchMediaItems(
 export function createQueueItem(
   mediaItem: MediaItem,
   addedBy: string,
-  position?: number,
+  position?: number
 ): QueueItem {
   return {
     id: `queue_${generateId()}`,
@@ -82,7 +82,7 @@ export function addToQueue(
   queue: QueueItem[],
   mediaItem: MediaItem,
   addedBy: string,
-  position?: number,
+  position?: number
 ): QueueItem[] {
   const newQueue = [...queue];
   const insertPosition = position ?? newQueue.length;
@@ -101,9 +101,9 @@ export function addToQueue(
 
 export function removeFromQueue(
   queue: QueueItem[],
-  itemId: string,
+  itemId: string
 ): QueueItem[] {
-  const newQueue = queue.filter((item) => item.id !== itemId);
+  const newQueue = queue.filter(item => item.id !== itemId);
 
   // Update positions
   return newQueue.map((item, index) => ({
@@ -115,9 +115,9 @@ export function removeFromQueue(
 export function moveQueueItem(
   queue: QueueItem[],
   itemId: string,
-  newPosition: number,
+  newPosition: number
 ): QueueItem[] {
-  const currentIndex = queue.findIndex((item) => item.id === itemId);
+  const currentIndex = queue.findIndex(item => item.id === itemId);
   if (currentIndex === -1) return queue;
 
   const newQueue = [...queue];
@@ -132,15 +132,15 @@ export function moveQueueItem(
 }
 
 export function getNextSong(queue: QueueItem[]): QueueItem | null {
-  const pendingSongs = queue.filter((item) => item.status === "pending");
+  const pendingSongs = queue.filter(item => item.status === "pending");
   return pendingSongs.length > 0 ? pendingSongs[0] : null;
 }
 
 export function markSongAsPlaying(
   queue: QueueItem[],
-  songId: string,
+  songId: string
 ): QueueItem[] {
-  return queue.map((item) => ({
+  return queue.map(item => ({
     ...item,
     status: item.id === songId ? ("playing" as QueueItemStatus) : item.status,
   }));
@@ -148,9 +148,9 @@ export function markSongAsPlaying(
 
 export function markSongAsCompleted(
   queue: QueueItem[],
-  songId: string,
+  songId: string
 ): QueueItem[] {
-  return queue.map((item) => ({
+  return queue.map(item => ({
     ...item,
     status: item.id === songId ? ("completed" as QueueItemStatus) : item.status,
   }));
@@ -158,9 +158,9 @@ export function markSongAsCompleted(
 
 export function getUserQueueItems(
   queue: QueueItem[],
-  userId: string,
+  userId: string
 ): QueueItem[] {
-  return queue.filter((item) => item.addedBy === userId);
+  return queue.filter(item => item.addedBy === userId);
 }
 
 // ============================================================================
@@ -169,7 +169,7 @@ export function getUserQueueItems(
 
 export function createKaraokeSession(
   name: string,
-  hostUser: ConnectedUser,
+  hostUser: ConnectedUser
 ): KaraokeSession {
   return {
     id: `session_${generateId()}`,
@@ -207,11 +207,11 @@ export function createKaraokeSession(
 
 export function addUserToSession(
   session: KaraokeSession,
-  user: ConnectedUser,
+  user: ConnectedUser
 ): KaraokeSession {
   // Check if user already exists
   const existingUserIndex = session.connectedUsers.findIndex(
-    (u) => u.id === user.id,
+    u => u.id === user.id
   );
 
   if (existingUserIndex >= 0) {
@@ -236,11 +236,11 @@ export function addUserToSession(
 
 export function removeUserFromSession(
   session: KaraokeSession,
-  userId: string,
+  userId: string
 ): KaraokeSession {
   return {
     ...session,
-    connectedUsers: session.connectedUsers.filter((user) => user.id !== userId),
+    connectedUsers: session.connectedUsers.filter(user => user.id !== userId),
     lastActivity: new Date(),
   };
 }
@@ -259,7 +259,7 @@ export function updateSessionActivity(session: KaraokeSession): KaraokeSession {
 export function createConnectedUser(
   name: string,
   isHost: boolean = false,
-  socketId?: string,
+  socketId?: string
 ): ConnectedUser {
   const now = new Date();
 
@@ -286,7 +286,7 @@ export function updateUserLastSeen(user: ConnectedUser): ConnectedUser {
 
 export function findCurrentLyricsLine(
   lines: LyricsLine[],
-  currentTime: number,
+  currentTime: number
 ): { current: LyricsLine | null; next: LyricsLine | null; index: number } {
   if (!lines.length) {
     return { current: null, next: null, index: -1 };
@@ -336,7 +336,7 @@ export function createSuccessResponse<T>(data: T): ApiResponse<T> {
 export function createErrorResponse(
   code: string,
   message: string,
-  details?: any,
+  details?: any
 ): ApiResponse {
   return {
     success: false,
@@ -354,7 +354,7 @@ export function createPaginatedResponse<T>(
   data: T[],
   page: number,
   limit: number,
-  total: number,
+  total: number
 ): PaginatedResponse<T> {
   return {
     success: true,
@@ -392,7 +392,7 @@ export function formatTimeAgo(date: Date): string {
 
 export function isRecentActivity(
   date: Date,
-  thresholdMinutes: number = 5,
+  thresholdMinutes: number = 5
 ): boolean {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -416,7 +416,7 @@ export function shuffleArray<T>(array: T[]): T[] {
 
 export function groupBy<T, K extends string | number>(
   array: T[],
-  keyFn: (item: T) => K,
+  keyFn: (item: T) => K
 ): Record<K, T[]> {
   return array.reduce(
     (groups, item) => {
@@ -427,13 +427,13 @@ export function groupBy<T, K extends string | number>(
       groups[key].push(item);
       return groups;
     },
-    {} as Record<K, T[]>,
+    {} as Record<K, T[]>
   );
 }
 
 export function uniqueBy<T>(array: T[], keyFn: (item: T) => any): T[] {
   const seen = new Set();
-  return array.filter((item) => {
+  return array.filter(item => {
     const key = keyFn(item);
     if (seen.has(key)) {
       return false;

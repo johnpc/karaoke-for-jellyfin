@@ -17,7 +17,7 @@ export function RatingAnimation({
   duration = 4000,
 }: RatingAnimationProps) {
   const [phase, setPhase] = useState<"spinning" | "revealing" | "celebrating">(
-    "spinning",
+    "spinning"
   );
   const [isVisible, setIsVisible] = useState(true);
 

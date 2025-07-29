@@ -21,7 +21,7 @@ export function NextSongSplash({
   useEffect(() => {
     // Countdown timer
     const countdownInterval = setInterval(() => {
-      setCountdown((prev) => {
+      setCountdown(prev => {
         if (prev <= 1) {
           clearInterval(countdownInterval);
           return 0;

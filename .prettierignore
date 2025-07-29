@@ -12,3 +12,4 @@ Dockerfile
 *.sh
 *.mp3
 .env*
+.husky/

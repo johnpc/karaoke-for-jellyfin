@@ -44,7 +44,7 @@ export function AudioPlayer({
     console.log(
       "Loading new song:",
       song.mediaItem.title,
-      song.mediaItem.streamUrl,
+      song.mediaItem.streamUrl
     );
 
     // Validate stream URL
@@ -67,7 +67,7 @@ export function AudioPlayer({
       // If playback state indicates we should be playing, start playback now
       if (playbackState?.isPlaying && audio.paused) {
         console.log("Audio ready and should be playing - starting playback");
-        audio.play().catch((err) => {
+        audio.play().catch(err => {
           console.error("Auto-play on ready failed:", err);
           setError(`Auto-play failed: ${err.message}`);
         });
@@ -126,7 +126,7 @@ export function AudioPlayer({
       // Check if audio is ready to play
       if (audio.readyState >= 2) {
         // HAVE_CURRENT_DATA or higher
-        audio.play().catch((err) => {
+        audio.play().catch(err => {
           console.error("Play failed:", err);
           setError(`Play failed: ${err.message}`);
         });
@@ -159,7 +159,7 @@ export function AudioPlayer({
     ) {
       const timeDiff = Math.abs(audio.currentTime - playbackState.currentTime);
       const lastSeekDiff = Math.abs(
-        lastSeekTimeRef.current - playbackState.currentTime,
+        lastSeekTimeRef.current - playbackState.currentTime
       );
 
       // Only seek if the difference is significant and it's not the same seek we just did

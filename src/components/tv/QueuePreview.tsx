@@ -15,7 +15,7 @@ export function QueuePreview({
   currentSong,
   onClose,
 }: QueuePreviewProps) {
-  const pendingQueue = queue.filter((item) => item.status === "pending");
+  const pendingQueue = queue.filter(item => item.status === "pending");
 
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -25,7 +25,7 @@ export function QueuePreview({
 
   const totalDuration = pendingQueue.reduce(
     (total, item) => total + item.mediaItem.duration,
-    0,
+    0
   );
 
   return (

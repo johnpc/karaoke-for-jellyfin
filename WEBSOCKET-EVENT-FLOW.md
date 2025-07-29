@@ -156,7 +156,7 @@ io.to(sessionId).emit("song-ended", {
 ### 2. Update Client Handler
 
 ```javascript
-socket.on("song-ended", (data) => {
+socket.on("song-ended", data => {
   if (data.rating) {
     // This is a completion with rating - start transitions
     handleSongCompleted(data);

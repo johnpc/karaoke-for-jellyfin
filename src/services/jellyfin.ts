@@ -66,7 +66,7 @@ export class JellyfinService {
 
     if (!this.baseUrl || !this.apiKey || !this.username) {
       throw new Error(
-        "JELLYFIN_SERVER_URL, JELLYFIN_API_KEY, and JELLYFIN_USERNAME must be configured",
+        "JELLYFIN_SERVER_URL, JELLYFIN_API_KEY, and JELLYFIN_USERNAME must be configured"
       );
     }
   }
@@ -90,26 +90,26 @@ export class JellyfinService {
       const users = await response.json();
       console.log(
         "Available users:",
-        users?.map((u: any) => u.Name),
+        users?.map((u: any) => u.Name)
       );
 
       if (users && users.length > 0) {
         // Find user by username (case insensitive)
         const targetUser = users.find(
           (user: any) =>
-            user.Name?.toLowerCase() === this.username.toLowerCase(),
+            user.Name?.toLowerCase() === this.username.toLowerCase()
         );
 
         if (targetUser) {
           this.userId = targetUser.Id;
           console.log(
-            `Authenticated as user: ${targetUser.Name} (ID: ${targetUser.Id})`,
+            `Authenticated as user: ${targetUser.Name} (ID: ${targetUser.Id})`
           );
           return true;
         } else {
           console.error(
             `User "${this.username}" not found. Available users:`,
-            users.map((u: any) => u.Name),
+            users.map((u: any) => u.Name)
           );
           return false;
         }
@@ -150,7 +150,7 @@ export class JellyfinService {
       const uniqueResults = new Map<string, MediaItem>();
 
       // Use Map to deduplicate by ID, keeping the first occurrence
-      allResults.forEach((item) => {
+      allResults.forEach(item => {
         if (!uniqueResults.has(item.id)) {
           uniqueResults.set(item.id, item);
         }
@@ -212,7 +212,7 @@ export class JellyfinService {
     try {
       const result = await this.performSearch(query, limit, "Name");
       console.log(
-        `Title search for "${query}" returned ${result.length} results`,
+        `Title search for "${query}" returned ${result.length} results`
       );
       return result;
     } catch (error) {
@@ -227,7 +227,7 @@ export class JellyfinService {
   async searchArtists(
     query: string,
     limit: number = 50,
-    startIndex: number = 0,
+    startIndex: number = 0
   ): Promise<Artist[]> {
     if (!this.userId) {
       const authenticated = await this.authenticate();
@@ -238,7 +238,7 @@ export class JellyfinService {
 
     try {
       console.log(
-        `Searching for artists: "${query}" (limit: ${limit}, startIndex: ${startIndex})`,
+        `Searching for artists: "${query}" (limit: ${limit}, startIndex: ${startIndex})`
       );
 
       const searchParams = new URLSearchParams({
@@ -254,7 +254,7 @@ export class JellyfinService {
       });
 
       console.log(
-        `Artist search URL: ${this.baseUrl}/Items?${searchParams.toString()}`,
+        `Artist search URL: ${this.baseUrl}/Items?${searchParams.toString()}`
       );
 
       const response = await fetch(
@@ -264,7 +264,7 @@ export class JellyfinService {
             "X-Emby-Token": this.apiKey,
             "Content-Type": "application/json",
           },
-        },
+        }
       );
 
       if (!response.ok) {
@@ -290,7 +290,7 @@ export class JellyfinService {
   async getSongsByArtistId(
     artistId: string,
     limit: number = 50,
-    startIndex: number = 0,
+    startIndex: number = 0
   ): Promise<MediaItem[]> {
     if (!this.userId) {
       const authenticated = await this.authenticate();
@@ -301,7 +301,7 @@ export class JellyfinService {
 
     try {
       console.log(
-        `Getting songs for artist ID: ${artistId} (limit: ${limit}, startIndex: ${startIndex})`,
+        `Getting songs for artist ID: ${artistId} (limit: ${limit}, startIndex: ${startIndex})`
       );
 
       const searchParams = new URLSearchParams({
@@ -317,7 +317,7 @@ export class JellyfinService {
       });
 
       console.log(
-        `Songs by artist URL: ${this.baseUrl}/Items?${searchParams.toString()}`,
+        `Songs by artist URL: ${this.baseUrl}/Items?${searchParams.toString()}`
       );
 
       const response = await fetch(
@@ -327,7 +327,7 @@ export class JellyfinService {
             "X-Emby-Token": this.apiKey,
             "Content-Type": "application/json",
           },
-        },
+        }
       );
 
       if (!response.ok) {
@@ -336,7 +336,7 @@ export class JellyfinService {
 
       const data: JellyfinSearchResponse = await response.json();
       console.log(
-        `Jellyfin returned ${data.Items?.length || 0} songs for artist ${artistId}`,
+        `Jellyfin returned ${data.Items?.length || 0} songs for artist ${artistId}`
       );
 
       const songs = this.transformMediaItems(data.Items || []);
@@ -351,7 +351,7 @@ export class JellyfinService {
   async searchByArtist(
     query: string,
     limit: number = 50,
-    startIndex: number = 0,
+    startIndex: number = 0
   ): Promise<MediaItem[]> {
     if (!this.userId) {
       const authenticated = await this.authenticate();
@@ -362,7 +362,7 @@ export class JellyfinService {
 
     try {
       console.log(
-        `Searching for artist: "${query}" (limit: ${limit}, startIndex: ${startIndex})`,
+        `Searching for artist: "${query}" (limit: ${limit}, startIndex: ${startIndex})`
       );
 
       // Due to Jellyfin API limitations with artist search, we need to:
@@ -385,7 +385,7 @@ export class JellyfinService {
         allMatchingItems = this.artistSearchCache.get(cacheKey) || [];
       } else {
         console.log(
-          `Fetching all songs for artist "${query}" - this may take a moment...`,
+          `Fetching all songs for artist "${query}" - this may take a moment...`
         );
 
         // Fetch all audio items in batches to avoid memory issues
@@ -396,7 +396,7 @@ export class JellyfinService {
 
         while (hasMoreItems) {
           console.log(
-            `Fetching batch ${Math.floor(currentStartIndex / batchSize) + 1} starting at index ${currentStartIndex}`,
+            `Fetching batch ${Math.floor(currentStartIndex / batchSize) + 1} starting at index ${currentStartIndex}`
           );
 
           const searchParams = new URLSearchParams({
@@ -417,7 +417,7 @@ export class JellyfinService {
                 "X-Emby-Token": this.apiKey,
                 "Content-Type": "application/json",
               },
-            },
+            }
           );
 
           if (!response.ok) {
@@ -428,7 +428,7 @@ export class JellyfinService {
           const batchItems = this.transformMediaItems(data.Items || []);
 
           console.log(
-            `Batch ${Math.floor(currentStartIndex / batchSize) + 1}: Got ${batchItems.length} items`,
+            `Batch ${Math.floor(currentStartIndex / batchSize) + 1}: Got ${batchItems.length} items`
           );
           allItems.push(...batchItems);
 
@@ -447,12 +447,12 @@ export class JellyfinService {
 
         // Filter by artist name
         const queryLower = query.toLowerCase();
-        allMatchingItems = allItems.filter((item) => {
+        allMatchingItems = allItems.filter(item => {
           return item.artist.toLowerCase().includes(queryLower);
         });
 
         console.log(
-          `Found ${allMatchingItems.length} songs by artists matching "${query}"`,
+          `Found ${allMatchingItems.length} songs by artists matching "${query}"`
         );
 
         // Sort by relevance (exact matches first, then partial matches)
@@ -484,21 +484,21 @@ export class JellyfinService {
             this.artistSearchCache?.delete(cacheKey);
             console.log(`Cleared cache for artist search "${query}"`);
           },
-          5 * 60 * 1000,
+          5 * 60 * 1000
         ); // 5 minutes
       }
 
       // Apply pagination to the filtered and sorted results
       const paginatedResults = allMatchingItems.slice(
         startIndex,
-        startIndex + limit,
+        startIndex + limit
       );
 
       console.log(
-        `Returning ${paginatedResults.length} results for page (startIndex: ${startIndex}, limit: ${limit})`,
+        `Returning ${paginatedResults.length} results for page (startIndex: ${startIndex}, limit: ${limit})`
       );
       console.log(
-        `Total matching songs for "${query}": ${allMatchingItems.length}`,
+        `Total matching songs for "${query}": ${allMatchingItems.length}`
       );
 
       return paginatedResults;
@@ -510,7 +510,7 @@ export class JellyfinService {
   private async performSearch(
     query: string,
     limit: number,
-    searchField: "Name" | "Artists",
+    searchField: "Name" | "Artists"
   ): Promise<MediaItem[]> {
     try {
       const searchParams = new URLSearchParams({
@@ -524,7 +524,7 @@ export class JellyfinService {
 
       console.log(`Performing ${searchField} search for: "${query}"`);
       console.log(
-        `Search URL: ${this.baseUrl}/Items?${searchParams.toString()}`,
+        `Search URL: ${this.baseUrl}/Items?${searchParams.toString()}`
       );
 
       const response = await fetch(
@@ -534,7 +534,7 @@ export class JellyfinService {
             "X-Emby-Token": this.apiKey,
             "Content-Type": "application/json",
           },
-        },
+        }
       );
 
       if (!response.ok) {
@@ -543,7 +543,7 @@ export class JellyfinService {
 
       const data: JellyfinSearchResponse = await response.json();
       console.log(
-        `Jellyfin returned ${data.Items?.length || 0} items for ${searchField} search`,
+        `Jellyfin returned ${data.Items?.length || 0} items for ${searchField} search`
       );
 
       const items = this.transformMediaItems(data.Items || []);
@@ -551,7 +551,7 @@ export class JellyfinService {
 
       // Filter results based on the search field for better relevance
       const queryLower = query.toLowerCase();
-      const filtered = items.filter((item) => {
+      const filtered = items.filter(item => {
         if (searchField === "Name") {
           const matches = item.title.toLowerCase().includes(queryLower);
           if (matches) {
@@ -569,7 +569,7 @@ export class JellyfinService {
       });
 
       console.log(
-        `After filtering: ${filtered.length} items for ${searchField} search`,
+        `After filtering: ${filtered.length} items for ${searchField} search`
       );
       return filtered;
     } catch (error) {
@@ -584,7 +584,7 @@ export class JellyfinService {
    */
   async getAllAudioItems(
     startIndex: number = 0,
-    limit: number = 100,
+    limit: number = 100
   ): Promise<MediaItem[]> {
     if (!this.userId) {
       const authenticated = await this.authenticate();
@@ -619,7 +619,7 @@ export class JellyfinService {
         console.error(
           "Jellyfin API response not OK:",
           response.status,
-          response.statusText,
+          response.statusText
         );
         throw new Error(`Failed to fetch audio items: ${response.status}`);
       }
@@ -676,7 +676,7 @@ export class JellyfinService {
             "X-Emby-Token": this.apiKey,
             "Content-Type": "application/json",
           },
-        },
+        }
       );
 
       if (!response.ok) {
@@ -737,7 +737,7 @@ export class JellyfinService {
       console.log(`Lyrics API response status: ${response.status}`);
       console.log(
         `Lyrics API response headers:`,
-        Object.fromEntries(response.headers.entries()),
+        Object.fromEntries(response.headers.entries())
       );
 
       if (response.ok) {
@@ -749,7 +749,7 @@ export class JellyfinService {
           console.log(
             "Received lyrics array with",
             lyricsData.length,
-            "entries",
+            "entries"
           );
           return lyricsData;
         } else if (lyricsData.Lyrics) {
@@ -769,7 +769,7 @@ export class JellyfinService {
 
       // If the direct lyrics endpoint doesn't work, try alternative approaches
       console.log(
-        "Direct lyrics endpoint failed, trying alternative methods...",
+        "Direct lyrics endpoint failed, trying alternative methods..."
       );
 
       // Try getting item details to see if lyrics are embedded
@@ -780,7 +780,7 @@ export class JellyfinService {
             "X-Emby-Token": this.apiKey,
             "Content-Type": "application/json",
           },
-        },
+        }
       );
 
       if (itemResponse.ok) {
@@ -796,12 +796,12 @@ export class JellyfinService {
             stream.Type === "Subtitle" &&
             (stream.Codec === "lrc" ||
               stream.DisplayTitle?.toLowerCase().includes("lyrics") ||
-              stream.Language?.toLowerCase().includes("lrc")),
+              stream.Language?.toLowerCase().includes("lrc"))
         );
 
         console.log(
           `Found ${lyricsStreams.length} potential lyrics streams:`,
-          lyricsStreams,
+          lyricsStreams
         );
 
         if (lyricsStreams.length > 0) {
@@ -822,13 +822,13 @@ export class JellyfinService {
             const lyricsContent = await subtitleResponse.text();
             console.log(
               "Got lyrics from subtitle stream, length:",
-              lyricsContent.length,
+              lyricsContent.length
             );
             return lyricsContent;
           } else {
             console.log(
               "Subtitle stream request failed:",
-              subtitleResponse.status,
+              subtitleResponse.status
             );
           }
         }
@@ -848,8 +848,7 @@ export class JellyfinService {
     const lyrics = await this.getLyrics(itemId);
     if (Array.isArray(lyrics)) {
       return (
-        lyrics.length > 0 &&
-        lyrics.some((item) => item.Text && item.Text.trim())
+        lyrics.length > 0 && lyrics.some(item => item.Text && item.Text.trim())
       );
     }
     return (
@@ -869,7 +868,7 @@ export class JellyfinService {
             "X-Emby-Token": this.apiKey,
             "Content-Type": "application/json",
           },
-        },
+        }
       );
 
       if (!response.ok) {
@@ -883,7 +882,7 @@ export class JellyfinService {
           name: lib.Name,
           id: lib.Id,
           type: lib.CollectionType,
-        })),
+        }))
       );
 
       return data.Items || [];
@@ -898,8 +897,8 @@ export class JellyfinService {
    */
   private transformArtists(items: JellyfinArtist[]): Artist[] {
     return items
-      .filter((item) => item.Type === "MusicArtist")
-      .map((item) => this.transformArtist(item))
+      .filter(item => item.Type === "MusicArtist")
+      .map(item => this.transformArtist(item))
       .filter(Boolean) as Artist[];
   }
 
@@ -922,7 +921,7 @@ export class JellyfinService {
   }
   private transformMediaItems(items: JellyfinMediaItem[]): MediaItem[] {
     return items
-      .map((item) => this.transformMediaItem(item))
+      .map(item => this.transformMediaItem(item))
       .filter(Boolean) as MediaItem[];
   }
 

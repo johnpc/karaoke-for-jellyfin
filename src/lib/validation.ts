@@ -21,7 +21,7 @@ export class ValidationError extends Error {
   constructor(
     message: string,
     public code: ErrorCode = "INVALID_REQUEST",
-    public field?: string,
+    public field?: string
   ) {
     super(message);
     this.name = "ValidationError";
@@ -31,7 +31,7 @@ export class ValidationError extends Error {
 export function createErrorMessage(
   code: ErrorCode,
   message: string,
-  details?: any,
+  details?: any
 ): ErrorMessage {
   return {
     code,
@@ -58,7 +58,7 @@ export const isPositiveNumber: TypeGuard<number> = (value): value is number => {
 };
 
 export const isNonNegativeNumber: TypeGuard<number> = (
-  value,
+  value
 ): value is number => {
   return isNumber(value) && value >= 0;
 };
@@ -82,7 +82,7 @@ export const isValidUrl: TypeGuard<string> = (value): value is string => {
 // ============================================================================
 
 export const isValidMediaItem: TypeGuard<MediaItem> = (
-  value,
+  value
 ): value is MediaItem => {
   if (!value || typeof value !== "object") return false;
 
@@ -114,7 +114,7 @@ export function validateMediaItem(item: any): MediaItem {
 // ============================================================================
 
 export const isValidQueueItem: TypeGuard<QueueItem> = (
-  value,
+  value
 ): value is QueueItem => {
   if (!value || typeof value !== "object") return false;
 
@@ -144,7 +144,7 @@ export function validateQueueItem(item: any): QueueItem {
 // ============================================================================
 
 export const isValidConnectedUser: TypeGuard<ConnectedUser> = (
-  value,
+  value
 ): value is ConnectedUser => {
   if (!value || typeof value !== "object") return false;
 
@@ -172,7 +172,7 @@ export function validateConnectedUser(user: any): ConnectedUser {
 // ============================================================================
 
 export const isValidLyricsLine: TypeGuard<LyricsLine> = (
-  value,
+  value
 ): value is LyricsLine => {
   if (!value || typeof value !== "object") return false;
 
@@ -186,7 +186,7 @@ export const isValidLyricsLine: TypeGuard<LyricsLine> = (
 };
 
 export const isValidLyricsFile: TypeGuard<LyricsFile> = (
-  value,
+  value
 ): value is LyricsFile => {
   if (!value || typeof value !== "object") return false;
 
@@ -213,7 +213,7 @@ export function validateLyricsFile(lyrics: any): LyricsFile {
 // ============================================================================
 
 export const isValidPlaybackCommand: TypeGuard<PlaybackCommand> = (
-  value,
+  value
 ): value is PlaybackCommand => {
   if (!value || typeof value !== "object") return false;
 
@@ -248,7 +248,7 @@ export function validatePlaybackCommand(command: any): PlaybackCommand {
       throw new ValidationError(
         "Volume must be between 0 and 100",
         "INVALID_REQUEST",
-        "value",
+        "value"
       );
     }
   }
@@ -258,7 +258,7 @@ export function validatePlaybackCommand(command: any): PlaybackCommand {
       throw new ValidationError(
         "Seek position cannot be negative",
         "INVALID_REQUEST",
-        "value",
+        "value"
       );
     }
   }
@@ -271,7 +271,7 @@ export function validatePlaybackCommand(command: any): PlaybackCommand {
 // ============================================================================
 
 export const isValidSearchRequest: TypeGuard<SearchRequest> = (
-  value,
+  value
 ): value is SearchRequest => {
   if (!value || typeof value !== "object") return false;
 
@@ -308,7 +308,7 @@ export function validateSessionName(name: string): string {
     throw new ValidationError(
       "Session name is required",
       "INVALID_REQUEST",
-      "name",
+      "name"
     );
   }
 
@@ -316,7 +316,7 @@ export function validateSessionName(name: string): string {
     throw new ValidationError(
       "Session name must be 100 characters or less",
       "INVALID_REQUEST",
-      "name",
+      "name"
     );
   }
 
@@ -328,7 +328,7 @@ export function validateUserName(name: string): string {
     throw new ValidationError(
       "User name is required",
       "INVALID_REQUEST",
-      "name",
+      "name"
     );
   }
 
@@ -336,7 +336,7 @@ export function validateUserName(name: string): string {
     throw new ValidationError(
       "User name must be 50 characters or less",
       "INVALID_REQUEST",
-      "name",
+      "name"
     );
   }
 
@@ -347,7 +347,7 @@ export function validateUserName(name: string): string {
     throw new ValidationError(
       "User name contains only invalid characters",
       "INVALID_REQUEST",
-      "name",
+      "name"
     );
   }
 
@@ -364,7 +364,7 @@ export function generateId(): string {
 
 export function sanitizeString(
   input: string,
-  maxLength: number = 1000,
+  maxLength: number = 1000
 ): string {
   if (!isString(input)) return "";
 
@@ -386,7 +386,7 @@ export function formatDuration(seconds: number): string {
 export function parseDuration(durationString: string): number {
   if (!isString(durationString)) return 0;
 
-  const parts = durationString.split(":").map((part) => parseInt(part, 10));
+  const parts = durationString.split(":").map(part => parseInt(part, 10));
 
   if (parts.length === 2 && parts.every(isNumber)) {
     return parts[0] * 60 + parts[1];
@@ -401,13 +401,13 @@ export function parseDuration(durationString: string): number {
 
 export function validateQueuePosition(
   position: number,
-  queueLength: number,
+  queueLength: number
 ): number {
   if (!isNonNegativeNumber(position)) {
     throw new ValidationError(
       "Queue position must be a non-negative number",
       "INVALID_REQUEST",
-      "position",
+      "position"
     );
   }
 
@@ -421,7 +421,7 @@ export function validateQueuePosition(
 export function reorderQueue(
   queue: QueueItem[],
   fromIndex: number,
-  toIndex: number,
+  toIndex: number
 ): QueueItem[] {
   if (!Array.isArray(queue)) return [];
 

@@ -8,7 +8,7 @@ async function testQueueSync() {
     // Test 1: Check WebSocket server state
     console.log("1. WebSocket Server State:");
     const wsResponse = await fetch(
-      "http://localhost:3000/debug/websocket-state",
+      "http://localhost:3000/debug/websocket-state"
     );
     const wsData = await wsResponse.json();
     console.log("   Session exists:", !!wsData.currentSession);
@@ -19,7 +19,7 @@ async function testQueueSync() {
       console.log("   Queue items:");
       wsData.currentSession.queue.forEach((item, i) => {
         console.log(
-          `     ${i + 1}. "${item.title}" by ${item.artist} (${item.status}) - added by ${item.addedBy}`,
+          `     ${i + 1}. "${item.title}" by ${item.artist} (${item.status}) - added by ${item.addedBy}`
         );
       });
     }
@@ -34,14 +34,14 @@ async function testQueueSync() {
       console.log("   Queue length:", apiData.data.queue?.length || 0);
       console.log(
         "   Current song:",
-        apiData.data.currentSong?.mediaItem?.title || "None",
+        apiData.data.currentSong?.mediaItem?.title || "None"
       );
 
       if (apiData.data.queue?.length > 0) {
         console.log("   Queue items:");
         apiData.data.queue.forEach((item, i) => {
           console.log(
-            `     ${i + 1}. "${item.mediaItem.title}" by ${item.mediaItem.artist} (${item.status}) - added by ${item.addedBy}`,
+            `     ${i + 1}. "${item.mediaItem.title}" by ${item.mediaItem.artist} (${item.status}) - added by ${item.addedBy}`
           );
         });
       }
@@ -57,7 +57,7 @@ async function testQueueSync() {
 
     if (wsQueueLength > 0 && apiQueueLength === 0) {
       console.log(
-        "   ❌ ISSUE CONFIRMED: WebSocket has queue items but API session manager is empty",
+        "   ❌ ISSUE CONFIRMED: WebSocket has queue items but API session manager is empty"
       );
       console.log("   This explains why Host Controls shows no songs");
     } else if (wsQueueLength === apiQueueLength) {

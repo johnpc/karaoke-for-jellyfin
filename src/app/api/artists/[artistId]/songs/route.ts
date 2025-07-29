@@ -9,14 +9,14 @@ import {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ artistId: string }> },
+  { params }: { params: Promise<{ artistId: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 1000);
     const startIndex = Math.max(
       parseInt(searchParams.get("startIndex") || "0"),
-      0,
+      0
     );
 
     const { artistId } = await params;
@@ -24,7 +24,7 @@ export async function GET(
     if (!artistId) {
       return NextResponse.json(
         createErrorResponse("INVALID_ARTIST_ID", "Artist ID is required"),
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -41,9 +41,9 @@ export async function GET(
       return NextResponse.json(
         createErrorResponse(
           "JELLYFIN_UNAVAILABLE",
-          "Jellyfin server is not accessible",
+          "Jellyfin server is not accessible"
         ),
-        { status: 503 },
+        { status: 503 }
       );
     }
 
@@ -51,7 +51,7 @@ export async function GET(
     const result = await jellyfinService.getSongsByArtistId(
       jellyfinArtistId,
       limit,
-      startIndex,
+      startIndex
     );
 
     return NextResponse.json(
@@ -59,17 +59,17 @@ export async function GET(
         result.songs,
         Math.floor(startIndex / limit) + 1,
         limit,
-        result.totalCount, // Use the actual total count from Jellyfin
-      ),
+        result.totalCount // Use the actual total count from Jellyfin
+      )
     );
   } catch (error) {
     console.error("Get songs by artist API error:", error);
     return NextResponse.json(
       createErrorResponse(
         "GET_SONGS_BY_ARTIST_FAILED",
-        "Failed to get songs by artist",
+        "Failed to get songs by artist"
       ),
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

@@ -50,7 +50,7 @@ export class KaraokeSessionManager {
       "playback-state-changed",
     ];
 
-    eventTypes.forEach((type) => {
+    eventTypes.forEach(type => {
       this.eventListeners.set(type, []);
     });
   }
@@ -75,7 +75,7 @@ export class KaraokeSessionManager {
 
   private emit(event: string, data?: unknown): void {
     const listeners = this.eventListeners.get(event) || [];
-    listeners.forEach((callback) => {
+    listeners.forEach(callback => {
       try {
         callback(data);
       } catch (error) {
@@ -144,14 +144,14 @@ export class KaraokeSessionManager {
       throw new ValidationError("No active session");
     }
 
-    const user = this.session.connectedUsers.find((u) => u.id === userId);
+    const user = this.session.connectedUsers.find(u => u.id === userId);
     if (!user) {
       throw new ValidationError("User not found");
     }
 
     // Remove user's songs from queue if they're not playing
     this.session.queue = this.session.queue.filter(
-      (item) => item.addedBy !== userId || item.status === "playing",
+      item => item.addedBy !== userId || item.status === "playing"
     );
 
     this.session = removeUserFromSession(this.session, userId);
@@ -168,7 +168,7 @@ export class KaraokeSessionManager {
     if (!this.session) return;
 
     const userIndex = this.session.connectedUsers.findIndex(
-      (u) => u.id === userId,
+      u => u.id === userId
     );
     if (userIndex >= 0) {
       this.session.connectedUsers[userIndex].socketId = socketId;
@@ -183,7 +183,7 @@ export class KaraokeSessionManager {
   addSongToQueue(
     mediaItem: MediaItem,
     userId: string,
-    position?: number,
+    position?: number
   ): QueueOperationResult {
     if (!this.session) {
       return { success: false, message: "No active session" };
@@ -200,14 +200,14 @@ export class KaraokeSessionManager {
     this.queueOperationInProgress = true;
 
     try {
-      const user = this.session.connectedUsers.find((u) => u.id === userId);
+      const user = this.session.connectedUsers.find(u => u.id === userId);
       if (!user) {
         return { success: false, message: "User not found in session" };
       }
 
       // Check user's song limit
       const userSongs = this.session.queue.filter(
-        (item) => item.addedBy === userId && item.status === "pending",
+        item => item.addedBy === userId && item.status === "pending"
       );
 
       if (userSongs.length >= this.session.hostControls.maxSongsPerUser) {
@@ -221,7 +221,7 @@ export class KaraokeSessionManager {
         this.session.queue,
         mediaItem,
         userId,
-        position,
+        position
       );
       const addedItem =
         this.session.queue[position ?? this.session.queue.length - 1];
@@ -247,7 +247,7 @@ export class KaraokeSessionManager {
 
   removeSongFromQueue(
     queueItemId: string,
-    userId: string,
+    userId: string
   ): QueueOperationResult {
     if (!this.session) {
       return { success: false, message: "No active session" };
@@ -265,13 +265,13 @@ export class KaraokeSessionManager {
 
     try {
       const queueItem = this.session.queue.find(
-        (item) => item.id === queueItemId,
+        item => item.id === queueItemId
       );
       if (!queueItem) {
         return { success: false, message: "Song not found in queue" };
       }
 
-      const user = this.session.connectedUsers.find((u) => u.id === userId);
+      const user = this.session.connectedUsers.find(u => u.id === userId);
       const isHost = user?.isHost || false;
 
       // Check permissions
@@ -312,13 +312,13 @@ export class KaraokeSessionManager {
   reorderQueue(
     queueItemId: string,
     newPosition: number,
-    userId: string,
+    userId: string
   ): QueueOperationResult {
     if (!this.session) {
       return { success: false, message: "No active session" };
     }
 
-    const user = this.session.connectedUsers.find((u) => u.id === userId);
+    const user = this.session.connectedUsers.find(u => u.id === userId);
     if (!user?.isHost) {
       return { success: false, message: "Only the host can reorder the queue" };
     }
@@ -327,7 +327,7 @@ export class KaraokeSessionManager {
       this.session.queue = moveQueueItem(
         this.session.queue,
         queueItemId,
-        newPosition,
+        newPosition
       );
 
       this.updateSessionActivity();
@@ -387,11 +387,11 @@ export class KaraokeSessionManager {
       if (this.session.currentSong) {
         console.log(
           "Marking previous song as completed:",
-          this.session.currentSong.id,
+          this.session.currentSong.id
         );
         this.session.queue = markSongAsCompleted(
           this.session.queue,
-          this.session.currentSong.id,
+          this.session.currentSong.id
         );
       }
 
@@ -401,7 +401,7 @@ export class KaraokeSessionManager {
 
       // Get the updated song object from the queue
       const updatedSong = this.session.queue.find(
-        (item) => item.id === nextSong.id,
+        item => item.id === nextSong.id
       )!;
       console.log("Updated song object:", updatedSong);
       this.session.currentSong = updatedSong;
@@ -431,7 +431,7 @@ export class KaraokeSessionManager {
     // Prevent concurrent song transitions
     if (this.songTransitionInProgress) {
       console.log(
-        "Song transition already in progress, ignoring endCurrentSong",
+        "Song transition already in progress, ignoring endCurrentSong"
       );
       return;
     }
@@ -444,7 +444,7 @@ export class KaraokeSessionManager {
       // Mark song as completed
       this.session.queue = markSongAsCompleted(
         this.session.queue,
-        completedSong.id,
+        completedSong.id
       );
 
       // Clear current song
@@ -500,7 +500,7 @@ export class KaraokeSessionManager {
       return { success: false, message: "Song transition in progress" };
     }
 
-    const user = this.session.connectedUsers.find((u) => u.id === userId);
+    const user = this.session.connectedUsers.find(u => u.id === userId);
     const isHost = user?.isHost || false;
     const isOwner = this.session.currentSong.addedBy === userId;
 
@@ -517,7 +517,7 @@ export class KaraokeSessionManager {
       // Double-check that we still have a current song after acquiring the lock
       if (!this.session.currentSong) {
         console.log(
-          "Skip failed: Current song disappeared after acquiring lock",
+          "Skip failed: Current song disappeared after acquiring lock"
         );
         return { success: false, message: "No song currently playing" };
       }
@@ -526,7 +526,7 @@ export class KaraokeSessionManager {
       console.log(`Marking song ${currentSongId} as skipped`);
 
       // Mark as skipped instead of completed
-      this.session.queue = this.session.queue.map((item) => ({
+      this.session.queue = this.session.queue.map(item => ({
         ...item,
         status:
           item.id === currentSongId
@@ -544,7 +544,7 @@ export class KaraokeSessionManager {
       };
 
       console.log(
-        `Song ${currentSongId} successfully skipped, emitting events`,
+        `Song ${currentSongId} successfully skipped, emitting events`
       );
       this.updateSessionActivity();
       this.emit("song-ended", skippedSong);
@@ -596,10 +596,10 @@ export class KaraokeSessionManager {
 
     const totalSongs = this.session.queue.length;
     const completedSongs = this.session.queue.filter(
-      (item) => item.status === "completed",
+      item => item.status === "completed"
     ).length;
     const pendingSongs = this.session.queue.filter(
-      (item) => item.status === "pending",
+      item => item.status === "pending"
     ).length;
 
     return {
@@ -623,7 +623,7 @@ export class KaraokeSessionManager {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     const initialLength = this.session.queue.length;
 
-    this.session.queue = this.session.queue.filter((item) => {
+    this.session.queue = this.session.queue.filter(item => {
       if (item.status === "completed" || item.status === "skipped") {
         return item.addedAt > oneHourAgo;
       }

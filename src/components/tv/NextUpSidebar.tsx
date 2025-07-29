@@ -10,7 +10,7 @@ interface NextUpSidebarProps {
 }
 
 export function NextUpSidebar({ queue, currentSong }: NextUpSidebarProps) {
-  const pendingQueue = queue.filter((item) => item.status === "pending");
+  const pendingQueue = queue.filter(item => item.status === "pending");
   const nextSong = pendingQueue[0];
 
   if (!nextSong) {

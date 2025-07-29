@@ -9,14 +9,14 @@ import {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ playlistId: string }> },
+  { params }: { params: Promise<{ playlistId: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 1000);
     const startIndex = Math.max(
       parseInt(searchParams.get("startIndex") || "0"),
-      0,
+      0
     );
 
     const { playlistId } = await params;
@@ -24,7 +24,7 @@ export async function GET(
     if (!playlistId) {
       return NextResponse.json(
         createErrorResponse("INVALID_PLAYLIST_ID", "Playlist ID is required"),
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -41,9 +41,9 @@ export async function GET(
       return NextResponse.json(
         createErrorResponse(
           "JELLYFIN_UNAVAILABLE",
-          "Jellyfin server is not accessible",
+          "Jellyfin server is not accessible"
         ),
-        { status: 503 },
+        { status: 503 }
       );
     }
 
@@ -51,7 +51,7 @@ export async function GET(
     const items = await jellyfinService.getPlaylistItems(
       jellyfinPlaylistId,
       limit,
-      startIndex,
+      startIndex
     );
 
     return NextResponse.json(
@@ -59,17 +59,17 @@ export async function GET(
         items,
         Math.floor(startIndex / limit) + 1,
         limit,
-        items.length,
-      ),
+        items.length
+      )
     );
   } catch (error) {
     console.error("Get playlist items API error:", error);
     return NextResponse.json(
       createErrorResponse(
         "PLAYLIST_ITEMS_FETCH_FAILED",
-        "Failed to get playlist items",
+        "Failed to get playlist items"
       ),
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

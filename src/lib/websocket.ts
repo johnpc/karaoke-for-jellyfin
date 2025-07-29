@@ -46,7 +46,7 @@ export const initializeWebSocket = (server: HTTPServer) => {
               : false,
           methods: ["GET", "POST"],
         },
-      },
+      }
     );
 
     const sessionManager = getSessionManager();
@@ -54,7 +54,7 @@ export const initializeWebSocket = (server: HTTPServer) => {
     // Set up session manager event listeners
     setupSessionEventListeners(sessionManager);
 
-    io.on("connection", (socket) => {
+    io.on("connection", socket => {
       console.log("Client connected:", socket.id);
 
       let currentUserId: string | null = null;
@@ -64,7 +64,7 @@ export const initializeWebSocket = (server: HTTPServer) => {
       socket.on("join-session", ({ sessionId, userName }) => {
         try {
           console.log(
-            `Client ${socket.id} attempting to join session with name: ${userName}`,
+            `Client ${socket.id} attempting to join session with name: ${userName}`
           );
 
           // Get or create session
@@ -96,7 +96,7 @@ export const initializeWebSocket = (server: HTTPServer) => {
           });
 
           console.log(
-            `Client ${socket.id} joined session ${sessionId} as user ${userName}`,
+            `Client ${socket.id} joined session ${sessionId} as user ${userName}`
           );
         } catch (error) {
           console.error("Error joining session:", error);
@@ -122,7 +122,7 @@ export const initializeWebSocket = (server: HTTPServer) => {
           const result = sessionManager.addSongToQueue(
             mediaItem,
             currentUserId,
-            position,
+            position
           );
           if (!result.success) {
             socket.emit("error", {
@@ -153,7 +153,7 @@ export const initializeWebSocket = (server: HTTPServer) => {
         try {
           const result = sessionManager.removeSongFromQueue(
             queueItemId,
-            currentUserId,
+            currentUserId
           );
           if (!result.success) {
             socket.emit("error", {
@@ -185,7 +185,7 @@ export const initializeWebSocket = (server: HTTPServer) => {
           const result = sessionManager.reorderQueue(
             queueItemId,
             newPosition,
-            currentUserId,
+            currentUserId
           );
           if (!result.success) {
             socket.emit("error", {
@@ -206,7 +206,7 @@ export const initializeWebSocket = (server: HTTPServer) => {
       });
 
       // Handle playback controls
-      socket.on("playback-control", (command) => {
+      socket.on("playback-control", command => {
         if (!currentUserId) {
           socket.emit("error", {
             code: "NOT_IN_SESSION",
@@ -221,7 +221,7 @@ export const initializeWebSocket = (server: HTTPServer) => {
           console.log("Action value:", JSON.stringify(command.action));
           console.log(
             "Action === 'lyrics-offset':",
-            command.action === "lyrics-offset",
+            command.action === "lyrics-offset"
           );
 
           switch (command.action) {
@@ -231,7 +231,7 @@ export const initializeWebSocket = (server: HTTPServer) => {
                 // Clamp the offset between -10 and +10 seconds
                 const clampedOffset = Math.max(
                   -10,
-                  Math.min(10, command.value),
+                  Math.min(10, command.value)
                 );
                 console.log("Setting lyrics offset to:", clampedOffset);
                 sessionManager.updatePlaybackState({
@@ -239,7 +239,7 @@ export const initializeWebSocket = (server: HTTPServer) => {
                 });
                 console.log(
                   "Updated playback state:",
-                  sessionManager.getPlaybackState(),
+                  sessionManager.getPlaybackState()
                 );
               }
               break;
@@ -436,7 +436,7 @@ export const getWebSocketServer = () => {
 export const broadcastToSession = (
   sessionId: string,
   event: string,
-  data: any,
+  data: any
 ) => {
   if (io) {
     io.to(sessionId).emit(event, data);

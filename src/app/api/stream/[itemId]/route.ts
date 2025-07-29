@@ -4,7 +4,7 @@ import { getJellyfinService } from "@/services/jellyfin";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ itemId: string }> },
+  { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
     const { itemId } = await params;
@@ -12,7 +12,7 @@ export async function GET(
     if (!itemId) {
       return NextResponse.json(
         { error: "Item ID is required" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -37,20 +37,20 @@ export async function GET(
     console.log("Jellyfin response status:", response.status);
     console.log(
       "Jellyfin response headers:",
-      Object.fromEntries(response.headers.entries()),
+      Object.fromEntries(response.headers.entries())
     );
 
     if (!response.ok) {
       console.error(
         "Failed to fetch stream from Jellyfin:",
         response.status,
-        response.statusText,
+        response.statusText
       );
       const errorText = await response.text();
       console.error("Jellyfin error response:", errorText);
       return NextResponse.json(
         { error: "Failed to fetch audio stream" },
-        { status: response.status },
+        { status: response.status }
       );
     }
 
@@ -112,7 +112,7 @@ export async function GET(
       console.error("No response body from Jellyfin");
       return NextResponse.json(
         { error: "No audio data received from Jellyfin" },
-        { status: 502 },
+        { status: 502 }
       );
     }
 
@@ -124,7 +124,7 @@ export async function GET(
       console.error("Empty audio buffer received from Jellyfin");
       return NextResponse.json(
         { error: "Empty audio data received from Jellyfin" },
-        { status: 502 },
+        { status: 502 }
       );
     }
 
@@ -136,7 +136,7 @@ export async function GET(
     console.error("Stream proxy error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

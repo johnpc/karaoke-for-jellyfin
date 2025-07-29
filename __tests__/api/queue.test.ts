@@ -116,7 +116,7 @@ describe("/api/queue", () => {
       expect(data.data.session.id).toBe("session_123");
       expect(mockSessionManager.createSession).toHaveBeenCalledWith(
         "Karaoke Session",
-        "Test User",
+        "Test User"
       );
     });
 
@@ -189,7 +189,7 @@ describe("/api/queue", () => {
       expect(mockSessionManager.addSongToQueue).toHaveBeenCalledWith(
         mockMediaItem,
         "user_1",
-        undefined,
+        undefined
       );
     });
 
@@ -221,7 +221,7 @@ describe("/api/queue", () => {
       mockSessionManager.removeSongFromQueue.mockReturnValue(mockResult);
 
       const request = new NextRequest(
-        "http://localhost:3000/api/queue?itemId=queue_1&userId=user_1",
+        "http://localhost:3000/api/queue?itemId=queue_1&userId=user_1"
       );
       const response = await DELETE(request);
       const data = await response.json();
@@ -231,7 +231,7 @@ describe("/api/queue", () => {
       expect(data.data.message).toBe("Song removed from queue");
       expect(mockSessionManager.removeSongFromQueue).toHaveBeenCalledWith(
         "queue_1",
-        "user_1",
+        "user_1"
       );
     });
 
@@ -275,7 +275,7 @@ describe("/api/queue", () => {
       expect(mockSessionManager.reorderQueue).toHaveBeenCalledWith(
         "queue_1",
         2,
-        "user_1",
+        "user_1"
       );
     });
 

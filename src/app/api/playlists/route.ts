@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 1000);
     const startIndex = Math.max(
       parseInt(searchParams.get("startIndex") || "0"),
-      0,
+      0
     );
 
     const jellyfinService = getJellyfinSDKService();
@@ -24,9 +24,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         createErrorResponse(
           "JELLYFIN_UNAVAILABLE",
-          "Jellyfin server is not accessible",
+          "Jellyfin server is not accessible"
         ),
-        { status: 503 },
+        { status: 503 }
       );
     }
 
@@ -38,15 +38,15 @@ export async function GET(request: NextRequest) {
     if (playlistFilterRegex) {
       try {
         const regex = new RegExp(playlistFilterRegex, "i"); // Case-insensitive by default
-        playlists = playlists.filter((playlist) => regex.test(playlist.name));
+        playlists = playlists.filter(playlist => regex.test(playlist.name));
         console.log(
-          `Applied playlist filter "${playlistFilterRegex}": ${playlists.length} playlists match`,
+          `Applied playlist filter "${playlistFilterRegex}": ${playlists.length} playlists match`
         );
       } catch (error) {
         console.warn(
           "Invalid PLAYLIST_FILTER_REGEX:",
           playlistFilterRegex,
-          error,
+          error
         );
         // Continue without filtering if regex is invalid
       }
@@ -56,14 +56,14 @@ export async function GET(request: NextRequest) {
     console.log("Playlists before deduplication:");
     playlists.forEach((playlist, index) => {
       console.log(
-        `  ${index}: "${playlist.name}" (length: ${playlist.name.length}, id: ${playlist.id})`,
+        `  ${index}: "${playlist.name}" (length: ${playlist.name.length}, id: ${playlist.id})`
       );
     });
 
     // Remove duplicates by name (keep the first occurrence)
     // Normalize names for comparison to handle whitespace, case, and encoding differences
     const normalizedNames = new Set<string>();
-    const uniquePlaylists = playlists.filter((playlist) => {
+    const uniquePlaylists = playlists.filter(playlist => {
       // Normalize the name:
       // 1. Trim whitespace
       // 2. Convert to lowercase
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
 
       if (normalizedNames.has(normalizedName)) {
         console.log(
-          `Duplicate playlist found: "${playlist.name}" (normalized: "${normalizedName}")`,
+          `Duplicate playlist found: "${playlist.name}" (normalized: "${normalizedName}")`
         );
         return false; // Skip this duplicate
       }
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
     });
 
     console.log(
-      `After deduplication: ${uniquePlaylists.length} unique playlists (removed ${playlists.length - uniquePlaylists.length} duplicates)`,
+      `After deduplication: ${uniquePlaylists.length} unique playlists (removed ${playlists.length - uniquePlaylists.length} duplicates)`
     );
 
     return NextResponse.json(
@@ -97,14 +97,14 @@ export async function GET(request: NextRequest) {
         uniquePlaylists,
         Math.floor(startIndex / limit) + 1,
         limit,
-        uniquePlaylists.length,
-      ),
+        uniquePlaylists.length
+      )
     );
   } catch (error) {
     console.error("Get playlists API error:", error);
     return NextResponse.json(
       createErrorResponse("PLAYLIST_FETCH_FAILED", "Failed to fetch playlists"),
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

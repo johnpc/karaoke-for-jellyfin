@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 1000); // Cap at 1000
     const startIndex = Math.max(
       parseInt(searchParams.get("startIndex") || "0"),
-      0,
+      0
     );
 
     // Validate search parameters
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
         if (error instanceof ValidationError) {
           return NextResponse.json(
             createErrorResponse("INVALID_SEARCH", error.message),
-            { status: 400 },
+            { status: 400 }
           );
         }
         throw error;
@@ -41,9 +41,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         createErrorResponse(
           "JELLYFIN_UNAVAILABLE",
-          "Jellyfin server is not accessible",
+          "Jellyfin server is not accessible"
         ),
-        { status: 503 },
+        { status: 503 }
       );
     }
 
@@ -62,17 +62,17 @@ export async function GET(request: NextRequest) {
         songs,
         Math.floor(startIndex / limit) + 1,
         limit,
-        songs.length, // Note: This is approximate, Jellyfin doesn't always return total count
-      ),
+        songs.length // Note: This is approximate, Jellyfin doesn't always return total count
+      )
     );
   } catch (error) {
     console.error("Songs API error:", error);
     return NextResponse.json(
       createErrorResponse(
         "SONGS_FETCH_FAILED",
-        "Failed to fetch songs from Jellyfin",
+        "Failed to fetch songs from Jellyfin"
       ),
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     if (!itemId || typeof itemId !== "string" || itemId.trim().length === 0) {
       return NextResponse.json(
         createErrorResponse("INVALID_REQUEST", "Valid itemId is required"),
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -97,9 +97,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         createErrorResponse(
           "JELLYFIN_UNAVAILABLE",
-          "Jellyfin server is not accessible",
+          "Jellyfin server is not accessible"
         ),
-        { status: 503 },
+        { status: 503 }
       );
     }
 
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
     if (!song) {
       return NextResponse.json(
         createErrorResponse("SONG_NOT_FOUND", "Song not found"),
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -118,9 +118,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       createErrorResponse(
         "SONG_METADATA_FAILED",
-        "Failed to fetch song metadata",
+        "Failed to fetch song metadata"
       ),
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

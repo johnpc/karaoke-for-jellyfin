@@ -33,7 +33,7 @@ describe("JellyfinService", () => {
       delete process.env.JELLYFIN_USERNAME;
 
       expect(() => new JellyfinService()).toThrow(
-        "JELLYFIN_SERVER_URL, JELLYFIN_API_KEY, and JELLYFIN_USERNAME must be configured",
+        "JELLYFIN_SERVER_URL, JELLYFIN_API_KEY, and JELLYFIN_USERNAME must be configured"
       );
     });
   });
@@ -57,7 +57,7 @@ describe("JellyfinService", () => {
             "X-Emby-Token": "test-api-key",
             "Content-Type": "application/json",
           }),
-        }),
+        })
       );
     });
 
@@ -314,7 +314,7 @@ describe("JellyfinService", () => {
           headers: expect.objectContaining({
             "X-Emby-Token": "test-api-key",
           }),
-        }),
+        })
       );
     });
 

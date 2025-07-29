@@ -11,7 +11,7 @@ export async function GET() {
     if (!isHealthy) {
       return NextResponse.json(
         { error: "Jellyfin server is not accessible" },
-        { status: 503 },
+        { status: 503 }
       );
     }
 
@@ -26,7 +26,7 @@ export async function GET() {
           "X-Emby-Token": process.env.JELLYFIN_API_KEY!,
           "Content-Type": "application/json",
         },
-      },
+      }
     );
 
     let allItems = [];
@@ -57,7 +57,7 @@ export async function GET() {
         error: "Debug check failed",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

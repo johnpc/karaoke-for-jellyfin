@@ -42,7 +42,7 @@ export function ApplausePlayer({
         .then(() => {
           console.log("🎵 Applause playing successfully via socket trigger");
         })
-        .catch((error) => {
+        .catch(error => {
           console.log("🎵 Applause playback failed:", error.message);
           // This is expected on first load before user interaction
         });

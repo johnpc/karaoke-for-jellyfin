@@ -164,7 +164,7 @@ app.prepare().then(() => {
         // Get unique users by name for display
         const uniqueUsers = currentSession
           ? currentSession.connectedUsers.reduce((acc, user) => {
-              if (!acc.find((u) => u.name === user.name)) {
+              if (!acc.find(u => u.name === user.name)) {
                 acc.push({
                   name: user.name,
                   isHost: user.isHost,
@@ -195,7 +195,7 @@ app.prepare().then(() => {
                     uniqueUsers: uniqueUsers,
                     uniqueUserCount: uniqueUsers.length,
                     queue:
-                      currentSession.queue?.map((item) => ({
+                      currentSession.queue?.map(item => ({
                         title: item.mediaItem.title,
                         artist: item.mediaItem.artist,
                         status: item.status,
@@ -213,8 +213,8 @@ app.prepare().then(() => {
               },
             },
             null,
-            2,
-          ),
+            2
+          )
         );
         return;
       }
@@ -254,26 +254,26 @@ app.prepare().then(() => {
 
     // Remove users who haven't been seen in a while
     currentSession.connectedUsers = currentSession.connectedUsers.filter(
-      (user) => {
+      user => {
         const timeSinceLastSeen = now - new Date(user.lastSeen);
         const isStale = timeSinceLastSeen > staleThreshold;
 
         if (isStale) {
           console.log(
-            `Removing stale user: ${user.name} (last seen ${Math.round(timeSinceLastSeen / 1000)}s ago)`,
+            `Removing stale user: ${user.name} (last seen ${Math.round(timeSinceLastSeen / 1000)}s ago)`
           );
           // Also remove from connectedUsers map
           connectedUsers.delete(user.socketId);
         }
 
         return !isStale;
-      },
+      }
     );
 
     const removedCount = initialCount - currentSession.connectedUsers.length;
     if (removedCount > 0) {
       console.log(
-        `Cleaned up ${removedCount} stale connections. Active users: ${currentSession.connectedUsers.length}`,
+        `Cleaned up ${removedCount} stale connections. Active users: ${currentSession.connectedUsers.length}`
       );
     }
   };
@@ -282,7 +282,7 @@ app.prepare().then(() => {
   setInterval(cleanupStaleConnections, 2 * 60 * 1000);
 
   // Basic WebSocket connection handling with session management
-  io.on("connection", (socket) => {
+  io.on("connection", socket => {
     console.log("Client connected:", socket.id);
     let currentUserId = null;
     let currentSessionId = null;
@@ -309,13 +309,13 @@ app.prepare().then(() => {
 
       // DEDUPLICATION: Remove any existing TV Display users
       const existingTvIndex = currentSession.connectedUsers.findIndex(
-        (u) => u.name === userName,
+        u => u.name === userName
       );
 
       if (existingTvIndex !== -1) {
         const existingTv = currentSession.connectedUsers[existingTvIndex];
         console.log(
-          `Removing duplicate TV Display (old socket: ${existingTv.socketId})`,
+          `Removing duplicate TV Display (old socket: ${existingTv.socketId})`
         );
 
         // Remove from both session and connectedUsers map
@@ -365,7 +365,7 @@ app.prepare().then(() => {
       console.log("TV client auto-joined to main-session (deduplicated)");
     }
 
-    socket.on("join-session", (data) => {
+    socket.on("join-session", data => {
       console.log("Client joining session:", data);
       const { sessionId, userName } = data;
 
@@ -390,13 +390,13 @@ app.prepare().then(() => {
 
       // DEDUPLICATION: Remove any existing users with the same name
       const existingUserIndex = currentSession.connectedUsers.findIndex(
-        (u) => u.name === userName,
+        u => u.name === userName
       );
 
       if (existingUserIndex !== -1) {
         const existingUser = currentSession.connectedUsers[existingUserIndex];
         console.log(
-          `Removing duplicate user: ${userName} (old socket: ${existingUser.socketId})`,
+          `Removing duplicate user: ${userName} (old socket: ${existingUser.socketId})`
         );
 
         // Remove from both session and connectedUsers map
@@ -407,7 +407,7 @@ app.prepare().then(() => {
           if (user.name === userName) {
             connectedUsers.delete(socketId);
             console.log(
-              `Cleaned up old socket mapping for ${userName}: ${socketId}`,
+              `Cleaned up old socket mapping for ${userName}: ${socketId}`
             );
             break;
           }
@@ -431,7 +431,7 @@ app.prepare().then(() => {
       console.log(
         "Session now has",
         currentSession.connectedUsers.length,
-        "users (deduplicated)",
+        "users (deduplicated)"
       );
 
       // Send session state to client
@@ -453,11 +453,11 @@ app.prepare().then(() => {
       socket.to(sessionId).emit("user-joined", user);
 
       console.log(
-        `User ${userName} joined session ${sessionId} (deduplicated)`,
+        `User ${userName} joined session ${sessionId} (deduplicated)`
       );
     });
 
-    socket.on("add-song", async (data) => {
+    socket.on("add-song", async data => {
       console.log("Adding song:", data);
 
       // Get the user for this socket
@@ -486,7 +486,7 @@ app.prepare().then(() => {
       console.log("Session ID:", currentSession.id);
       console.log(
         "Connected users in session:",
-        currentSession.connectedUsers?.length,
+        currentSession.connectedUsers?.length
       );
 
       const { mediaItem, position } = data;
@@ -527,7 +527,7 @@ app.prepare().then(() => {
 
         if (!response.ok) {
           console.log(
-            "Failed to sync with session manager, creating session...",
+            "Failed to sync with session manager, creating session..."
           );
           // Try to create session first
           await fetch("http://localhost:3000/api/queue", {
@@ -571,7 +571,7 @@ app.prepare().then(() => {
       console.log("Song added to queue and broadcast sent");
     });
 
-    socket.on("remove-song", (data) => {
+    socket.on("remove-song", data => {
       console.log("Removing song:", data);
       if (!currentSession || !currentUserId) {
         socket.emit("error", {
@@ -583,7 +583,7 @@ app.prepare().then(() => {
 
       const { queueItemId } = data;
       const itemIndex = currentSession.queue.findIndex(
-        (item) => item.id === queueItemId,
+        item => item.id === queueItemId
       );
 
       if (itemIndex === -1) {
@@ -615,7 +615,7 @@ app.prepare().then(() => {
       console.log("Song removed from queue");
     });
 
-    socket.on("playback-control", (command) => {
+    socket.on("playback-control", command => {
       console.log("Playback control:", command);
 
       // Get the user for this socket
@@ -650,7 +650,7 @@ app.prepare().then(() => {
               console.log("No current song, starting next song from queue");
               // Find next pending song
               const nextSong = currentSession.queue.find(
-                (item) => item.status === "pending",
+                item => item.status === "pending"
               );
               if (nextSong) {
                 console.log("Found next song:", nextSong.mediaItem.title);
@@ -679,7 +679,7 @@ app.prepare().then(() => {
                 io.to(sessionId).emit("queue-updated", currentSession.queue);
                 io.to(sessionId).emit(
                   "playback-state-changed",
-                  currentSession.playbackState,
+                  currentSession.playbackState
                 );
                 console.log("Song started successfully");
               } else {
@@ -705,7 +705,7 @@ app.prepare().then(() => {
               const sessionId = currentSession.id || "main-session";
               io.to(sessionId).emit(
                 "playback-state-changed",
-                currentSession.playbackState,
+                currentSession.playbackState
               );
             }
             break;
@@ -728,7 +728,7 @@ app.prepare().then(() => {
             const sessionId = currentSession.id || "main-session";
             io.to(sessionId).emit(
               "playback-state-changed",
-              currentSession.playbackState,
+              currentSession.playbackState
             );
             break;
           case "volume":
@@ -750,7 +750,7 @@ app.prepare().then(() => {
               const sessionId = currentSession.id || "main-session";
               io.to(sessionId).emit(
                 "playback-state-changed",
-                currentSession.playbackState,
+                currentSession.playbackState
               );
             }
             break;
@@ -773,7 +773,7 @@ app.prepare().then(() => {
               const sessionId = currentSession.id || "main-session";
               io.to(sessionId).emit(
                 "playback-state-changed",
-                currentSession.playbackState,
+                currentSession.playbackState
               );
             }
             break;
@@ -795,7 +795,7 @@ app.prepare().then(() => {
             const sessionId2 = currentSession.id || "main-session";
             io.to(sessionId2).emit(
               "playback-state-changed",
-              currentSession.playbackState,
+              currentSession.playbackState
             );
             break;
           case "time-update":
@@ -825,7 +825,7 @@ app.prepare().then(() => {
               const sessionId = currentSession.id || "main-session";
               io.to(sessionId).emit(
                 "playback-state-changed",
-                currentSession.playbackState,
+                currentSession.playbackState
               );
               console.log("Lyrics offset updated to:", command.value);
             }
@@ -877,7 +877,7 @@ app.prepare().then(() => {
 
       // Start next song if available
       const nextSong = currentSession.queue.find(
-        (item) => item.status === "pending",
+        item => item.status === "pending"
       );
       if (nextSong) {
         nextSong.status = "playing";
@@ -891,7 +891,7 @@ app.prepare().then(() => {
         io.to(sessionId).emit("queue-updated", currentSession.queue);
         io.to(sessionId).emit(
           "playback-state-changed",
-          currentSession.playbackState,
+          currentSession.playbackState
         );
       }
     });
@@ -910,7 +910,7 @@ app.prepare().then(() => {
       // Generate rating for the completed song
       const rating = generateRandomRating();
       console.log(
-        `Generated rating for "${completedSong.mediaItem.title}": ${rating.grade} (${rating.score}/100)`,
+        `Generated rating for "${completedSong.mediaItem.title}": ${rating.grade} (${rating.score}/100)`
       );
 
       currentSession.currentSong = null;
@@ -932,7 +932,7 @@ app.prepare().then(() => {
 
       // Find next song but don't start it immediately - let the client handle transitions
       const nextSong = currentSession.queue.find(
-        (item) => item.status === "pending",
+        item => item.status === "pending"
       );
 
       // Broadcast song ended with rating data for transitions
@@ -951,7 +951,7 @@ app.prepare().then(() => {
         // Broadcast updated playback state even if no next song
         io.to(sessionId).emit(
           "playback-state-changed",
-          currentSession.playbackState,
+          currentSession.playbackState
         );
       }
     });
@@ -965,7 +965,7 @@ app.prepare().then(() => {
 
       // Find next pending song
       const nextSong = currentSession.queue.find(
-        (item) => item.status === "pending",
+        item => item.status === "pending"
       );
 
       if (nextSong) {
@@ -993,7 +993,7 @@ app.prepare().then(() => {
         io.to(sessionId).emit("queue-updated", currentSession.queue);
         io.to(sessionId).emit(
           "playback-state-changed",
-          currentSession.playbackState,
+          currentSession.playbackState
         );
       } else {
         console.log("No next song available");
@@ -1015,7 +1015,7 @@ app.prepare().then(() => {
       if (user && currentSession) {
         // Remove user from session
         currentSession.connectedUsers = currentSession.connectedUsers.filter(
-          (u) => u.id !== user.id,
+          u => u.id !== user.id
         );
         connectedUsers.delete(socket.id);
 
@@ -1032,7 +1032,7 @@ app.prepare().then(() => {
   });
 
   server
-    .once("error", (err) => {
+    .once("error", err => {
       console.error(err);
       process.exit(1);
     })

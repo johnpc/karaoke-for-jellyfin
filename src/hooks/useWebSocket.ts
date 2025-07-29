@@ -25,7 +25,7 @@ interface WebSocketHookReturn {
   startNextSong: () => void;
   updateLocalPlaybackState: (updates: Partial<PlaybackState>) => void;
   setSongCompletedHandler: (
-    handler: (data: { song: QueueItem; rating: any }) => void,
+    handler: (data: { song: QueueItem; rating: any }) => void
   ) => void;
   session: KaraokeSession | null;
   queue: QueueItem[];
@@ -41,7 +41,7 @@ export function useWebSocket(): WebSocketHookReturn {
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [currentSong, setCurrentSong] = useState<QueueItem | null>(null);
   const [playbackState, setPlaybackState] = useState<PlaybackState | null>(
-    null,
+    null
   );
   const [error, setError] = useState<string | null>(null);
   const songCompletedHandlerRef = useRef<
@@ -124,7 +124,7 @@ export function useWebSocket(): WebSocketHookReturn {
         }
       });
 
-      socketInstance.on("disconnect", (reason) => {
+      socketInstance.on("disconnect", reason => {
         console.log("❌ Disconnected from WebSocket server:", reason);
         setIsConnected(false);
 
@@ -164,25 +164,25 @@ export function useWebSocket(): WebSocketHookReturn {
         }
       });
 
-      socketInstance.on("connect_error", (err) => {
+      socketInstance.on("connect_error", err => {
         console.error("❌ WebSocket connection error:", err);
         setError("Connection failed: " + (err.message || "Unknown error"));
         setIsConnected(false);
       });
 
-      socketInstance.on("reconnect", (attemptNumber) => {
+      socketInstance.on("reconnect", attemptNumber => {
         console.log(`✅ WebSocket reconnected after ${attemptNumber} attempts`);
         setError(null);
       });
 
-      socketInstance.on("reconnect_attempt", (attemptNumber) => {
+      socketInstance.on("reconnect_attempt", attemptNumber => {
         console.log(`🔄 WebSocket reconnection attempt ${attemptNumber}`);
         setError(`Reconnecting... (attempt ${attemptNumber})`);
       });
 
       socketInstance.on("reconnect_failed", () => {
         console.error(
-          "❌ WebSocket reconnection failed, creating fresh connection...",
+          "❌ WebSocket reconnection failed, creating fresh connection..."
         );
 
         // Create a completely fresh connection
@@ -206,7 +206,7 @@ export function useWebSocket(): WebSocketHookReturn {
       });
 
       // Session event handlers
-      socketInstance.on("session-updated", (data) => {
+      socketInstance.on("session-updated", data => {
         console.log("📡 Session updated:", data);
         if (data.session) setSession(data.session);
         if (data.queue) setQueue(data.queue);
@@ -221,7 +221,7 @@ export function useWebSocket(): WebSocketHookReturn {
         }
       });
 
-      socketInstance.on("session-joined", (data) => {
+      socketInstance.on("session-joined", data => {
         console.log("🎉 Session joined successfully:", data);
         if (data.session) setSession(data.session);
         if (data.queue) setQueue(data.queue || data.session?.queue || []);
@@ -231,17 +231,17 @@ export function useWebSocket(): WebSocketHookReturn {
         setError(null);
       });
 
-      socketInstance.on("queue-updated", (newQueue) => {
+      socketInstance.on("queue-updated", newQueue => {
         console.log("📝 Queue updated:", newQueue);
         setQueue(newQueue);
       });
 
-      socketInstance.on("song-started", (song) => {
+      socketInstance.on("song-started", song => {
         console.log("🎵 Song started:", song);
         setCurrentSong(song);
       });
 
-      socketInstance.on("song-ended", (data) => {
+      socketInstance.on("song-ended", data => {
         console.log("🎵 Song ended:", data);
 
         if (data && typeof data === "object" && data.rating) {
@@ -257,10 +257,10 @@ export function useWebSocket(): WebSocketHookReturn {
         }
       });
 
-      socketInstance.on("user-joined", (user) => {
+      socketInstance.on("user-joined", user => {
         console.log("👤 User joined:", user);
         // Update session users if we have the session
-        setSession((prevSession) => {
+        setSession(prevSession => {
           if (prevSession) {
             return {
               ...prevSession,
@@ -274,12 +274,12 @@ export function useWebSocket(): WebSocketHookReturn {
       socketInstance.on("user-left", ({ userId }) => {
         console.log("👋 User left:", userId);
         // Update session users if we have the session
-        setSession((prevSession) => {
+        setSession(prevSession => {
           if (prevSession) {
             return {
               ...prevSession,
               connectedUsers: prevSession.connectedUsers.filter(
-                (u) => u.id !== userId,
+                u => u.id !== userId
               ),
             };
           }
@@ -287,7 +287,7 @@ export function useWebSocket(): WebSocketHookReturn {
         });
       });
 
-      socketInstance.on("playback-state-changed", (state) => {
+      socketInstance.on("playback-state-changed", state => {
         console.log("⏯️ Playback state changed:", state);
         // Ensure lyricsOffset is always present
         const stateWithOffset = {
@@ -297,12 +297,12 @@ export function useWebSocket(): WebSocketHookReturn {
         setPlaybackState(stateWithOffset);
       });
 
-      socketInstance.on("lyrics-sync", (data) => {
+      socketInstance.on("lyrics-sync", data => {
         console.log("🎤 Lyrics sync:", data);
         // Handle lyrics synchronization
       });
 
-      socketInstance.on("error", (errorData) => {
+      socketInstance.on("error", errorData => {
         console.error("❌ WebSocket error:", errorData);
 
         // Handle "not in session" errors by creating fresh connection
@@ -348,7 +348,7 @@ export function useWebSocket(): WebSocketHookReturn {
           const currentSocket = socketRef.current;
           if (!currentSocket?.connected && userNameRef.current) {
             console.log(
-              "🔄 Socket not connected, creating fresh connection...",
+              "🔄 Socket not connected, creating fresh connection..."
             );
 
             // Create completely fresh connection
@@ -421,7 +421,7 @@ export function useWebSocket(): WebSocketHookReturn {
       if (typeof document !== "undefined") {
         document.removeEventListener(
           "visibilitychange",
-          handleVisibilityChange,
+          handleVisibilityChange
         );
       }
       if (typeof window !== "undefined") {
@@ -488,17 +488,17 @@ export function useWebSocket(): WebSocketHookReturn {
           // Reject with a helpful error message
           reject(
             new Error(
-              "Connection lost. Please wait for reconnection or refresh the page.",
-            ),
+              "Connection lost. Please wait for reconnection or refresh the page."
+            )
           );
         } else {
           reject(
-            new Error("Not connected to server. Please refresh the page."),
+            new Error("Not connected to server. Please refresh the page.")
           );
         }
       });
     },
-    [],
+    []
   );
 
   const removeSong = useCallback((queueItemId: string) => {
@@ -513,7 +513,7 @@ export function useWebSocket(): WebSocketHookReturn {
         socketRef.current.emit("reorder-queue", { queueItemId, newPosition });
       }
     },
-    [],
+    []
   );
 
   const playbackControl = useCallback((command: PlaybackCommand) => {
@@ -542,7 +542,7 @@ export function useWebSocket(): WebSocketHookReturn {
     (handler: (data: { song: QueueItem; rating: any }) => void) => {
       songCompletedHandlerRef.current = handler;
     },
-    [],
+    []
   );
 
   const startNextSong = useCallback(() => {
@@ -553,7 +553,7 @@ export function useWebSocket(): WebSocketHookReturn {
 
   const updateLocalPlaybackState = useCallback(
     (updates: Partial<PlaybackState>) => {
-      setPlaybackState((prevState) => {
+      setPlaybackState(prevState => {
         if (!prevState) {
           // If no previous state, create a new one with defaults
           return {
@@ -573,7 +573,7 @@ export function useWebSocket(): WebSocketHookReturn {
         };
       });
     },
-    [],
+    []
   );
 
   return {

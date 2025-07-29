@@ -18,7 +18,7 @@ export class LyricsService {
    */
   async parseLyricsFile(
     filePath: string,
-    format: LyricsFormat,
+    format: LyricsFormat
   ): Promise<LyricsFile | null> {
     try {
       const content = await fs.readFile(filePath, "utf-8");
@@ -47,8 +47,8 @@ export class LyricsService {
    */
   private parseJellyfinLyrics(lyricsData: any[], songId: string): LyricsFile {
     const lines: LyricsLine[] = lyricsData
-      .filter((item) => item.Text && item.Text.trim()) // Filter out empty lines
-      .map((item) => ({
+      .filter(item => item.Text && item.Text.trim()) // Filter out empty lines
+      .map(item => ({
         timestamp: Math.round(item.Start / 10000), // Convert from nanoseconds to milliseconds
         text: item.Text.trim(),
       }))
@@ -64,7 +64,7 @@ export class LyricsService {
     const lines: LyricsLine[] = [];
     const metadata: LyricsMetadata = {};
 
-    const lrcLines = content.split("\n").filter((line) => line.trim());
+    const lrcLines = content.split("\n").filter(line => line.trim());
 
     for (const line of lrcLines) {
       const trimmedLine = line.trim();
@@ -101,7 +101,7 @@ export class LyricsService {
 
       // Parse timed lyrics
       const lyricsMatch = trimmedLine.match(
-        /^\[(\d{1,2}):(\d{2})\.(\d{2})\](.*)$/,
+        /^\[(\d{1,2}):(\d{2})\.(\d{2})\](.*)$/
       );
       if (lyricsMatch) {
         const [, minutes, seconds, centiseconds, text] = lyricsMatch;
@@ -147,14 +147,14 @@ export class LyricsService {
    */
   private parseSRT(content: string, songId: string): LyricsFile {
     const lines: LyricsLine[] = [];
-    const blocks = content.split("\n\n").filter((block) => block.trim());
+    const blocks = content.split("\n\n").filter(block => block.trim());
 
     for (const block of blocks) {
       const blockLines = block.trim().split("\n");
       if (blockLines.length < 3) continue;
 
       const timeMatch = blockLines[1].match(
-        /(\d{2}):(\d{2}):(\d{2}),(\d{3}) --> (\d{2}):(\d{2}):(\d{2}),(\d{3})/,
+        /(\d{2}):(\d{2}):(\d{2}),(\d{3}) --> (\d{2}):(\d{2}):(\d{2}),(\d{3})/
       );
       if (timeMatch) {
         const [, startH, startM, startS, startMs, endH, endM, endS, endMs] =
@@ -202,7 +202,7 @@ export class LyricsService {
     while (i < vttLines.length) {
       const line = vttLines[i].trim();
       const timeMatch = line.match(
-        /(\d{2}):(\d{2})\.(\d{3}) --> (\d{2}):(\d{2})\.(\d{3})/,
+        /(\d{2}):(\d{2})\.(\d{3}) --> (\d{2}):(\d{2})\.(\d{3})/
       );
 
       if (timeMatch) {
@@ -248,7 +248,7 @@ export class LyricsService {
    */
   private parsePlainText(content: string, songId: string): LyricsFile {
     const lines: LyricsLine[] = [];
-    const textLines = content.split("\n").filter((line) => line.trim());
+    const textLines = content.split("\n").filter(line => line.trim());
 
     // For plain text, we'll space lines evenly across a 3-minute duration
     const totalDuration = 180000; // 3 minutes in ms
@@ -274,7 +274,7 @@ export class LyricsService {
    */
   async findLyricsFile(
     songId: string,
-    searchPaths: string[],
+    searchPaths: string[]
   ): Promise<string | null> {
     const extensions = [".lrc", ".srt", ".vtt", ".txt"];
 
@@ -298,7 +298,7 @@ export class LyricsService {
    */
   async getLyrics(
     songId: string,
-    searchPaths: string[] = [],
+    searchPaths: string[] = []
   ): Promise<LyricsFile | null> {
     // Check cache first
     if (this.lyricsCache.has(songId)) {
@@ -330,7 +330,7 @@ export class LyricsService {
         } else {
           console.log(
             "Unknown lyrics format from Jellyfin:",
-            typeof jellyfinLyrics,
+            typeof jellyfinLyrics
           );
           return null;
         }
@@ -346,7 +346,7 @@ export class LyricsService {
     // Fallback: search for local lyrics files
     console.log(
       "No lyrics found in Jellyfin, searching local files for:",
-      songId,
+      songId
     );
     const lyricsPath = await this.findLyricsFile(songId, searchPaths);
     if (!lyricsPath) {

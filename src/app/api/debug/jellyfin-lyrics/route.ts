@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     if (!itemId) {
       return NextResponse.json(
         { error: "itemId parameter required" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     if (!authenticated) {
       return NextResponse.json(
         { error: "Failed to authenticate with Jellyfin" },
-        { status: 401 },
+        { status: 401 }
       );
     }
 
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
         error: "Jellyfin lyrics test failed",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

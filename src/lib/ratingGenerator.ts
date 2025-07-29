@@ -124,7 +124,7 @@ const gradeToScore = {
 function generateWeightedGrade(): string {
   const totalWeight = Object.values(gradeWeights).reduce(
     (sum, weight) => sum + weight,
-    0,
+    0
   );
   let random = Math.random() * totalWeight;
 

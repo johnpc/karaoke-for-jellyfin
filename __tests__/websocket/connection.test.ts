@@ -5,12 +5,12 @@ describe("WebSocket Connection", () => {
   let clientSocket: Socket;
   const serverUrl = "http://localhost:3003";
 
-  beforeAll((done) => {
+  beforeAll(done => {
     // Wait a bit for server to be ready
     setTimeout(done, 1000);
   });
 
-  beforeEach((done) => {
+  beforeEach(done => {
     clientSocket = io(serverUrl, {
       autoConnect: false,
     });
@@ -28,18 +28,18 @@ describe("WebSocket Connection", () => {
     }
   });
 
-  it("should connect to WebSocket server", (done) => {
+  it("should connect to WebSocket server", done => {
     expect(clientSocket.connected).toBe(true);
     done();
   });
 
-  it("should be able to join a session", (done) => {
+  it("should be able to join a session", done => {
     clientSocket.emit("join-session", {
       sessionId: "test-session",
       userName: "Test User",
     });
 
-    clientSocket.on("session-updated", (data) => {
+    clientSocket.on("session-updated", data => {
       expect(data).toBeDefined();
       expect(data.session).toBeDefined();
       expect(data.session.id).toBe("test-session");
@@ -48,7 +48,7 @@ describe("WebSocket Connection", () => {
     });
   });
 
-  it("should handle adding songs to queue", (done) => {
+  it("should handle adding songs to queue", done => {
     // First join a session
     clientSocket.emit("join-session", {
       sessionId: "test-session",
@@ -69,7 +69,7 @@ describe("WebSocket Connection", () => {
       });
     });
 
-    clientSocket.on("queue-updated", (queue) => {
+    clientSocket.on("queue-updated", queue => {
       expect(queue).toHaveLength(1);
       expect(queue[0].mediaItem.title).toBe("Test Song");
       expect(queue[0].status).toBe("pending");
@@ -77,7 +77,7 @@ describe("WebSocket Connection", () => {
     });
   });
 
-  it("should handle playback controls", (done) => {
+  it("should handle playback controls", done => {
     clientSocket.emit("join-session", {
       sessionId: "test-session-2",
       userName: "Test User",
@@ -91,13 +91,13 @@ describe("WebSocket Connection", () => {
       });
     });
 
-    clientSocket.on("playback-state-changed", (state) => {
+    clientSocket.on("playback-state-changed", state => {
       expect(state.action).toBe("play");
       done();
     });
   });
 
-  it("should handle disconnection gracefully", (done) => {
+  it("should handle disconnection gracefully", done => {
     clientSocket.on("disconnect", () => {
       expect(clientSocket.connected).toBe(false);
       done();

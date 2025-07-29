@@ -34,7 +34,7 @@ describe("LyricsService", () => {
 
       const result = await lyricsService.parseLyricsFile(
         "/test/song.lrc",
-        "lrc",
+        "lrc"
       );
 
       expect(result).toBeTruthy();
@@ -73,7 +73,7 @@ Second subtitle line`;
 
       const result = await lyricsService.parseLyricsFile(
         "/test/song.srt",
-        "srt",
+        "srt"
       );
 
       expect(result).toBeTruthy();
@@ -104,7 +104,7 @@ Second VTT line`;
 
       const result = await lyricsService.parseLyricsFile(
         "/test/song.vtt",
-        "vtt",
+        "vtt"
       );
 
       expect(result).toBeTruthy();
@@ -126,7 +126,7 @@ Third line of text`;
 
       const result = await lyricsService.parseLyricsFile(
         "/test/song.txt",
-        "txt",
+        "txt"
       );
 
       expect(result).toBeTruthy();
@@ -141,7 +141,7 @@ Third line of text`;
     it("should return null for unsupported format", async () => {
       const result = await lyricsService.parseLyricsFile(
         "/test/song.xyz",
-        "xyz" as LyricsFormat,
+        "xyz" as LyricsFormat
       );
 
       expect(result).toBeNull();
@@ -152,7 +152,7 @@ Third line of text`;
 
       const result = await lyricsService.parseLyricsFile(
         "/test/nonexistent.lrc",
-        "lrc",
+        "lrc"
       );
 
       expect(result).toBeNull();

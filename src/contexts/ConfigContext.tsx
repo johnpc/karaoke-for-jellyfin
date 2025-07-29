@@ -21,12 +21,12 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
   useEffect(() => {
     // Fetch config from API route
     fetch("/api/config")
-      .then((res) => res.json())
-      .then((data) => {
+      .then(res => res.json())
+      .then(data => {
         console.log("🔧 Config loaded from API:", data);
         setConfig(data);
       })
-      .catch((error) => {
+      .catch(error => {
         console.error("Failed to load config:", error);
         // Fallback to default values
         setConfig({

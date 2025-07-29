@@ -115,7 +115,7 @@ export default function Home() {
       <NavigationTabs
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        queueCount={queue.filter((item) => item.status === "pending").length}
+        queueCount={queue.filter(item => item.status === "pending").length}
       />
 
       {/* Main Content */}

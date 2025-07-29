@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     if (!session) {
       return NextResponse.json(
         createErrorResponse("SESSION_NOT_FOUND", "No active karaoke session"),
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -38,13 +38,13 @@ export async function GET(request: NextRequest) {
           hostControls: session.hostControls,
           settings: session.settings,
         },
-      }),
+      })
     );
   } catch (error) {
     console.error("Queue GET error:", error);
     return NextResponse.json(
       createErrorResponse("QUEUE_FETCH_FAILED", "Failed to fetch queue"),
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     if (!action) {
       return NextResponse.json(
         createErrorResponse("INVALID_REQUEST", "Action is required"),
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -69,9 +69,9 @@ export async function POST(request: NextRequest) {
           return NextResponse.json(
             createErrorResponse(
               "INVALID_REQUEST",
-              "userName is required for creating session",
+              "userName is required for creating session"
             ),
-            { status: 400 },
+            { status: 400 }
           );
         }
 
@@ -79,20 +79,20 @@ export async function POST(request: NextRequest) {
           const validatedUserName = validateUserName(userName);
           const session = sessionManager.createSession(
             "Karaoke Session",
-            validatedUserName,
+            validatedUserName
           );
 
           return NextResponse.json(
             createSuccessResponse({
               session,
               message: "Session created successfully",
-            }),
+            })
           );
         } catch (error) {
           if (error instanceof ValidationError) {
             return NextResponse.json(
               createErrorResponse("SESSION_EXISTS", error.message),
-              { status: 409 },
+              { status: 409 }
             );
           }
           throw error;
@@ -103,9 +103,9 @@ export async function POST(request: NextRequest) {
           return NextResponse.json(
             createErrorResponse(
               "INVALID_REQUEST",
-              "userName is required for joining session",
+              "userName is required for joining session"
             ),
-            { status: 400 },
+            { status: 400 }
           );
         }
 
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
             // Create session if none exists
             session = sessionManager.createSession(
               "Karaoke Session",
-              validatedUserName,
+              validatedUserName
             );
           } else {
             // Add user to existing session
@@ -131,13 +131,13 @@ export async function POST(request: NextRequest) {
               currentSong: sessionManager.getCurrentSong(),
               playbackState: sessionManager.getPlaybackState(),
               message: "Joined session successfully",
-            }),
+            })
           );
         } catch (error) {
           if (error instanceof ValidationError) {
             return NextResponse.json(
               createErrorResponse("JOIN_FAILED", error.message),
-              { status: 400 },
+              { status: 400 }
             );
           }
           throw error;
@@ -148,9 +148,9 @@ export async function POST(request: NextRequest) {
           return NextResponse.json(
             createErrorResponse(
               "INVALID_REQUEST",
-              "mediaItem and userId are required",
+              "mediaItem and userId are required"
             ),
-            { status: 400 },
+            { status: 400 }
           );
         }
 
@@ -159,13 +159,13 @@ export async function POST(request: NextRequest) {
           const result = sessionManager.addSongToQueue(
             validatedMediaItem,
             userId,
-            position,
+            position
           );
 
           if (!result.success) {
             return NextResponse.json(
               createErrorResponse("ADD_SONG_FAILED", result.message),
-              { status: 400 },
+              { status: 400 }
             );
           }
 
@@ -174,13 +174,13 @@ export async function POST(request: NextRequest) {
               queueItem: result.queueItem,
               queue: result.newQueue,
               message: result.message,
-            }),
+            })
           );
         } catch (error) {
           if (error instanceof ValidationError) {
             return NextResponse.json(
               createErrorResponse("VALIDATION_ERROR", error.message),
-              { status: 400 },
+              { status: 400 }
             );
           }
           throw error;
@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
       default:
         return NextResponse.json(
           createErrorResponse("INVALID_ACTION", `Unknown action: ${action}`),
-          { status: 400 },
+          { status: 400 }
         );
     }
   } catch (error) {
@@ -197,9 +197,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       createErrorResponse(
         "QUEUE_OPERATION_FAILED",
-        "Failed to perform queue operation",
+        "Failed to perform queue operation"
       ),
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -214,9 +214,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json(
         createErrorResponse(
           "INVALID_REQUEST",
-          "itemId and userId are required",
+          "itemId and userId are required"
         ),
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -226,7 +226,7 @@ export async function DELETE(request: NextRequest) {
     if (!result.success) {
       return NextResponse.json(
         createErrorResponse("REMOVE_SONG_FAILED", result.message),
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -234,16 +234,16 @@ export async function DELETE(request: NextRequest) {
       createSuccessResponse({
         queue: result.newQueue,
         message: result.message,
-      }),
+      })
     );
   } catch (error) {
     console.error("Queue DELETE error:", error);
     return NextResponse.json(
       createErrorResponse(
         "QUEUE_DELETE_FAILED",
-        "Failed to remove song from queue",
+        "Failed to remove song from queue"
       ),
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -257,9 +257,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(
         createErrorResponse(
           "INVALID_REQUEST",
-          "action and userId are required",
+          "action and userId are required"
         ),
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -271,22 +271,22 @@ export async function PUT(request: NextRequest) {
           return NextResponse.json(
             createErrorResponse(
               "INVALID_REQUEST",
-              "queueItemId and newPosition are required for reorder",
+              "queueItemId and newPosition are required for reorder"
             ),
-            { status: 400 },
+            { status: 400 }
           );
         }
 
         const result = sessionManager.reorderQueue(
           queueItemId,
           newPosition,
-          userId,
+          userId
         );
 
         if (!result.success) {
           return NextResponse.json(
             createErrorResponse("REORDER_FAILED", result.message),
-            { status: 400 },
+            { status: 400 }
           );
         }
 
@@ -294,7 +294,7 @@ export async function PUT(request: NextRequest) {
           createSuccessResponse({
             queue: result.newQueue,
             message: result.message,
-          }),
+          })
         );
 
       case "skip":
@@ -303,7 +303,7 @@ export async function PUT(request: NextRequest) {
         if (!skipResult.success) {
           return NextResponse.json(
             createErrorResponse("SKIP_FAILED", skipResult.message),
-            { status: 400 },
+            { status: 400 }
           );
         }
 
@@ -312,20 +312,20 @@ export async function PUT(request: NextRequest) {
             message: skipResult.message,
             currentSong: sessionManager.getCurrentSong(),
             playbackState: sessionManager.getPlaybackState(),
-          }),
+          })
         );
 
       default:
         return NextResponse.json(
           createErrorResponse("INVALID_ACTION", `Unknown action: ${action}`),
-          { status: 400 },
+          { status: 400 }
         );
     }
   } catch (error) {
     console.error("Queue PUT error:", error);
     return NextResponse.json(
       createErrorResponse("QUEUE_UPDATE_FAILED", "Failed to update queue"),
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
