@@ -377,7 +377,69 @@ export function SearchInterface({
     []
   );
 
-  // Load more results for infinite scroll
+  // Load more artists (for initial browse without search)
+  const loadMoreArtists = useCallback(
+    async (page: number = 1, append: boolean = false) => {
+      console.log(`Loading more artists - page ${page}, append: ${append}`);
+
+      if (page === 1) {
+        setIsLoading(true);
+        if (!append) {
+          setArtistResults([]);
+        }
+      } else {
+        setIsLoadingMore(true);
+      }
+
+      setError(null);
+
+      try {
+        const limit = 50;
+        const startIndex = (page - 1) * limit;
+
+        const response = await fetch(
+          `/api/artists?limit=${limit}&startIndex=${startIndex}`
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          const newResults = data.data || [];
+          console.log(`Got ${newResults.length} artists for page ${page}`);
+
+          if (append && page > 1) {
+            setArtistResults(prev => {
+              const combined = [...prev, ...newResults];
+              console.log(`Total artists after append: ${combined.length}`);
+              return combined;
+            });
+          } else {
+            setArtistResults(newResults);
+          }
+
+          // Check if there are more results
+          const hasMore = newResults.length === limit;
+          console.log(`Has more artists: ${hasMore}`);
+          setHasMoreResults(hasMore);
+          setCurrentPage(page);
+        } else {
+          setError(data.error?.message || "Failed to load artists");
+          if (!append) {
+            setArtistResults([]);
+          }
+        }
+      } catch (err) {
+        console.error("Load more artists error:", err);
+        setError("Failed to connect to server");
+        if (!append) {
+          setArtistResults([]);
+        }
+      } finally {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
+    },
+    []
+  );
   const loadMoreResults = useCallback(async () => {
     if (!hasMoreResults || isLoadingMore || isLoading) {
       return;
@@ -385,12 +447,17 @@ export function SearchInterface({
 
     if (activeTab === "search") {
       if (artistViewMode === "artists") {
-        // Load more unified search results
-        if (!searchQuery.trim()) return;
-        console.log(
-          `Loading more unified search results for "${searchQuery}" - page ${currentPage + 1}`
-        );
-        await performUnifiedSearch(searchQuery, currentPage + 1, true);
+        if (searchQuery.trim()) {
+          // Load more unified search results
+          console.log(
+            `Loading more unified search results for "${searchQuery}" - page ${currentPage + 1}`
+          );
+          await performUnifiedSearch(searchQuery, currentPage + 1, true);
+        } else {
+          // Load more artists (initial browse)
+          console.log(`Loading more artists - page ${currentPage + 1}`);
+          await loadMoreArtists(currentPage + 1, true);
+        }
       } else if (selectedArtist) {
         // Load more songs for selected artist
         console.log(
@@ -421,6 +488,7 @@ export function SearchInterface({
     isLoadingMore,
     isLoading,
     performUnifiedSearch,
+    loadMoreArtists,
     getSongsByArtist,
     getPlaylists,
     getSongsByPlaylist,
@@ -435,11 +503,9 @@ export function SearchInterface({
     const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100; // 100px threshold
 
     if (isNearBottom && hasMoreResults && !isLoadingMore && !isLoading) {
-      // Only load more if we have a search query or are viewing songs for an artist/playlist
+      // Load more for various scenarios
       const shouldLoadMore =
-        (activeTab === "search" &&
-          artistViewMode === "artists" &&
-          searchQuery.trim()) ||
+        (activeTab === "search" && artistViewMode === "artists") || // Always allow loading more artists (with or without search)
         (activeTab === "search" &&
           artistViewMode === "songs" &&
           selectedArtist) ||
@@ -486,28 +552,50 @@ export function SearchInterface({
     return () => container.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  // Load popular songs on initial load
+  // Load all artists on initial load
   useEffect(() => {
-    const loadInitialSongs = async () => {
+    const loadInitialArtists = async () => {
       setIsLoading(true);
+      setHasSearched(true);
       try {
-        const response = await fetch("/api/songs?limit=20");
+        const limit = 50;
+        const response = await fetch(
+          `/api/artists?limit=${limit}&startIndex=0`
+        );
         const data = await response.json();
 
         if (data.success) {
-          setSongResults(data.data || []);
+          const artists = data.data || [];
+          setArtistResults(artists);
+
+          // Check if there are more results
+          const hasMore = artists.length === limit;
+          setHasMoreResults(hasMore);
+          setCurrentPage(1);
+
+          console.log(
+            `Loaded ${artists.length} initial artists, hasMore: ${hasMore}`
+          );
+        } else {
+          console.error("Failed to load initial artists:", data.error);
+          setError(data.error?.message || "Failed to load artists");
         }
       } catch (err) {
-        console.error("Failed to load initial songs:", err);
+        console.error("Failed to load initial artists:", err);
+        setError("Failed to connect to server");
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (!hasSearched && activeTab === "search") {
-      loadInitialSongs();
+    if (
+      !hasSearched &&
+      activeTab === "search" &&
+      artistViewMode === "artists"
+    ) {
+      loadInitialArtists();
     }
-  }, [hasSearched, activeTab]);
+  }, [hasSearched, activeTab, artistViewMode]);
 
   // Clear search when switching tabs
   const handleTabChange = (tab: SearchTab) => {
