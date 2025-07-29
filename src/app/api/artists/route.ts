@@ -18,26 +18,6 @@ export async function GET(request: NextRequest) {
       0
     );
 
-    if (!query || !query.trim()) {
-      return NextResponse.json(
-        createErrorResponse("INVALID_SEARCH", "Search query is required"),
-        { status: 400 }
-      );
-    }
-
-    // Validate search parameters
-    try {
-      validateSearchRequest({ query, limit, offset: startIndex });
-    } catch (error) {
-      if (error instanceof ValidationError) {
-        return NextResponse.json(
-          createErrorResponse("INVALID_SEARCH", error.message),
-          { status: 400 }
-        );
-      }
-      throw error;
-    }
-
     const jellyfinService = getJellyfinSDKService();
 
     // Health check first
@@ -52,12 +32,32 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Search for artists using the SDK
-    const artists = await jellyfinService.searchArtists(
-      query.trim(),
-      limit,
-      startIndex
-    );
+    let artists;
+
+    if (query && query.trim()) {
+      // Validate search parameters when query is provided
+      try {
+        validateSearchRequest({ query, limit, offset: startIndex });
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          return NextResponse.json(
+            createErrorResponse("INVALID_SEARCH", error.message),
+            { status: 400 }
+          );
+        }
+        throw error;
+      }
+
+      // Search for artists using the SDK
+      artists = await jellyfinService.searchArtists(
+        query.trim(),
+        limit,
+        startIndex
+      );
+    } else {
+      // Get all artists when no query is provided
+      artists = await jellyfinService.getAllArtists(limit, startIndex);
+    }
 
     return NextResponse.json(
       createPaginatedResponse(
@@ -68,9 +68,9 @@ export async function GET(request: NextRequest) {
       )
     );
   } catch (error) {
-    console.error("Artist search API error:", error);
+    console.error("Artist API error:", error);
     return NextResponse.json(
-      createErrorResponse("ARTIST_SEARCH_FAILED", "Failed to search artists"),
+      createErrorResponse("ARTIST_REQUEST_FAILED", "Failed to get artists"),
       { status: 500 }
     );
   }

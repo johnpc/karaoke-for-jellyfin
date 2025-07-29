@@ -158,6 +158,67 @@ export class JellyfinSDKService {
   }
 
   /**
+   * Get all artists (without search query) using the official SDK
+   */
+  async getAllArtists(
+    limit: number = 50,
+    startIndex: number = 0
+  ): Promise<Artist[]> {
+    if (!this.api) {
+      throw new Error("API not initialized");
+    }
+
+    if (!this.userId) {
+      const authenticated = await this.authenticate();
+      if (!authenticated) {
+        throw new Error("Failed to authenticate with Jellyfin");
+      }
+    }
+
+    try {
+      console.log(
+        `Getting all artists (limit: ${limit}, startIndex: ${startIndex})`
+      );
+
+      // Use fetch instead of axios instance to avoid base URL issues
+      const params = new URLSearchParams({
+        startIndex: startIndex.toString(),
+        limit: limit.toString(),
+        userId: this.userId!,
+        fields: "Overview,ImageTags",
+        includeItemTypes: "MusicArtist",
+        recursive: "true",
+        sortBy: "SortName",
+        sortOrder: "Ascending",
+      });
+
+      const artistsUrl = `${this.baseUrl}/Artists?${params}`;
+      const response = await fetch(artistsUrl, {
+        method: "GET",
+        headers: {
+          "X-Emby-Token": this.apiKey,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(`Jellyfin returned ${data.Items?.length || 0} artists`);
+
+      const artists = this.transformArtists(data.Items || []);
+      console.log(`Transformed ${artists.length} artists`);
+
+      return artists;
+    } catch (error) {
+      console.error("Jellyfin get all artists error:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Get all songs by a specific artist ID using the official SDK
    * This method uses artistIds filter which should get all songs where the artist is listed
    */
