@@ -1,0 +1,79 @@
+{
+  "packageId": "com.jellyfin.karaoke.tv",
+  "host": "YOUR_SERVER_URL",
+  "name": "Karaoke TV Display",
+  "launcherName": "Karaoke TV",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "themeColor": "#8B5CF6",
+  "navigationColor": "#8B5CF6",
+  "backgroundColor": "#8B5CF6",
+  "enableNotifications": false,
+  "startUrl": "/tv",
+  "iconUrl": "/icons/icon-512x512.png",
+  "maskableIconUrl": "/icons/icon-512x512.png",
+  "monochromeIconUrl": "/icons/icon-512x512.png",
+  "includeSourceCode": false,
+  "webManifestUrl": "/manifest-tv.json",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "/manifest-tv.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": {
+      "enabled": false
+    },
+    "playBilling": {
+      "enabled": false
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": false,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "minSdkVersion": 21,
+  "targetSdkVersion": 34,
+  "retainedBundles": [],
+  "appVersion": "1.0.0",
+  "appVersionCode": 1,
+  "androidPackage": {
+    "packageId": "com.jellyfin.karaoke.tv",
+    "name": "Karaoke TV Display",
+    "launcherName": "Karaoke TV",
+    "features": [
+      {
+        "name": "android.software.leanback",
+        "required": true
+      },
+      {
+        "name": "android.hardware.touchscreen",
+        "required": false
+      },
+      {
+        "name": "android.hardware.gamepad",
+        "required": false
+      }
+    ],
+    "permissions": [
+      {
+        "name": "android.permission.INTERNET"
+      },
+      {
+        "name": "android.permission.ACCESS_NETWORK_STATE"
+      },
+      {
+        "name": "android.permission.WAKE_LOCK"
+      }
+    ],
+    "categories": ["android.intent.category.LEANBACK_LAUNCHER"]
+  }
+}

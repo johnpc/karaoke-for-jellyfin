@@ -6,6 +6,7 @@
     "dev": "node server.js",
     "dev:next": "next dev --turbopack",
     "build": "next build",
+    "build:android-tv": "node scripts/build-tv-apk.js",
     "start": "NODE_ENV=production node server.js",
     "start:next": "next start",
     "lint": "lint-staged",
