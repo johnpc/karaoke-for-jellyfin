@@ -62,7 +62,7 @@ function execCommand(command, options = {}) {
     return execSync(command, {
       stdio: "inherit",
       encoding: "utf8",
-      timeout: 30000, // 30 second timeout
+      timeout: 600000, // 30 second timeout
       ...options,
     });
   } catch (error) {
@@ -236,7 +236,7 @@ async function initializeBubblewrap() {
   // Initialize Bubblewrap
   const initCommand = [
     "bubblewrap init",
-    `--manifest="${serverUrl}/manifest-tv.json"`,
+    `--manifest="${serverUrl}/manifest.json"`,
     "--directory=.",
     `--packageId="${CONFIG.packageName}"`,
     `--name="${CONFIG.appName}"`,
@@ -302,7 +302,7 @@ function configureAndroidTV() {
 function buildAPK() {
   log("🔨 Building APK...", "yellow");
 
-  execCommand("bubblewrap build");
+  execCommand("npx bubblewrap build");
 
   // Find the generated APK
   const apkFiles = fs.readdirSync(".").filter(file => file.endsWith(".apk"));
