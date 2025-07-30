@@ -9,8 +9,9 @@ import {
   ArrowLeftIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  RectangleStackIcon,
 } from "@heroicons/react/24/outline";
-import { MediaItem, Artist, Playlist } from "@/types";
+import { MediaItem, Artist, Playlist, Album } from "@/types";
 import { ConfirmationDialog } from "./ConfirmationDialog";
 import { LyricsIndicator } from "@/components/LyricsIndicator";
 
@@ -22,6 +23,7 @@ interface SearchInterfaceProps {
 type SearchTab = "search" | "playlist";
 type ArtistViewMode = "artists" | "songs";
 type PlaylistViewMode = "playlists" | "songs";
+type AlbumViewMode = "albums" | "songs";
 
 export function SearchInterface({
   onAddSong,
@@ -36,11 +38,13 @@ export function SearchInterface({
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(
     null
   );
+  const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Unified search results
   const [songResults, setSongResults] = useState<MediaItem[]>([]);
   const [artistResults, setArtistResults] = useState<Artist[]>([]);
+  const [albumResults, setAlbumResults] = useState<Album[]>([]);
 
   // Playlist results (separate from unified search)
   const [playlistResults, setPlaylistResults] = useState<Playlist[]>([]);
@@ -49,6 +53,7 @@ export function SearchInterface({
   const [isArtistSectionCollapsed, setIsArtistSectionCollapsed] =
     useState(false);
   const [isSongSectionCollapsed, setIsSongSectionCollapsed] = useState(false);
+  const [isAlbumSectionCollapsed, setIsAlbumSectionCollapsed] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -65,12 +70,13 @@ export function SearchInterface({
     "success"
   );
 
-  // Unified search function that searches both artists and songs
+  // Unified search function that searches artists, albums, and songs
   const performUnifiedSearch = useCallback(
     async (query: string, page: number = 1, append: boolean = false) => {
       if (!query.trim()) {
         setSongResults([]);
         setArtistResults([]);
+        setAlbumResults([]);
         setHasSearched(false);
         setHasMoreResults(true);
         setCurrentPage(1);
@@ -86,6 +92,7 @@ export function SearchInterface({
         if (!append) {
           setSongResults([]);
           setArtistResults([]);
+          setAlbumResults([]);
         }
       } else {
         setIsLoadingMore(true);
@@ -98,18 +105,24 @@ export function SearchInterface({
         const limit = 50;
         const startIndex = (page - 1) * limit;
 
-        // Search both artists and songs in parallel
-        const [artistResponse, songResponse] = await Promise.all([
-          fetch(
-            `/api/artists?q=${encodeURIComponent(query.trim())}&limit=${limit}&startIndex=${startIndex}`
-          ),
-          fetch(
-            `/api/songs/title?q=${encodeURIComponent(query.trim())}&limit=${limit}&startIndex=${startIndex}`
-          ),
-        ]);
+        // Search artists, albums, and songs in parallel
+        const [artistResponse, albumResponse, songResponse] = await Promise.all(
+          [
+            fetch(
+              `/api/artists?q=${encodeURIComponent(query.trim())}&limit=${limit}&startIndex=${startIndex}`
+            ),
+            fetch(
+              `/api/albums?q=${encodeURIComponent(query.trim())}&limit=${limit}&startIndex=${startIndex}`
+            ),
+            fetch(
+              `/api/songs/title?q=${encodeURIComponent(query.trim())}&limit=${limit}&startIndex=${startIndex}`
+            ),
+          ]
+        );
 
-        const [artistData, songData] = await Promise.all([
+        const [artistData, albumData, songData] = await Promise.all([
           artistResponse.json(),
+          albumResponse.json(),
           songResponse.json(),
         ]);
 
@@ -140,6 +153,33 @@ export function SearchInterface({
           console.error("Artist search failed:", artistData.error);
         }
 
+        // Process album results
+        if (albumData.success) {
+          const newAlbumResults = albumData.data || [];
+          console.log(
+            `Got ${newAlbumResults.length} album results for page ${page}`
+          );
+
+          if (append && page > 1) {
+            setAlbumResults(prev => {
+              const combined = [...prev, ...newAlbumResults];
+              // Filter out duplicates by album.id
+              const uniqueAlbums = combined.filter(
+                (album, index, arr) =>
+                  arr.findIndex(a => a.id === album.id) === index
+              );
+              console.log(
+                `Total album results after append: ${uniqueAlbums.length} (${combined.length - uniqueAlbums.length} duplicates removed)`
+              );
+              return uniqueAlbums;
+            });
+          } else {
+            setAlbumResults(newAlbumResults);
+          }
+        } else {
+          console.error("Album search failed:", albumData.error);
+        }
+
         // Process song results
         if (songData.success) {
           const newSongResults = songData.data || [];
@@ -167,24 +207,34 @@ export function SearchInterface({
           console.error("Song search failed:", songData.error);
         }
 
-        // Check if there are more results (if either endpoint has more)
+        // Check if there are more results (if any endpoint has more)
         const artistHasMore =
           artistData.success && (artistData.data || []).length === limit;
+        const albumHasMore =
+          albumData.success && (albumData.data || []).length === limit;
         const songHasMore =
           songData.success && (songData.data || []).length === limit;
-        const hasMore = artistHasMore || songHasMore;
+        const hasMore = artistHasMore || albumHasMore || songHasMore;
 
         console.log(
-          `Has more results: ${hasMore} (artists: ${artistHasMore}, songs: ${songHasMore})`
+          `Has more results: ${hasMore} (artists: ${artistHasMore}, albums: ${albumHasMore}, songs: ${songHasMore})`
         );
         setHasMoreResults(hasMore);
         setCurrentPage(page);
 
-        // Set error if both searches failed
-        if (!artistData.success && !songData.success) {
+        // Set error if all searches failed
+        if (!artistData.success && !albumData.success && !songData.success) {
+          setError("Failed to search artists, albums, and songs");
+        } else if (!artistData.success && !albumData.success) {
+          setError("Failed to search artists and albums");
+        } else if (!artistData.success && !songData.success) {
           setError("Failed to search artists and songs");
+        } else if (!albumData.success && !songData.success) {
+          setError("Failed to search albums and songs");
         } else if (!artistData.success) {
           setError("Failed to search artists");
+        } else if (!albumData.success) {
+          setError("Failed to search albums");
         } else if (!songData.success) {
           setError("Failed to search songs");
         }
@@ -194,6 +244,80 @@ export function SearchInterface({
         if (!append) {
           setSongResults([]);
           setArtistResults([]);
+          setAlbumResults([]);
+        }
+      } finally {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
+    },
+    []
+  );
+
+  // Get songs by album ID
+  const getSongsByAlbum = useCallback(
+    async (album: Album, page: number = 1, append: boolean = false) => {
+      console.log(
+        `Getting songs for album "${album.name}" - page ${page}, append: ${append}`
+      );
+
+      if (page === 1) {
+        setIsLoading(true);
+        setSongResults([]);
+      } else {
+        setIsLoadingMore(true);
+      }
+
+      setError(null);
+
+      try {
+        const limit = 50;
+        const startIndex = (page - 1) * limit;
+
+        const response = await fetch(
+          `/api/albums/${album.id}/songs?limit=${limit}&startIndex=${startIndex}`
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          const newResults = data.data || [];
+          console.log(
+            `Got ${newResults.length} songs for album "${album.name}" - page ${page}`
+          );
+
+          if (append && page > 1) {
+            setSongResults(prev => {
+              const combined = [...prev, ...newResults];
+              // Filter out duplicates by song.id
+              const uniqueSongs = combined.filter(
+                (song, index, arr) =>
+                  arr.findIndex(s => s.id === song.id) === index
+              );
+              console.log(
+                `Total songs for album after append: ${uniqueSongs.length} (${combined.length - uniqueSongs.length} duplicates removed)`
+              );
+              return uniqueSongs;
+            });
+          } else {
+            setSongResults(newResults);
+          }
+
+          // Check if there are more results
+          const hasMore = newResults.length === limit;
+          console.log(`Has more songs for album: ${hasMore}`);
+          setHasMoreResults(hasMore);
+          setCurrentPage(page);
+        } else {
+          setError(data.error?.message || "Failed to get songs by album");
+          if (!append) {
+            setSongResults([]);
+          }
+        }
+      } catch (err) {
+        console.error("Get songs by album error:", err);
+        setError("Failed to connect to server");
+        if (!append) {
+          setSongResults([]);
         }
       } finally {
         setIsLoading(false);
@@ -507,6 +631,12 @@ export function SearchInterface({
           `Loading more songs for artist "${selectedArtist.name}" - page ${currentPage + 1}`
         );
         await getSongsByArtist(selectedArtist, currentPage + 1, true);
+      } else if (selectedAlbum) {
+        // Load more songs for selected album
+        console.log(
+          `Loading more songs for album "${selectedAlbum.name}" - page ${currentPage + 1}`
+        );
+        await getSongsByAlbum(selectedAlbum, currentPage + 1, true);
       }
     } else if (activeTab === "playlist") {
       if (playlistViewMode === "playlists") {
@@ -526,6 +656,7 @@ export function SearchInterface({
     playlistViewMode,
     selectedArtist,
     selectedPlaylist,
+    selectedAlbum,
     currentPage,
     hasMoreResults,
     isLoadingMore,
@@ -533,6 +664,7 @@ export function SearchInterface({
     performUnifiedSearch,
     loadMoreArtists,
     getSongsByArtist,
+    getSongsByAlbum,
     getPlaylists,
     getSongsByPlaylist,
   ]);
@@ -608,6 +740,7 @@ export function SearchInterface({
     setSearchQuery("");
     setSongResults([]);
     setArtistResults([]);
+    setAlbumResults([]);
     setPlaylistResults([]);
     setHasSearched(false);
     setError(null);
@@ -617,15 +750,41 @@ export function SearchInterface({
     setPlaylistViewMode("playlists");
     setSelectedArtist(null);
     setSelectedPlaylist(null);
+    setSelectedAlbum(null);
 
     // Reset collapse states
     setIsArtistSectionCollapsed(false);
     setIsSongSectionCollapsed(false);
+    setIsAlbumSectionCollapsed(false);
 
     // Auto-load playlists when switching to playlist tab
     if (tab === "playlist") {
       getPlaylists();
     }
+  };
+
+  // Handle album selection
+  const handleAlbumSelect = async (album: Album) => {
+    console.log(`Selected album: ${album.name}`);
+    setSelectedAlbum(album);
+    setArtistViewMode("songs"); // Reuse the same view mode for consistency
+    setCurrentPage(1);
+    setHasMoreResults(true);
+    await getSongsByAlbum(album);
+  };
+
+  // Handle back to albums view
+  const handleBackToAlbums = () => {
+    setArtistViewMode("artists"); // Reset to main search view
+    setSelectedAlbum(null);
+    setSongResults([]);
+    setCurrentPage(1);
+    setHasMoreResults(true);
+
+    // Reset collapse states
+    setIsArtistSectionCollapsed(false);
+    setIsSongSectionCollapsed(false);
+    setIsAlbumSectionCollapsed(false);
   };
 
   // Handle artist selection
@@ -642,6 +801,7 @@ export function SearchInterface({
   const handleBackToArtists = () => {
     setArtistViewMode("artists");
     setSelectedArtist(null);
+    setSelectedAlbum(null);
     setSongResults([]);
     setCurrentPage(1);
     setHasMoreResults(true);
@@ -649,6 +809,7 @@ export function SearchInterface({
     // Reset collapse states
     setIsArtistSectionCollapsed(false);
     setIsSongSectionCollapsed(false);
+    setIsAlbumSectionCollapsed(false);
   };
 
   // Handle playlist selection
@@ -724,9 +885,11 @@ export function SearchInterface({
   const getPlaceholderText = () => {
     if (activeTab === "search") {
       if (artistViewMode === "artists") {
-        return "Search for artists and songs...";
-      } else {
-        return `Search songs by ${selectedArtist?.name || "this artist"}...`;
+        return "Search for artists, albums, and songs...";
+      } else if (selectedArtist) {
+        return `Search songs by ${selectedArtist.name}...`;
+      } else if (selectedAlbum) {
+        return `Search songs in ${selectedAlbum.name}...`;
       }
     }
     return "Search...";
@@ -735,9 +898,11 @@ export function SearchInterface({
   const getEmptyStateText = () => {
     if (activeTab === "search") {
       if (artistViewMode === "artists") {
-        return "Try searching by artist name or song title";
-      } else {
-        return `No songs found for ${selectedArtist?.name || "this artist"}`;
+        return "Try searching by artist name, album title, or song title";
+      } else if (selectedArtist) {
+        return `No songs found for ${selectedArtist.name}`;
+      } else if (selectedAlbum) {
+        return `No songs found in ${selectedAlbum.name}`;
       }
     }
     return "No results found";
@@ -773,18 +938,22 @@ export function SearchInterface({
 
       {/* Search Input */}
       <div className="p-4 bg-white border-b border-gray-200">
-        {/* Back button for artist songs view */}
-        {activeTab === "search" && artistViewMode === "songs" && (
-          <div className="flex items-center mb-3">
-            <button
-              onClick={handleBackToArtists}
-              className="flex items-center text-purple-600 hover:text-purple-700 transition-colors"
-            >
-              <ArrowLeftIcon className="w-5 h-5 mr-2" />
-              <span className="text-sm font-medium">Back to Search</span>
-            </button>
-          </div>
-        )}
+        {/* Back button for artist/album songs view */}
+        {activeTab === "search" &&
+          artistViewMode === "songs" &&
+          (selectedArtist || selectedAlbum) && (
+            <div className="flex items-center mb-3">
+              <button
+                onClick={
+                  selectedArtist ? handleBackToArtists : handleBackToAlbums
+                }
+                className="flex items-center text-purple-600 hover:text-purple-700 transition-colors"
+              >
+                <ArrowLeftIcon className="w-5 h-5 mr-2" />
+                <span className="text-sm font-medium">Back to Search</span>
+              </button>
+            </div>
+          )}
 
         {/* Back button for playlist songs view */}
         {activeTab === "playlist" && playlistViewMode === "songs" && (
@@ -813,16 +982,28 @@ export function SearchInterface({
           </div>
         )}
 
-        {/* Artist info header when viewing songs */}
+        {/* Artist/Album info header when viewing songs */}
         {activeTab === "search" &&
           artistViewMode === "songs" &&
-          selectedArtist && (
+          (selectedArtist || selectedAlbum) && (
             <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
               <div className="flex items-center">
-                <UserIcon className="w-5 h-5 text-purple-600 mr-2" />
-                <span className="text-sm font-medium text-purple-900">
-                  Songs by {selectedArtist.name}
-                </span>
+                {selectedArtist ? (
+                  <>
+                    <UserIcon className="w-5 h-5 text-purple-600 mr-2" />
+                    <span className="text-sm font-medium text-purple-900">
+                      Songs by {selectedArtist.name}
+                    </span>
+                  </>
+                ) : selectedAlbum ? (
+                  <>
+                    <RectangleStackIcon className="w-5 h-5 text-purple-600 mr-2" />
+                    <span className="text-sm font-medium text-purple-900">
+                      Songs in {selectedAlbum.name}
+                      {selectedAlbum.artist && ` by ${selectedAlbum.artist}`}
+                    </span>
+                  </>
+                ) : null}
               </div>
             </div>
           )}
@@ -855,6 +1036,7 @@ export function SearchInterface({
         {isLoading &&
           songResults.length === 0 &&
           artistResults.length === 0 &&
+          albumResults.length === 0 &&
           playlistResults.length === 0 && (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
@@ -862,7 +1044,11 @@ export function SearchInterface({
                 {activeTab === "search" && artistViewMode === "artists"
                   ? "Searching..."
                   : activeTab === "search" && artistViewMode === "songs"
-                    ? `Finding songs by ${selectedArtist?.name}...`
+                    ? selectedArtist
+                      ? `Finding songs by ${selectedArtist.name}...`
+                      : selectedAlbum
+                        ? `Finding songs in ${selectedAlbum.name}...`
+                        : "Finding songs..."
                     : activeTab === "playlist" &&
                         playlistViewMode === "playlists"
                       ? "Loading playlists..."
@@ -878,6 +1064,7 @@ export function SearchInterface({
           ((activeTab === "search" &&
             artistViewMode === "artists" &&
             artistResults.length === 0 &&
+            albumResults.length === 0 &&
             songResults.length === 0) ||
             (activeTab === "search" &&
               artistViewMode === "songs" &&
@@ -932,7 +1119,7 @@ export function SearchInterface({
           </div>
         )}
 
-        {/* Unified Search Results - Artists and Songs */}
+        {/* Unified Search Results - Artists, Albums, and Songs */}
         {activeTab === "search" &&
           artistViewMode === "artists" &&
           hasSearched && (
@@ -984,6 +1171,75 @@ export function SearchInterface({
                                 {artist.name}
                               </h3>
                               <p className="text-sm text-gray-600">Artist</p>
+                            </div>
+                            <div className="flex-shrink-0">
+                              <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                                <ArrowLeftIcon className="w-4 h-4 text-white transform rotate-180" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Albums Section */}
+              {albumResults.length > 0 && (
+                <div className="border-b border-gray-200">
+                  <button
+                    onClick={() =>
+                      setIsAlbumSectionCollapsed(!isAlbumSectionCollapsed)
+                    }
+                    className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
+                  >
+                    <div className="flex items-center">
+                      <RectangleStackIcon className="w-5 h-5 text-gray-600 mr-2" />
+                      <span className="font-medium text-gray-900">
+                        Albums ({albumResults.length})
+                      </span>
+                    </div>
+                    {isAlbumSectionCollapsed ? (
+                      <ChevronDownIcon className="w-5 h-5 text-gray-600" />
+                    ) : (
+                      <ChevronUpIcon className="w-5 h-5 text-gray-600" />
+                    )}
+                  </button>
+
+                  {!isAlbumSectionCollapsed && (
+                    <div className="divide-y divide-gray-200">
+                      {albumResults.map(album => (
+                        <div
+                          key={album.id}
+                          className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                          onClick={() => handleAlbumSelect(album)}
+                        >
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                              {album.imageUrl ? (
+                                <img
+                                  src={album.imageUrl}
+                                  alt={album.name}
+                                  className="w-12 h-12 rounded-lg object-cover"
+                                />
+                              ) : (
+                                <RectangleStackIcon className="w-6 h-6 text-purple-600" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-base font-medium text-gray-900 truncate">
+                                {album.name}
+                              </h3>
+                              <p className="text-sm text-gray-600 truncate">
+                                {album.artist}
+                                {album.year && ` • ${album.year}`}
+                              </p>
+                              {album.trackCount && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {album.trackCount} tracks
+                                </p>
+                              )}
                             </div>
                             <div className="flex-shrink-0">
                               <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
@@ -1221,7 +1477,9 @@ export function SearchInterface({
           !isLoading &&
           ((activeTab === "search" &&
             artistViewMode === "artists" &&
-            (artistResults.length > 0 || songResults.length > 0)) ||
+            (artistResults.length > 0 ||
+              albumResults.length > 0 ||
+              songResults.length > 0)) ||
             (activeTab === "playlist" &&
               playlistViewMode === "playlists" &&
               playlistResults.length > 0) ||
@@ -1238,7 +1496,11 @@ export function SearchInterface({
                   : activeTab === "playlist" && playlistViewMode === "playlists"
                     ? "Load More Playlists"
                     : activeTab === "search" && artistViewMode === "songs"
-                      ? `Load More Songs by ${selectedArtist?.name}`
+                      ? selectedArtist
+                        ? `Load More Songs by ${selectedArtist.name}`
+                        : selectedAlbum
+                          ? `Load More Songs from ${selectedAlbum.name}`
+                          : "Load More Songs"
                       : activeTab === "playlist" && playlistViewMode === "songs"
                         ? `Load More Songs from ${selectedPlaylist?.name}`
                         : "Load More Songs"}
@@ -1250,7 +1512,9 @@ export function SearchInterface({
         {hasSearched &&
           ((activeTab === "search" &&
             artistViewMode === "artists" &&
-            (artistResults.length > 0 || songResults.length > 0)) ||
+            (artistResults.length > 0 ||
+              albumResults.length > 0 ||
+              songResults.length > 0)) ||
             (activeTab === "playlist" &&
               playlistViewMode === "playlists" &&
               playlistResults.length > 0) ||
@@ -1262,11 +1526,15 @@ export function SearchInterface({
             <div className="flex items-center justify-center py-6">
               <p className="text-gray-500 text-sm">
                 {activeTab === "search" && artistViewMode === "artists"
-                  ? `Found all results (${artistResults.length} artists, ${songResults.length} songs)`
+                  ? `Found all results (${artistResults.length} artists, ${albumResults.length} albums, ${songResults.length} songs)`
                   : activeTab === "playlist" && playlistViewMode === "playlists"
                     ? `Found all playlists (${playlistResults.length} total)`
                     : activeTab === "search" && artistViewMode === "songs"
-                      ? `Found all songs by ${selectedArtist?.name} (${songResults.length} total)`
+                      ? selectedArtist
+                        ? `Found all songs by ${selectedArtist.name} (${songResults.length} total)`
+                        : selectedAlbum
+                          ? `Found all songs in ${selectedAlbum.name} (${songResults.length} total)`
+                          : `No more songs found (${songResults.length} total)`
                       : activeTab === "playlist" && playlistViewMode === "songs"
                         ? `Found all songs in ${selectedPlaylist?.name} (${songResults.length} total)`
                         : `No more songs found (${songResults.length} total)`}

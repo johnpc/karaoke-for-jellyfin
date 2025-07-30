@@ -25,6 +25,17 @@ export interface Artist {
   songCount?: number;
 }
 
+export interface Album {
+  id: string;
+  name: string;
+  artist: string;
+  jellyfinId: string;
+  imageUrl?: string;
+  trackCount?: number;
+  year?: number;
+  genre?: string;
+}
+
 export interface Playlist {
   id: string;
   name: string;

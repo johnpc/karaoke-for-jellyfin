@@ -1,5 +1,5 @@
 // Jellyfin API integration service
-import { MediaItem } from "@/types";
+import { MediaItem, Album } from "@/types";
 
 export interface JellyfinAuthResponse {
   AccessToken: string;
@@ -34,6 +34,19 @@ export interface JellyfinArtist {
   };
 }
 
+export interface JellyfinAlbum {
+  Id: string;
+  Name: string;
+  Type: string;
+  Artists?: string[];
+  ProductionYear?: number;
+  Genres?: string[];
+  ImageTags?: {
+    Primary?: string;
+  };
+  ChildCount?: number;
+}
+
 export interface JellyfinSearchResponse {
   Items: JellyfinMediaItem[];
   TotalRecordCount: number;
@@ -41,6 +54,11 @@ export interface JellyfinSearchResponse {
 
 export interface JellyfinArtistSearchResponse {
   Items: JellyfinArtist[];
+  TotalRecordCount: number;
+}
+
+export interface JellyfinAlbumSearchResponse {
+  Items: JellyfinAlbum[];
   TotalRecordCount: number;
 }
 
@@ -285,8 +303,132 @@ export class JellyfinService {
   }
 
   /**
-   * Get all songs by a specific artist ID
+   * Search for albums by name
    */
+  async searchAlbums(
+    query: string,
+    limit: number = 50,
+    startIndex: number = 0
+  ): Promise<Album[]> {
+    if (!this.userId) {
+      const authenticated = await this.authenticate();
+      if (!authenticated) {
+        throw new Error("Failed to authenticate with Jellyfin");
+      }
+    }
+
+    try {
+      console.log(
+        `Searching for albums: "${query}" (limit: ${limit}, startIndex: ${startIndex})`
+      );
+
+      const searchParams = new URLSearchParams({
+        searchTerm: query,
+        includeItemTypes: "MusicAlbum",
+        recursive: "true",
+        limit: limit.toString(),
+        startIndex: startIndex.toString(),
+        userId: this.userId!,
+        fields: "Artists,ProductionYear,Genres,ImageTags,ChildCount",
+        sortBy: "SortName",
+        sortOrder: "Ascending",
+      });
+
+      console.log(
+        `Album search URL: ${this.baseUrl}/Items?${searchParams.toString()}`
+      );
+
+      const response = await fetch(
+        `${this.baseUrl}/Items?${searchParams.toString()}`,
+        {
+          headers: {
+            "X-Emby-Token": this.apiKey,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Album search failed: ${response.status}`);
+      }
+
+      const data: JellyfinAlbumSearchResponse = await response.json();
+      console.log(`Jellyfin returned ${data.Items?.length || 0} albums`);
+
+      const albums = this.transformAlbums(data.Items || []);
+      console.log(`Transformed ${albums.length} albums`);
+
+      return albums;
+    } catch (error) {
+      console.error("Jellyfin album search error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all songs by a specific album ID
+   */
+  async getSongsByAlbumId(
+    albumId: string,
+    limit: number = 50,
+    startIndex: number = 0
+  ): Promise<MediaItem[]> {
+    if (!this.userId) {
+      const authenticated = await this.authenticate();
+      if (!authenticated) {
+        throw new Error("Failed to authenticate with Jellyfin");
+      }
+    }
+
+    try {
+      console.log(
+        `Getting songs for album ID: ${albumId} (limit: ${limit}, startIndex: ${startIndex})`
+      );
+
+      const searchParams = new URLSearchParams({
+        includeItemTypes: "Audio",
+        recursive: "true",
+        parentId: albumId,
+        limit: limit.toString(),
+        startIndex: startIndex.toString(),
+        userId: this.userId!,
+        fields: "Artists,Album,RunTimeTicks",
+        sortBy: "IndexNumber,SortName",
+        sortOrder: "Ascending",
+      });
+
+      console.log(
+        `Songs by album URL: ${this.baseUrl}/Items?${searchParams.toString()}`
+      );
+
+      const response = await fetch(
+        `${this.baseUrl}/Items?${searchParams.toString()}`,
+        {
+          headers: {
+            "X-Emby-Token": this.apiKey,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Get songs by album failed: ${response.status}`);
+      }
+
+      const data: JellyfinSearchResponse = await response.json();
+      console.log(
+        `Jellyfin returned ${data.Items?.length || 0} songs for album ${albumId}`
+      );
+
+      const songs = this.transformMediaItems(data.Items || []);
+      console.log(`Transformed ${songs.length} songs`);
+
+      return songs;
+    } catch (error) {
+      console.error("Jellyfin get songs by album error:", error);
+      throw error;
+    }
+  }
   async getSongsByArtistId(
     artistId: string,
     limit: number = 50,
@@ -890,6 +1032,38 @@ export class JellyfinService {
       console.error("Failed to get libraries:", error);
       return [];
     }
+  }
+
+  /**
+   * Transform Jellyfin albums to our Album format
+   */
+  private transformAlbums(items: JellyfinAlbum[]): Album[] {
+    return items
+      .filter(item => item.Type === "MusicAlbum")
+      .map(item => this.transformAlbum(item))
+      .filter(Boolean) as Album[];
+  }
+
+  /**
+   * Transform a single Jellyfin album to our Album format
+   */
+  private transformAlbum(item: JellyfinAlbum): Album | null {
+    if (item.Type !== "MusicAlbum") {
+      return null;
+    }
+
+    return {
+      id: `jellyfin_album_${item.Id}`,
+      name: item.Name || "Unknown Album",
+      artist: item.Artists?.join(", ") || "Unknown Artist",
+      jellyfinId: item.Id,
+      imageUrl: item.ImageTags?.Primary
+        ? `${this.baseUrl}/Items/${item.Id}/Images/Primary?maxHeight=300&maxWidth=300&quality=90`
+        : undefined,
+      trackCount: item.ChildCount,
+      year: item.ProductionYear,
+      genre: item.Genres?.join(", "),
+    };
   }
 
   /**
