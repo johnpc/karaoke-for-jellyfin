@@ -240,7 +240,23 @@ export function AudioPlayer({
   return (
     <>
       {/* Hidden audio element */}
-      <audio ref={audioRef} preload="auto" style={{ display: "none" }} />
+      <audio
+        ref={audioRef}
+        data-testid="audio-player"
+        aria-label="Karaoke audio player"
+        preload="auto"
+        style={{ display: "none" }}
+      />
+
+      {/* Audio error display */}
+      {error && (
+        <div
+          data-testid="audio-error"
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-900 border border-red-700 rounded-lg p-4 text-red-300"
+        >
+          Audio Error: {error}
+        </div>
+      )}
     </>
   );
 }

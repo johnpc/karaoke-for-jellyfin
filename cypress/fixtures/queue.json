@@ -1,0 +1,34 @@
+{
+  "success": true,
+  "data": {
+    "queue": [
+      {
+        "id": "queue-item-1",
+        "mediaItem": {
+          "id": "jellyfin_song-1",
+          "title": "Hey Jude",
+          "artist": "The Beatles",
+          "album": "The Beatles 1967-1970",
+          "duration": 431,
+          "jellyfinId": "song-1",
+          "streamUrl": "/api/stream/song-1",
+          "hasLyrics": true
+        },
+        "addedBy": "Test User",
+        "addedAt": "2024-07-30T21:00:00.000Z",
+        "status": "pending"
+      }
+    ],
+    "currentSong": null,
+    "playbackState": {
+      "isPlaying": false,
+      "currentTime": 0,
+      "volume": 1.0
+    },
+    "stats": {
+      "totalSongs": 1,
+      "totalDuration": 431
+    }
+  },
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}

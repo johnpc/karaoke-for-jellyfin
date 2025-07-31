@@ -50,6 +50,7 @@ export function NextSongSplash({
 
   return (
     <div
+      data-testid="next-song-splash"
       className={`fixed inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 z-50 flex items-center justify-center transition-opacity duration-300 ${
         isVisible ? "opacity-100" : "opacity-0"
       }`}
@@ -79,7 +80,10 @@ export function NextSongSplash({
         {/* Song information */}
         <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-8 mb-8 border border-white/10">
           <div className="flex items-center justify-center gap-4 mb-3">
-            <h2 className="text-4xl font-bold text-white leading-tight">
+            <h2
+              data-testid="next-song-title"
+              className="text-4xl font-bold text-white leading-tight"
+            >
               {nextSong.mediaItem.title}
             </h2>
             <LyricsIndicator
@@ -88,7 +92,10 @@ export function NextSongSplash({
               variant="badge"
             />
           </div>
-          <p className="text-2xl text-gray-300 mb-4">
+          <p
+            data-testid="next-song-artist"
+            className="text-2xl text-gray-300 mb-4"
+          >
             by {nextSong.mediaItem.artist}
           </p>
           {nextSong.mediaItem.album && (
@@ -118,12 +125,18 @@ export function NextSongSplash({
         {/* Countdown and call to action */}
         <div className="space-y-6">
           <div className="text-center">
-            <div className="text-8xl font-bold text-white mb-2 tabular-nums">
+            <div
+              data-testid="next-song-countdown"
+              className="text-8xl font-bold text-white mb-2 tabular-nums"
+            >
               {countdown}
             </div>
-            <p className="text-xl text-gray-300">
+            <div
+              data-testid="countdown-timer"
+              className="text-xl text-gray-300"
+            >
               {countdown > 0 ? "Get ready to sing!" : "Here we go!"}
-            </p>
+            </div>
           </div>
 
           {/* Microphone reminder */}

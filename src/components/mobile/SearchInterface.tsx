@@ -69,6 +69,7 @@ export function SearchInterface({
   const [confirmationType, setConfirmationType] = useState<"success" | "error">(
     "success"
   );
+  const [addingSongId, setAddingSongId] = useState<string | null>(null);
 
   // Unified search function that searches artists, albums, and songs
   const performUnifiedSearch = useCallback(
@@ -837,6 +838,8 @@ export function SearchInterface({
       return;
     }
 
+    setAddingSongId(song.id);
+
     try {
       await onAddSong(song);
 
@@ -873,6 +876,8 @@ export function SearchInterface({
       setConfirmationType("error");
       setShowConfirmation(true);
       setError(errorMessage);
+    } finally {
+      setAddingSongId(null);
     }
   };
 
@@ -924,6 +929,7 @@ export function SearchInterface({
             Search
           </button>
           <button
+            data-testid="playlist-tab"
             onClick={() => handleTabChange("playlist")}
             className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === "playlist"
@@ -944,6 +950,7 @@ export function SearchInterface({
           (selectedArtist || selectedAlbum) && (
             <div className="flex items-center mb-3">
               <button
+                data-testid="back-button"
                 onClick={
                   selectedArtist ? handleBackToArtists : handleBackToAlbums
                 }
@@ -959,6 +966,7 @@ export function SearchInterface({
         {activeTab === "playlist" && playlistViewMode === "songs" && (
           <div className="flex items-center mb-3">
             <button
+              data-testid="back-button"
               onClick={handleBackToPlaylists}
               className="flex items-center text-purple-600 hover:text-purple-700 transition-colors"
             >
@@ -974,6 +982,7 @@ export function SearchInterface({
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
+              data-testid="search-input"
               placeholder={getPlaceholderText()}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
@@ -1038,7 +1047,10 @@ export function SearchInterface({
           artistResults.length === 0 &&
           albumResults.length === 0 &&
           playlistResults.length === 0 && (
-            <div className="flex items-center justify-center py-12">
+            <div
+              data-testid="search-loading"
+              className="flex items-center justify-center py-12"
+            >
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
               <span className="ml-3 text-gray-600">
                 {activeTab === "search" && artistViewMode === "artists"
@@ -1076,7 +1088,10 @@ export function SearchInterface({
               playlistViewMode === "songs" &&
               songResults.length === 0)) &&
           hasSearched && (
-            <div className="flex flex-col items-center justify-center py-12 px-4">
+            <div
+              data-testid="no-results"
+              className="flex flex-col items-center justify-center py-12 px-4"
+            >
               {activeTab === "search" && artistViewMode === "artists" ? (
                 <MagnifyingGlassIcon className="w-12 h-12 text-gray-400 mb-4" />
               ) : activeTab === "playlist" &&
@@ -1123,11 +1138,19 @@ export function SearchInterface({
         {activeTab === "search" &&
           artistViewMode === "artists" &&
           hasSearched && (
-            <div>
+            <div data-testid="search-results">
               {/* Artists Section */}
               {artistResults.length > 0 && (
-                <div className="border-b border-gray-200">
+                <div
+                  data-testid="artist-results"
+                  className="border-b border-gray-200"
+                >
                   <button
+                    data-testid={
+                      isArtistSectionCollapsed
+                        ? "expand-artists"
+                        : "collapse-artists"
+                    }
                     onClick={() =>
                       setIsArtistSectionCollapsed(!isArtistSectionCollapsed)
                     }
@@ -1151,6 +1174,7 @@ export function SearchInterface({
                       {artistResults.map(artist => (
                         <div
                           key={artist.id}
+                          data-testid="artist-item"
                           className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
                           onClick={() => handleArtistSelect(artist)}
                         >
@@ -1187,7 +1211,10 @@ export function SearchInterface({
 
               {/* Albums Section */}
               {albumResults.length > 0 && (
-                <div className="border-b border-gray-200">
+                <div
+                  data-testid="album-results"
+                  className="border-b border-gray-200"
+                >
                   <button
                     onClick={() =>
                       setIsAlbumSectionCollapsed(!isAlbumSectionCollapsed)
@@ -1256,7 +1283,7 @@ export function SearchInterface({
 
               {/* Songs Section */}
               {songResults.length > 0 && (
-                <div>
+                <div data-testid="song-results">
                   <button
                     onClick={() =>
                       setIsSongSectionCollapsed(!isSongSectionCollapsed)
@@ -1281,6 +1308,7 @@ export function SearchInterface({
                       {songResults.map(song => (
                         <div
                           key={song.id}
+                          data-testid="song-item"
                           className="p-4 hover:bg-gray-50 transition-colors"
                         >
                           <div className="flex items-center justify-between">
@@ -1305,12 +1333,22 @@ export function SearchInterface({
                             </div>
 
                             <button
+                              data-testid="add-song-button"
                               onClick={() => handleAddSong(song)}
-                              disabled={!isConnected}
+                              disabled={
+                                !isConnected || addingSongId === song.id
+                              }
                               className="ml-4 bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                               title="Add to queue"
                             >
-                              <PlusIcon className="w-5 h-5" />
+                              {addingSongId === song.id ? (
+                                <div
+                                  data-testid="add-song-loading"
+                                  className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"
+                                ></div>
+                              ) : (
+                                <PlusIcon className="w-5 h-5" />
+                              )}
                             </button>
                           </div>
                         </div>
@@ -1326,10 +1364,14 @@ export function SearchInterface({
         {activeTab === "search" &&
           artistViewMode === "songs" &&
           songResults.length > 0 && (
-            <div className="divide-y divide-gray-200">
+            <div
+              data-testid="artist-songs"
+              className="divide-y divide-gray-200"
+            >
               {songResults.map(song => (
                 <div
                   key={song.id}
+                  data-testid="song-item"
                   className="p-4 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center justify-between">
@@ -1354,12 +1396,20 @@ export function SearchInterface({
                     </div>
 
                     <button
+                      data-testid="add-song-button"
                       onClick={() => handleAddSong(song)}
-                      disabled={!isConnected}
+                      disabled={!isConnected || addingSongId === song.id}
                       className="ml-4 bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       title="Add to queue"
                     >
-                      <PlusIcon className="w-5 h-5" />
+                      {addingSongId === song.id ? (
+                        <div
+                          data-testid="add-song-loading"
+                          className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"
+                        ></div>
+                      ) : (
+                        <PlusIcon className="w-5 h-5" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -1375,6 +1425,7 @@ export function SearchInterface({
               {playlistResults.map(playlist => (
                 <div
                   key={playlist.id}
+                  data-testid="playlist-item"
                   className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
                   onClick={() => handlePlaylistSelect(playlist)}
                 >
@@ -1415,10 +1466,14 @@ export function SearchInterface({
         {activeTab === "playlist" &&
           playlistViewMode === "songs" &&
           songResults.length > 0 && (
-            <div className="divide-y divide-gray-200">
+            <div
+              data-testid="playlist-songs"
+              className="divide-y divide-gray-200"
+            >
               {songResults.map(song => (
                 <div
                   key={song.id}
+                  data-testid="song-item"
                   className="p-4 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center justify-between">
@@ -1443,12 +1498,20 @@ export function SearchInterface({
                     </div>
 
                     <button
+                      data-testid="add-song-button"
                       onClick={() => handleAddSong(song)}
-                      disabled={!isConnected}
+                      disabled={!isConnected || addingSongId === song.id}
                       className="ml-4 bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       title="Add to queue"
                     >
-                      <PlusIcon className="w-5 h-5" />
+                      {addingSongId === song.id ? (
+                        <div
+                          data-testid="add-song-loading"
+                          className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"
+                        ></div>
+                      ) : (
+                        <PlusIcon className="w-5 h-5" />
+                      )}
                     </button>
                   </div>
                 </div>

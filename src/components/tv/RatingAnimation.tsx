@@ -68,6 +68,7 @@ export function RatingAnimation({
 
   return (
     <div
+      data-testid="rating-animation"
       className={`fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center transition-opacity duration-300 ${
         isVisible ? "opacity-100" : "opacity-0"
       }`}
@@ -139,12 +140,14 @@ export function RatingAnimation({
               </div>
 
               {/* Rating message */}
-              <div className="space-y-4">
+              <div data-testid="performance-rating" className="space-y-4">
                 <div className="text-4xl">{getEmoji(rating.grade)}</div>
                 <h3 className="text-3xl font-bold text-white">
                   {rating.message}
                 </h3>
-                <div className="text-gray-300">Score: {rating.score}/100</div>
+                <div data-testid="rating-score" className="text-gray-300">
+                  Score: {rating.score}/100
+                </div>
               </div>
 
               {/* Celebration effects */}

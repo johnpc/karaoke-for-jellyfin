@@ -102,7 +102,10 @@ export function QueueView({
       {/* Queue List */}
       <div className="flex-1 overflow-y-auto">
         {queue.filter(item => item.status === "pending").length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 px-4">
+          <div
+            data-testid="empty-queue"
+            className="flex flex-col items-center justify-center py-12 px-4"
+          >
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <PlayIcon className="w-8 h-8 text-gray-400" />
             </div>
@@ -124,10 +127,23 @@ export function QueueView({
                 return (
                   <div
                     key={queueItem.id}
+                    data-testid="queue-item"
                     className={`p-4 ${isUserSong ? "bg-blue-50" : "hover:bg-gray-50"} transition-colors`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center flex-1 min-w-0">
+                        {/* Drag Handle */}
+                        <div
+                          data-testid="drag-handle"
+                          className="flex-shrink-0 mr-2 cursor-move"
+                        >
+                          <div className="w-4 h-4 flex flex-col justify-center">
+                            <div className="w-1 h-1 bg-gray-400 rounded-full mb-0.5"></div>
+                            <div className="w-1 h-1 bg-gray-400 rounded-full mb-0.5"></div>
+                            <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                          </div>
+                        </div>
+
                         {/* Position Number */}
                         <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
                           <span className="text-sm font-medium text-gray-600">
@@ -164,6 +180,7 @@ export function QueueView({
                       {/* Remove Button */}
                       {canRemoveSong(queueItem) && (
                         <button
+                          data-testid="remove-song-button"
                           onClick={() => onRemoveSong(queueItem.id)}
                           className="ml-4 p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
                           title="Remove from queue"

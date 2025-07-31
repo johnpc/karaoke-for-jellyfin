@@ -576,6 +576,51 @@ export function useWebSocket(): WebSocketHookReturn {
     []
   );
 
+  // Expose state setters for Cypress testing
+  useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      (process.env.NODE_ENV === "development" || (window as any).Cypress)
+    ) {
+      console.log("🧪 Setting up WebSocket test helpers...");
+      (window as any).webSocketTestHelpers = {
+        setQueue: (newQueue: any) => {
+          console.log("🧪 Cypress: Setting queue to:", newQueue);
+          setQueue(newQueue);
+        },
+        setCurrentSong: (newCurrentSong: any) => {
+          console.log("🧪 Cypress: Setting currentSong to:", newCurrentSong);
+          setCurrentSong(newCurrentSong);
+        },
+        setPlaybackState: (newPlaybackState: any) => {
+          console.log(
+            "🧪 Cypress: Setting playbackState to:",
+            newPlaybackState
+          );
+          setPlaybackState(newPlaybackState);
+        },
+        setSession: (newSession: any) => {
+          console.log("🧪 Cypress: Setting session to:", newSession);
+          setSession(newSession);
+        },
+        setError: (newError: any) => {
+          console.log("🧪 Cypress: Setting error to:", newError);
+          setError(newError);
+        },
+        // Also expose current state for debugging
+        getCurrentState: () => ({
+          queue,
+          currentSong,
+          playbackState,
+          session,
+          error,
+          isConnected,
+        }),
+      };
+      console.log("🧪 WebSocket test helpers set up successfully");
+    }
+  }, []); // Empty dependency array to set up once
+
   return {
     socket: socketRef.current,
     isConnected,

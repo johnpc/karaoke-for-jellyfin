@@ -15,6 +15,11 @@
     "format:check": "prettier --check .",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:e2e": "cypress run",
+    "test:e2e:open": "cypress open",
+    "test:e2e:mobile": "cypress run --spec 'cypress/e2e/mobile-interface.cy.ts'",
+    "test:e2e:admin": "cypress run --spec 'cypress/e2e/admin-interface.cy.ts'",
+    "test:e2e:tv": "cypress run --spec 'cypress/e2e/tv-interface.cy.ts'",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -40,6 +45,7 @@
     "ws": "^8.18.3"
   },
   "devDependencies": {
+    "@cypress/code-coverage": "^3.14.5",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.6.3",
@@ -49,6 +55,8 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/ws": "^8.18.1",
+    "cypress": "^14.5.3",
+    "cypress-real-events": "^1.14.0",
     "eslint": "^9",
     "eslint-config-next": "15.4.2",
     "husky": "^9.1.7",

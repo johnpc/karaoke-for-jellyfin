@@ -1,0 +1,56 @@
+{
+  "success": true,
+  "data": [
+    {
+      "id": "jellyfin_song-1",
+      "title": "Hey Jude",
+      "artist": "The Beatles",
+      "album": "The Beatles 1967-1970",
+      "duration": 431,
+      "jellyfinId": "song-1",
+      "streamUrl": "/api/stream/song-1",
+      "hasLyrics": true
+    },
+    {
+      "id": "jellyfin_song-2",
+      "title": "Bohemian Rhapsody",
+      "artist": "Queen",
+      "album": "A Night at the Opera",
+      "duration": 355,
+      "jellyfinId": "song-2",
+      "streamUrl": "/api/stream/song-2",
+      "hasLyrics": true
+    },
+    {
+      "id": "jellyfin_song-3",
+      "title": "Stairway to Heaven",
+      "artist": "Led Zeppelin",
+      "album": "Led Zeppelin IV",
+      "duration": 482,
+      "jellyfinId": "song-3",
+      "streamUrl": "/api/stream/song-3",
+      "hasLyrics": true
+    },
+    {
+      "id": "jellyfin_song-4",
+      "title": "Wish You Were Here",
+      "artist": "Pink Floyd",
+      "album": "Wish You Were Here",
+      "duration": 334,
+      "jellyfinId": "song-4",
+      "streamUrl": "/api/stream/song-4",
+      "hasLyrics": false
+    },
+    {
+      "id": "jellyfin_song-5",
+      "title": "Paint It Black",
+      "artist": "The Rolling Stones",
+      "album": "Aftermath",
+      "duration": 222,
+      "jellyfinId": "song-5",
+      "streamUrl": "/api/stream/song-5",
+      "hasLyrics": true
+    }
+  ],
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}

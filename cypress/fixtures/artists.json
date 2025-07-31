@@ -1,0 +1,43 @@
+{
+  "success": true,
+  "data": [
+    {
+      "id": "jellyfin_artist_1",
+      "name": "The Beatles",
+      "jellyfinId": "artist-1",
+      "imageUrl": "https://example.com/beatles.jpg"
+    },
+    {
+      "id": "jellyfin_artist_2",
+      "name": "Queen",
+      "jellyfinId": "artist-2",
+      "imageUrl": "https://example.com/queen.jpg"
+    },
+    {
+      "id": "jellyfin_artist_3",
+      "name": "Led Zeppelin",
+      "jellyfinId": "artist-3",
+      "imageUrl": "https://example.com/ledzeppelin.jpg"
+    },
+    {
+      "id": "jellyfin_artist_4",
+      "name": "Pink Floyd",
+      "jellyfinId": "artist-4",
+      "imageUrl": "https://example.com/pinkfloyd.jpg"
+    },
+    {
+      "id": "jellyfin_artist_5",
+      "name": "The Rolling Stones",
+      "jellyfinId": "artist-5",
+      "imageUrl": "https://example.com/rollingstones.jpg"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 50,
+    "total": 5,
+    "hasNext": false,
+    "hasPrev": false
+  },
+  "timestamp": "2025-07-30T22:24:28.079Z"
+}

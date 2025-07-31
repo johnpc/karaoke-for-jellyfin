@@ -21,6 +21,9 @@ export default function TVDisplay() {
   const [showHostControls, setShowHostControls] = useState(false);
   const [showQueuePreview, setShowQueuePreview] = useState(false);
   const [hasTriggeredAutoPlay, setHasTriggeredAutoPlay] = useState(false);
+  const [autoplayCountdown, setAutoplayCountdown] = useState<number | null>(
+    null
+  );
   const [isClient, setIsClient] = useState(false);
   const [transitionState, setTransitionState] = useState<TransitionState>({
     displayState: "waiting",
@@ -216,8 +219,24 @@ export default function TVDisplay() {
           firstPendingSong.mediaItem.title
         );
 
+        // Show countdown
+        const countdownDuration = Math.ceil(config.queueAutoplayDelay / 1000);
+        setAutoplayCountdown(countdownDuration);
+
+        // Countdown timer
+        const countdownInterval = setInterval(() => {
+          setAutoplayCountdown(prev => {
+            if (prev === null || prev <= 1) {
+              clearInterval(countdownInterval);
+              return null;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+
         // Small delay to ensure everything is ready
         const queueAutoPlayTimer = setTimeout(() => {
+          setAutoplayCountdown(null);
           playbackControl({
             action: "play",
             userId: "tv-display-queue-autoplay",
@@ -225,10 +244,21 @@ export default function TVDisplay() {
           });
         }, config.queueAutoplayDelay);
 
-        return () => clearTimeout(queueAutoPlayTimer);
+        return () => {
+          clearTimeout(queueAutoPlayTimer);
+          clearInterval(countdownInterval);
+          setAutoplayCountdown(null);
+        };
       }
     }
-  }, [queue, currentSong, isConnected, session, playbackControl]);
+  }, [
+    queue,
+    currentSong,
+    isConnected,
+    session,
+    playbackControl,
+    config.queueAutoplayDelay,
+  ]);
 
   // Keyboard shortcuts for TV remote/host controls
   useEffect(() => {
@@ -347,10 +377,14 @@ export default function TVDisplay() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+    <div
+      data-testid="tv-interface"
+      className="min-h-screen bg-black text-white relative overflow-hidden"
+    >
       {/* Connection Status */}
       <div className="absolute top-4 right-4 z-50 space-y-2">
         <div
+          data-testid="connection-status"
           className={`flex items-center px-3 py-1 rounded-full text-sm ${
             isConnected
               ? "bg-green-900 text-green-300"
@@ -395,6 +429,25 @@ export default function TVDisplay() {
         <div className="absolute top-4 left-4 right-4 z-50">
           <div className="bg-red-900 border border-red-700 rounded-lg p-4">
             <p className="text-red-300">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Autoplay Countdown */}
+      {autoplayCountdown !== null && (
+        <div
+          data-testid="autoplay-countdown"
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-black/80 backdrop-blur-sm rounded-2xl p-8 text-center border border-purple-500/50"
+        >
+          <div className="text-6xl font-bold text-white mb-4 tabular-nums">
+            {autoplayCountdown}
+          </div>
+          <div className="text-xl text-purple-300">
+            Starting in {autoplayCountdown} second
+            {autoplayCountdown !== 1 ? "s" : ""}...
+          </div>
+          <div className="text-sm text-gray-400 mt-2">
+            Press Space to start now
           </div>
         </div>
       )}

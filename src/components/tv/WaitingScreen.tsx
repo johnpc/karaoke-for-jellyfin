@@ -28,7 +28,10 @@ export function WaitingScreen({
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center p-8 relative">
+    <div
+      data-testid="waiting-screen"
+      className="min-h-screen flex flex-col justify-center items-center p-8 relative"
+    >
       {/* Background Animation */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 opacity-20"></div>
@@ -49,7 +52,10 @@ export function WaitingScreen({
         <div className="mb-12">
           <div className="flex items-center justify-center mb-6">
             <MusicalNoteIcon className="w-16 h-16 text-purple-400 mr-4" />
-            <h1 className="text-7xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+            <h1
+              data-testid="app-title"
+              className="text-7xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent"
+            >
               Karaoke
             </h1>
           </div>
@@ -71,7 +77,7 @@ export function WaitingScreen({
               </p>
             </div>
           ) : (
-            <div>
+            <div data-testid="instructions">
               <h2 className="text-4xl font-semibold text-white mb-4">
                 Waiting for Songs... 🎵
               </h2>
@@ -85,7 +91,7 @@ export function WaitingScreen({
                     ? window.location.origin
                     : "http://localhost:3000"}
                 </span>{" "}
-                on your mobile device
+                on your mobile device or scan the QR code
               </div>
               <p className="text-sm text-green-400">
                 ✨ Songs will start playing automatically when added
