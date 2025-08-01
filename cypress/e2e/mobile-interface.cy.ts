@@ -254,21 +254,44 @@ describe("Mobile Interface", () => {
     it("should show songs in queue", () => {
       cy.navigateToTab("queue");
 
+      // With immediate playback, the first song becomes "Now Playing"
+      // So we need to add a second song to see items in the pending queue
+      cy.navigateToTab("search");
+      cy.searchFor("Queen");
+      cy.addSongToQueue("Bohemian Rhapsody");
+      cy.get('[data-testid="confirmation-dialog"]').should("not.exist");
+
+      cy.navigateToTab("queue");
+
+      // Should show the second song in pending queue
       cy.get('[data-testid="queue-item"]').should("have.length.greaterThan", 0);
-      cy.get('[data-testid="queue-item"]').should("contain", "Hey Jude");
+      cy.get('[data-testid="queue-item"]').should(
+        "contain",
+        "Bohemian Rhapsody"
+      );
+
+      // Should also show the first song as "Now Playing"
+      cy.get('[data-testid="now-playing"]').should("contain", "Hey Jude");
     });
 
     it("should show queue position for each song", () => {
+      // Add a second song to have items in pending queue
+      cy.navigateToTab("search");
+      cy.searchFor("Queen");
+      cy.addSongToQueue("Bohemian Rhapsody");
+      cy.get('[data-testid="confirmation-dialog"]').should("not.exist");
+
       cy.navigateToTab("queue");
 
+      // The pending queue should show position numbers starting from 1
       cy.get('[data-testid="queue-item"]').first().should("contain", "1");
     });
 
     it("should allow removing songs from queue", () => {
-      // Ensure we have a song in the queue by adding one if needed
+      // Add a second song to have items in pending queue
       cy.navigateToTab("search");
-      cy.searchFor("Beatles");
-      cy.addSongToQueue("Hey Jude");
+      cy.searchFor("Queen");
+      cy.addSongToQueue("Bohemian Rhapsody");
       cy.get('[data-testid="confirmation-dialog"]').should("not.exist");
 
       cy.navigateToTab("queue");
@@ -288,30 +311,36 @@ describe("Mobile Interface", () => {
         .find('[data-testid="remove-song-button"]')
         .click();
 
-      // In a real app, this would remove the item via WebSocket
-      // For testing, we just verify the button was clickable
-      cy.get('[data-testid="queue-item"]').should("exist");
+      // After removal, should have fewer items or show empty queue
+      cy.get('[data-testid="queue-item"]').should("have.length", 0);
     });
 
     it("should show empty queue message when queue is empty", () => {
       cy.navigateToTab("queue");
 
-      // Remove all songs
-      cy.get('[data-testid="queue-item"]').each($item => {
-        cy.wrap($item).find('[data-testid="remove-song-button"]').click();
-      });
-
+      // With immediate playback, the first song is "Now Playing", not in pending queue
+      // So the pending queue should already be empty and show the empty message
       cy.get('[data-testid="empty-queue"]').should("be.visible");
+
+      // But should still show the current song as "Now Playing"
+      cy.get('[data-testid="now-playing"]').should("be.visible");
+      cy.get('[data-testid="now-playing"]').should("contain", "Hey Jude");
     });
 
     it("should allow reordering queue items", () => {
-      // Add another song first
+      // Add two more songs to have multiple items in pending queue
       cy.navigateToTab("search");
+      cy.searchFor("Queen");
       cy.addSongToQueue("Bohemian Rhapsody");
+      cy.get('[data-testid="confirmation-dialog"]').should("not.exist");
+
+      cy.searchFor("Led Zeppelin");
+      cy.addSongToQueue("Stairway to Heaven");
+      cy.get('[data-testid="confirmation-dialog"]').should("not.exist");
 
       cy.navigateToTab("queue");
 
-      // Should have drag handles
+      // Should have drag handles for the pending songs
       cy.get('[data-testid="drag-handle"]').should("have.length", 2);
 
       // Note: Actual drag and drop testing would require more complex setup

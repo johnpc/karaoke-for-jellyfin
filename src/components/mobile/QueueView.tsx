@@ -82,7 +82,10 @@ export function QueueView({
 
       {/* Current Song */}
       {currentSong && (
-        <div className="bg-purple-50 border-b border-purple-200 p-4">
+        <div
+          data-testid="now-playing"
+          className="bg-purple-50 border-b border-purple-200 p-4"
+        >
           <div className="flex items-center mb-2">
             <PlayIcon className="w-5 h-5 text-purple-600 mr-2" />
             <span className="text-sm font-medium text-purple-800">
