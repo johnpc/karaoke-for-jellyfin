@@ -58,6 +58,8 @@ export function useWebSocket(): WebSocketHookReturn {
   const rejoinSession = useCallback(() => {
     if (socketRef.current?.connected && userNameRef.current) {
       console.log("🔄 Auto-rejoining session:", userNameRef.current);
+      console.log("🔄 Rejoin reason: WebSocket reconnection detected");
+      console.log("🔄 Current socket ID:", socketRef.current.id);
       socketRef.current.emit("join-session", {
         sessionId: sessionIdRef.current,
         userName: userNameRef.current,
@@ -172,6 +174,8 @@ export function useWebSocket(): WebSocketHookReturn {
 
       socketInstance.on("reconnect", attemptNumber => {
         console.log(`✅ WebSocket reconnected after ${attemptNumber} attempts`);
+        console.log(`✅ New socket ID after reconnect:`, socketInstance.id);
+        console.log(`✅ Will auto-rejoin as:`, userNameRef.current);
         setError(null);
       });
 

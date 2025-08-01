@@ -1,7 +1,7 @@
 "use client";
 
 import { TrashIcon, PlayIcon, UserIcon } from "@heroicons/react/24/outline";
-import { QueueItem, KaraokeSession } from "@/types";
+import { QueueItem, KaraokeSession, ConnectedUser } from "@/types";
 import { LyricsIndicator } from "@/components/LyricsIndicator";
 
 interface QueueViewProps {
@@ -48,6 +48,12 @@ export function QueueView({
   const totalEstimatedTime = queue
     .filter(item => item.status === "pending")
     .reduce((total, item) => total + item.mediaItem.duration, 0);
+
+  const filterUniqueUsers = (
+    user: ConnectedUser,
+    index: number,
+    array: ConnectedUser[]
+  ) => array.findIndex(u => u.name === user.name) === index;
 
   return (
     <div className="flex flex-col h-full">
@@ -204,31 +210,32 @@ export function QueueView({
       </div>
 
       {/* Connected Users */}
-      {session && session.connectedUsers.length > 0 && (
-        <div className="bg-gray-50 border-t border-gray-200 p-4">
-          <div className="text-sm text-gray-600 mb-2">
-            Connected ({session.connectedUsers.length})
+      {session &&
+        session.connectedUsers.filter(filterUniqueUsers).length > 0 && (
+          <div className="bg-gray-50 border-t border-gray-200 p-4">
+            <div className="text-sm text-gray-600 mb-2">
+              Connected ({session.connectedUsers.length})
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {session.connectedUsers.filter(filterUniqueUsers).map(user => (
+                <div
+                  key={user.id}
+                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
+                    user.name === userName
+                      ? "bg-purple-100 text-purple-800"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  <UserIcon className="w-3 h-3 mr-1" />
+                  {user.name === userName ? "You" : user.name}
+                  {user.isHost && (
+                    <span className="ml-1 text-xs opacity-75">(Host)</span>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {session.connectedUsers.map(user => (
-              <div
-                key={user.id}
-                className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
-                  user.name === userName
-                    ? "bg-purple-100 text-purple-800"
-                    : "bg-gray-100 text-gray-700"
-                }`}
-              >
-                <UserIcon className="w-3 h-3 mr-1" />
-                {user.name === userName ? "You" : user.name}
-                {user.isHost && (
-                  <span className="ml-1 text-xs opacity-75">(Host)</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+        )}
     </div>
   );
 }

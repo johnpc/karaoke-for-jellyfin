@@ -24,6 +24,7 @@ export default function TVDisplay() {
   const [autoplayCountdown, setAutoplayCountdown] = useState<number | null>(
     null
   );
+  const [autoplayTriggered, setAutoplayTriggered] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [transitionState, setTransitionState] = useState<TransitionState>({
     displayState: "waiting",
@@ -207,20 +208,49 @@ export default function TVDisplay() {
     setHasTriggeredAutoPlay(false);
   }, [currentSong?.id]);
 
-  // Auto-play when queue changes from empty to having songs
+  // Debug effect to track state changes
   useEffect(() => {
-    // If we don't have a current song but we have songs in queue,
-    // and we're connected, try to start the first song
-    if (!currentSong && queue.length > 0 && isConnected && session) {
+    console.log("🔍 TV State Debug:", {
+      currentSong: currentSong ? currentSong.mediaItem.title : null,
+      queueLength: queue.length,
+      pendingSongs: queue.filter(s => s.status === "pending").length,
+      isConnected,
+      hasSession: !!session,
+      autoplayCountdown,
+      transitionState: transitionState.displayState,
+    });
+  }, [
+    currentSong,
+    queue,
+    isConnected,
+    session,
+    autoplayCountdown,
+    transitionState.displayState,
+  ]);
+
+  // Auto-play when queue changes from empty to having songs (fallback only)
+  useEffect(() => {
+    // This is now mainly a fallback since the server should auto-start songs
+    // Only trigger if we somehow have pending songs but no current song and no countdown
+    if (
+      !currentSong &&
+      queue.length > 0 &&
+      isConnected &&
+      session &&
+      autoplayCountdown === null &&
+      !autoplayTriggered
+    ) {
       const firstPendingSong = queue.find(song => song.status === "pending");
       if (firstPendingSong) {
         console.log(
-          "Auto-starting first song in queue:",
+          "Fallback: Auto-starting first song in queue:",
           firstPendingSong.mediaItem.title
         );
 
-        // Show countdown
-        const countdownDuration = Math.ceil(config.queueAutoplayDelay / 1000);
+        setAutoplayTriggered(true);
+
+        // Shorter countdown since this is a fallback
+        const countdownDuration = 2; // 2 seconds instead of full delay
         setAutoplayCountdown(countdownDuration);
 
         // Countdown timer
@@ -234,15 +264,15 @@ export default function TVDisplay() {
           });
         }, 1000);
 
-        // Small delay to ensure everything is ready
+        // Shorter delay for fallback
         const queueAutoPlayTimer = setTimeout(() => {
           setAutoplayCountdown(null);
           playbackControl({
             action: "play",
-            userId: "tv-display-queue-autoplay",
+            userId: "tv-display-fallback-autoplay",
             timestamp: new Date(),
           });
-        }, config.queueAutoplayDelay);
+        }, 2000); // 2 second delay
 
         return () => {
           clearTimeout(queueAutoPlayTimer);
@@ -252,13 +282,20 @@ export default function TVDisplay() {
       }
     }
   }, [
-    queue,
-    currentSong,
+    queue.length,
+    currentSong?.id,
     isConnected,
-    session,
+    session?.id,
     playbackControl,
-    config.queueAutoplayDelay,
+    autoplayTriggered,
   ]);
+
+  // Reset autoplay flag when queue becomes empty or when a song starts
+  useEffect(() => {
+    if (queue.length === 0 || currentSong) {
+      setAutoplayTriggered(false);
+    }
+  }, [queue.length, currentSong]);
 
   // Keyboard shortcuts for TV remote/host controls
   useEffect(() => {

@@ -226,6 +226,33 @@ export class KaraokeSessionManager {
       const addedItem =
         this.session.queue[position ?? this.session.queue.length - 1];
 
+      // Check if this is the first song added to an empty queue and no song is currently playing
+      const wasQueueEmpty = this.session.queue.length === 1;
+      const noCurrentSong = !this.session.currentSong;
+
+      if (wasQueueEmpty && noCurrentSong) {
+        console.log(
+          "First song added to empty queue via API, auto-starting playback"
+        );
+
+        // Mark the song as playing
+        addedItem.status = "playing";
+        this.session.currentSong = addedItem;
+
+        // Update playback state to playing
+        this.session.playbackState = {
+          ...this.session.playbackState,
+          isPlaying: true,
+          currentTime: 0,
+        };
+
+        // Emit events for auto-start
+        this.emit("song-started", addedItem);
+        this.emit("playback-state-changed", this.session.playbackState);
+
+        console.log("API auto-started song:", addedItem.mediaItem.title);
+      }
+
       this.updateSessionActivity();
       this.emit("queue-updated", this.session.queue);
 
@@ -447,6 +474,17 @@ export class KaraokeSessionManager {
         completedSong.id
       );
 
+      // Remove completed song from queue immediately
+      this.session.queue = this.session.queue.filter(
+        item => item.status !== "completed" && item.status !== "skipped"
+      );
+
+      // Update positions for remaining songs
+      this.session.queue = this.session.queue.map((item, index) => ({
+        ...item,
+        position: index,
+      }));
+
       // Clear current song
       this.session.currentSong = null;
 
@@ -534,6 +572,17 @@ export class KaraokeSessionManager {
             : item.status,
       }));
 
+      // Remove skipped song from queue immediately
+      this.session.queue = this.session.queue.filter(
+        item => item.status !== "completed" && item.status !== "skipped"
+      );
+
+      // Update positions for remaining songs
+      this.session.queue = this.session.queue.map((item, index) => ({
+        ...item,
+        position: index,
+      }));
+
       const skippedSong = this.session.currentSong;
       this.session.currentSong = null;
 
@@ -595,11 +644,11 @@ export class KaraokeSessionManager {
     if (!this.session) return null;
 
     const totalSongs = this.session.queue.length;
-    const completedSongs = this.session.queue.filter(
-      item => item.status === "completed"
-    ).length;
     const pendingSongs = this.session.queue.filter(
       item => item.status === "pending"
+    ).length;
+    const playingSongs = this.session.queue.filter(
+      item => item.status === "playing"
     ).length;
 
     return {
@@ -607,8 +656,8 @@ export class KaraokeSessionManager {
       sessionName: this.session.name,
       connectedUsers: this.session.connectedUsers.length,
       totalSongs,
-      completedSongs,
       pendingSongs,
+      playingSongs,
       currentSong: this.session.currentSong,
       isPlaying: this.session.playbackState.isPlaying,
       createdAt: this.session.createdAt,
@@ -617,25 +666,19 @@ export class KaraokeSessionManager {
   }
 
   cleanup(): void {
-    // Clean up completed songs older than 1 hour
+    // Since completed/skipped songs are now removed immediately,
+    // this method mainly ensures queue positions are correct
     if (!this.session) return;
 
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     const initialLength = this.session.queue.length;
 
-    this.session.queue = this.session.queue.filter(item => {
-      if (item.status === "completed" || item.status === "skipped") {
-        return item.addedAt > oneHourAgo;
-      }
-      return true;
-    });
-
-    // Update positions
+    // Update positions to ensure they're sequential
     this.session.queue = this.session.queue.map((item, index) => ({
       ...item,
       position: index,
     }));
 
+    // Only emit if there were actual changes (shouldn't happen with immediate removal)
     if (this.session.queue.length !== initialLength) {
       this.emit("queue-updated", this.session.queue);
     }
