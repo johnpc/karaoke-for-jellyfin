@@ -511,6 +511,43 @@ app.prepare().then(() => {
         item.position = index;
       });
 
+      // Check if this is the first song added to an empty queue and no song is currently playing
+      const wasQueueEmpty = currentSession.queue.length === 1;
+      const noCurrentSong = !currentSession.currentSong;
+
+      if (wasQueueEmpty && noCurrentSong) {
+        console.log("First song added to empty queue, auto-starting playback");
+
+        // Mark the song as playing
+        queueItem.status = "playing";
+        currentSession.currentSong = queueItem;
+
+        // Initialize or update playback state
+        if (!currentSession.playbackState) {
+          currentSession.playbackState = {
+            isPlaying: true,
+            currentTime: 0,
+            volume: 80,
+            isMuted: false,
+            playbackRate: 1.0,
+            lyricsOffset: 0,
+          };
+        } else {
+          currentSession.playbackState.isPlaying = true;
+          currentSession.playbackState.currentTime = 0;
+        }
+
+        // Broadcast song started immediately
+        const sessionId = currentSession.id || "main-session";
+        io.to(sessionId).emit("song-started", queueItem);
+        io.to(sessionId).emit(
+          "playback-state-changed",
+          currentSession.playbackState
+        );
+
+        console.log("Auto-started song:", queueItem.mediaItem.title);
+      }
+
       // SYNC WITH SESSION MANAGER: Also add to the API session manager
       try {
         const response = await fetch("http://localhost:3000/api/queue", {
@@ -854,6 +891,19 @@ app.prepare().then(() => {
 
       // Mark current song as skipped and move to next
       const skippedSong = currentSession.currentSong;
+      skippedSong.status = "skipped";
+
+      // Remove skipped song from queue immediately
+      currentSession.queue = currentSession.queue.filter(
+        item => item.status !== "completed" && item.status !== "skipped"
+      );
+
+      // Update positions for remaining songs
+      currentSession.queue = currentSession.queue.map((item, index) => ({
+        ...item,
+        position: index,
+      }));
+
       currentSession.currentSong = null;
 
       // Reset playback state for the next song
@@ -906,6 +956,17 @@ app.prepare().then(() => {
       // Mark current song as completed and move to next
       const completedSong = currentSession.currentSong;
       completedSong.status = "completed";
+
+      // Remove completed song from queue immediately
+      currentSession.queue = currentSession.queue.filter(
+        item => item.status !== "completed" && item.status !== "skipped"
+      );
+
+      // Update positions for remaining songs
+      currentSession.queue = currentSession.queue.map((item, index) => ({
+        ...item,
+        position: index,
+      }));
 
       // Generate rating for the completed song
       const rating = generateRandomRating();
