@@ -131,7 +131,10 @@ export function HostControls({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-2xl p-6 max-w-4xl w-full mx-8 border border-gray-700 max-h-[90vh] overflow-hidden flex flex-col">
+      <div
+        data-testid="host-controls"
+        className="bg-gray-900 rounded-2xl p-6 max-w-4xl w-full mx-8 border border-gray-700 max-h-[90vh] overflow-hidden flex flex-col"
+      >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
@@ -240,6 +243,7 @@ export function HostControls({
                   </button>
 
                   <button
+                    data-testid="tv-play-pause"
                     onClick={handlePlayPause}
                     className="flex items-center justify-center w-16 h-16 bg-purple-600 hover:bg-purple-700 rounded-full transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
                     disabled={pendingQueue.length === 0 && !currentSong}
@@ -257,6 +261,7 @@ export function HostControls({
                   </button>
 
                   <button
+                    data-testid="tv-skip"
                     onClick={onSkip}
                     className="flex items-center justify-center w-12 h-12 bg-gray-700 hover:bg-gray-600 rounded-full transition-colors"
                     disabled={!currentSong}
@@ -282,13 +287,13 @@ export function HostControls({
                 {currentSong && (
                   <div className="mb-4">
                     <div className="flex items-center justify-between text-sm text-gray-400 mb-2">
-                      <span>
+                      <span data-testid="current-time">
                         {Math.floor((playbackState?.currentTime || 0) / 60)}:
                         {String(
                           Math.floor((playbackState?.currentTime || 0) % 60)
                         ).padStart(2, "0")}
                       </span>
-                      <span>
+                      <span data-testid="total-duration">
                         {Math.floor(currentSong.mediaItem.duration / 60)}:
                         {String(currentSong.mediaItem.duration % 60).padStart(
                           2,
@@ -297,6 +302,7 @@ export function HostControls({
                       </span>
                     </div>
                     <input
+                      data-testid="progress-bar"
                       type="range"
                       min="0"
                       max={currentSong.mediaItem.duration}
@@ -309,7 +315,7 @@ export function HostControls({
               </div>
 
               {/* Volume Controls */}
-              <div>
+              <div data-testid="tv-volume">
                 <h3 className="text-lg font-semibold text-white mb-4">
                   Volume Control
                 </h3>

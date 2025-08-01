@@ -51,5 +51,12 @@ export function ApplausePlayer({
     }
   }, [isPlaying, volume]);
 
-  return <audio ref={audioRef} preload="none" style={{ display: "none" }} />;
+  return (
+    <audio
+      ref={audioRef}
+      data-testid="applause-animation"
+      preload="none"
+      style={{ display: "none" }}
+    />
+  );
 }

@@ -85,7 +85,11 @@ export function LyricsDisplay({
       : 0;
 
   return (
-    <div className="min-h-screen flex flex-col p-8 relative">
+    <div
+      data-testid="lyrics-display"
+      aria-live="polite"
+      className="min-h-screen flex flex-col p-8 relative"
+    >
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-blue-600"></div>
@@ -107,11 +111,19 @@ export function LyricsDisplay({
           </span>
         </div>
 
-        <h1 className="text-3xl font-semibold mb-2 text-white leading-tight">
+        <h1
+          data-testid="current-song-title"
+          className="text-3xl font-semibold mb-2 text-white leading-tight"
+        >
           {song.mediaItem.title}
         </h1>
 
-        <p className="text-xl text-gray-400 mb-1">{song.mediaItem.artist}</p>
+        <p
+          data-testid="current-song-artist"
+          className="text-xl text-gray-400 mb-1"
+        >
+          {song.mediaItem.artist}
+        </p>
 
         {song.mediaItem.album && (
           <p className="text-sm text-gray-500 opacity-60">
@@ -128,7 +140,10 @@ export function LyricsDisplay({
       {/* Lyrics Display - Enhanced prominence */}
       <div className="text-center z-10 max-w-5xl mx-auto flex-1 flex flex-col justify-center">
         <div className="mb-8">
-          <div className="text-6xl font-bold text-white leading-relaxed mb-6 min-h-[160px] flex items-center justify-center px-4">
+          <div
+            data-testid="current-lyric"
+            className="text-6xl font-bold text-white leading-relaxed mb-6 min-h-[160px] flex items-center justify-center px-4"
+          >
             {currentLine}
           </div>
 

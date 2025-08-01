@@ -33,7 +33,10 @@ export function UserSetup({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+      <div
+        data-testid="user-setup"
+        className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8"
+      >
         <div className="text-center mb-8">
           <div className="mx-auto w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
             <UserIcon className="w-8 h-8 text-purple-600" />
@@ -53,6 +56,7 @@ export function UserSetup({
             <input
               type="text"
               id="name"
+              data-testid="username-input"
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="Enter your name"
@@ -65,6 +69,7 @@ export function UserSetup({
 
           <button
             type="submit"
+            data-testid="join-session-button"
             disabled={!name.trim() || isLoading}
             className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-semibold text-lg hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >

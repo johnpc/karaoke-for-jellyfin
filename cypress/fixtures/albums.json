@@ -1,0 +1,38 @@
+{
+  "success": true,
+  "data": [
+    {
+      "id": "jellyfin_album_album-1",
+      "name": "Abbey Road",
+      "artist": "The Beatles",
+      "jellyfinId": "album-1",
+      "imageUrl": "/api/items/album-1/images/primary",
+      "trackCount": 17
+    },
+    {
+      "id": "jellyfin_album_album-2",
+      "name": "A Night at the Opera",
+      "artist": "Queen",
+      "jellyfinId": "album-2",
+      "imageUrl": "/api/items/album-2/images/primary",
+      "trackCount": 12
+    },
+    {
+      "id": "jellyfin_album_album-3",
+      "name": "Led Zeppelin IV",
+      "artist": "Led Zeppelin",
+      "jellyfinId": "album-3",
+      "imageUrl": "/api/items/album-3/images/primary",
+      "trackCount": 8
+    },
+    {
+      "id": "jellyfin_album_album-4",
+      "name": "The Dark Side of the Moon",
+      "artist": "Pink Floyd",
+      "jellyfinId": "album-4",
+      "imageUrl": "/api/items/album-4/images/primary",
+      "trackCount": 10
+    }
+  ],
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}

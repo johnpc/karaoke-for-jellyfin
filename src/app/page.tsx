@@ -89,7 +89,10 @@ export default function Home() {
                     : "bg-red-500"
               }`}
             />
-            <span className="text-sm text-gray-600">
+            <span
+              data-testid="connection-status"
+              className="text-sm text-gray-600"
+            >
               {isConnected
                 ? `Connected as ${userName}`
                 : error?.includes("Reconnecting") || error?.includes("attempt")
@@ -105,7 +108,9 @@ export default function Home() {
         <div className="bg-red-50 border-l-4 border-red-400 p-4 mx-4 mt-4">
           <div className="flex">
             <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+              <p data-testid="error-message" className="text-sm text-red-700">
+                {error}
+              </p>
             </div>
           </div>
         </div>
@@ -121,15 +126,19 @@ export default function Home() {
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
         {activeTab === "search" ? (
-          <SearchInterface onAddSong={addSong} isConnected={isConnected} />
+          <div data-testid="search-content">
+            <SearchInterface onAddSong={addSong} isConnected={isConnected} />
+          </div>
         ) : (
-          <QueueView
-            queue={queue}
-            currentSong={currentSong}
-            onRemoveSong={removeSong}
-            userName={userName}
-            session={session}
-          />
+          <div data-testid="queue-content">
+            <QueueView
+              queue={queue}
+              currentSong={currentSong}
+              onRemoveSong={removeSong}
+              userName={userName}
+              session={session}
+            />
+          </div>
         )}
       </div>
 

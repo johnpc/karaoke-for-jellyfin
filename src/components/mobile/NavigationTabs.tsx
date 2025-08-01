@@ -20,10 +20,11 @@ export function NavigationTabs({
     <div className="bg-white border-b border-gray-200">
       <div className="flex">
         <button
+          data-testid="search-tab"
           onClick={() => onTabChange("search")}
           className={`flex-1 flex items-center justify-center py-4 px-4 text-sm font-medium border-b-2 transition-colors ${
             activeTab === "search"
-              ? "border-purple-500 text-purple-600 bg-purple-50"
+              ? "border-purple-500 text-purple-600 bg-purple-50 active"
               : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
           }`}
         >
@@ -32,10 +33,11 @@ export function NavigationTabs({
         </button>
 
         <button
+          data-testid="queue-tab"
           onClick={() => onTabChange("queue")}
           className={`flex-1 flex items-center justify-center py-4 px-4 text-sm font-medium border-b-2 transition-colors relative ${
             activeTab === "queue"
-              ? "border-purple-500 text-purple-600 bg-purple-50"
+              ? "border-purple-500 text-purple-600 bg-purple-50 active"
               : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
           }`}
         >

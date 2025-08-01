@@ -1,0 +1,38 @@
+{
+  "success": true,
+  "data": [
+    {
+      "id": "jellyfin_playlist_playlist-1",
+      "name": "Classic Rock Hits",
+      "jellyfinId": "playlist-1",
+      "imageUrl": "/api/items/playlist-1/images/primary",
+      "trackCount": 25,
+      "description": "The best classic rock songs of all time"
+    },
+    {
+      "id": "jellyfin_playlist_playlist-2",
+      "name": "Karaoke Favorites",
+      "jellyfinId": "playlist-2",
+      "imageUrl": "/api/items/playlist-2/images/primary",
+      "trackCount": 50,
+      "description": "Popular karaoke songs everyone loves to sing"
+    },
+    {
+      "id": "jellyfin_playlist_playlist-3",
+      "name": "80s Greatest Hits",
+      "jellyfinId": "playlist-3",
+      "imageUrl": "/api/items/playlist-3/images/primary",
+      "trackCount": 30,
+      "description": "The biggest hits from the 1980s"
+    },
+    {
+      "id": "jellyfin_playlist_playlist-4",
+      "name": "Pop Anthems",
+      "jellyfinId": "playlist-4",
+      "imageUrl": "/api/items/playlist-4/images/primary",
+      "trackCount": 40,
+      "description": "Modern pop anthems that get everyone singing"
+    }
+  ],
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}

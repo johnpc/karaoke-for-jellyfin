@@ -39,7 +39,7 @@ export function QRCode({ url, size = 80, className = "" }: QRCodeProps) {
   }
 
   return (
-    <div className={`${className}`}>
+    <div data-testid="qr-code" className={`${className}`}>
       <Image
         src={qrCodeDataUrl}
         alt={`QR Code for ${url}`}

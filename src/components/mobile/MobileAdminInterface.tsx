@@ -19,6 +19,7 @@ import {
   ExclamationTriangleIcon,
   QueueListIcon,
   MusicalNoteIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { CacheStatus } from "@/components/CacheStatus";
 
@@ -116,7 +117,7 @@ export function MobileAdminInterface({
   console.log("MobileAdminInterface - currentOffset:", currentOffset);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div data-testid="admin-interface" className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="px-4 py-3">
@@ -191,7 +192,10 @@ export function MobileAdminInterface({
           <div className="space-y-6">
             {/* Current Song */}
             {currentSong && (
-              <div className="bg-white rounded-lg p-4 shadow-sm border">
+              <div
+                data-testid="current-song-info"
+                className="bg-white rounded-lg p-4 shadow-sm border"
+              >
                 <h3 className="text-sm font-medium text-gray-500 mb-2">
                   Now Playing
                 </h3>
@@ -206,7 +210,10 @@ export function MobileAdminInterface({
             )}
 
             {/* Playback Controls */}
-            <div className="bg-white rounded-lg p-4 shadow-sm border">
+            <div
+              data-testid="playback-controls"
+              className="bg-white rounded-lg p-4 shadow-sm border"
+            >
               <h3 className="text-sm font-medium text-gray-500 mb-4">
                 Controls
               </h3>
@@ -224,6 +231,7 @@ export function MobileAdminInterface({
                 </button>
 
                 <button
+                  data-testid="play-pause-button"
                   onClick={handlePlayPause}
                   className="p-4 bg-purple-600 hover:bg-purple-700 rounded-full transition-colors disabled:bg-gray-300"
                   disabled={!currentSong && pendingQueue.length === 0}
@@ -236,6 +244,7 @@ export function MobileAdminInterface({
                 </button>
 
                 <button
+                  data-testid="skip-button"
                   onClick={onSkip}
                   className="p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
                   disabled={!currentSong}
@@ -245,7 +254,7 @@ export function MobileAdminInterface({
               </div>
 
               {/* Status */}
-              <div className="text-center mb-4">
+              <div data-testid="playback-status" className="text-center mb-4">
                 <span
                   className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
                     playbackState?.isPlaying
@@ -259,7 +268,7 @@ export function MobileAdminInterface({
 
               {/* Seek Bar */}
               {currentSong && (
-                <div className="mb-4">
+                <div data-testid="seek-control" className="mb-4">
                   <div className="flex justify-between text-xs text-gray-500 mb-1">
                     <span>
                       {Math.floor((playbackState?.currentTime || 0) / 60)}:
@@ -276,6 +285,7 @@ export function MobileAdminInterface({
                     </span>
                   </div>
                   <input
+                    data-testid="seek-slider"
                     type="range"
                     min="0"
                     max={currentSong.mediaItem.duration}
@@ -289,7 +299,11 @@ export function MobileAdminInterface({
               {/* Volume Control */}
               <div>
                 <div className="flex items-center space-x-3">
-                  <button onClick={handleMute} className="p-1">
+                  <button
+                    data-testid="mute-button"
+                    onClick={handleMute}
+                    className="p-1"
+                  >
                     {playbackState?.isMuted ? (
                       <SpeakerXMarkIcon className="w-5 h-5 text-red-500" />
                     ) : (
@@ -298,6 +312,7 @@ export function MobileAdminInterface({
                   </button>
                   <div className="flex-1">
                     <input
+                      data-testid="volume-slider"
                       type="range"
                       min="0"
                       max="100"
@@ -316,13 +331,17 @@ export function MobileAdminInterface({
             </div>
 
             {/* Lyrics Offset Control */}
-            <div className="bg-white rounded-lg p-4 shadow-sm border">
+            <div
+              data-testid="lyrics-timing"
+              className="bg-white rounded-lg p-4 shadow-sm border"
+            >
               <h3 className="text-sm font-medium text-gray-500 mb-4">
                 Lyrics Timing
               </h3>
 
               <div className="flex items-center space-x-3">
                 <button
+                  data-testid="lyrics-offset-minus"
                   onClick={() => handleLyricsOffsetChange(currentOffset - 1)}
                   className="flex items-center justify-center w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={currentOffset <= -10}
@@ -379,6 +398,7 @@ export function MobileAdminInterface({
                 </div>
 
                 <button
+                  data-testid="lyrics-offset-plus"
                   onClick={() => handleLyricsOffsetChange(currentOffset + 1)}
                   className="flex items-center justify-center w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={currentOffset >= 10}
@@ -391,10 +411,14 @@ export function MobileAdminInterface({
         )}
 
         {activeTab === "queue" && (
-          <div className="space-y-4">
+          <div data-testid="queue-management" className="space-y-4">
             <div className="bg-white rounded-lg p-4 shadow-sm border">
               <h3 className="text-sm font-medium text-gray-500 mb-3">
-                Queue ({pendingQueue.length} songs)
+                <span data-testid="queue-status">
+                  Queue (
+                  <span data-testid="queue-count">{pendingQueue.length}</span>{" "}
+                  songs)
+                </span>
               </h3>
 
               {pendingQueue.length === 0 ? (
@@ -403,10 +427,11 @@ export function MobileAdminInterface({
                   <p className="text-sm">No songs in queue</p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div data-testid="admin-queue-list" className="space-y-2">
                   {pendingQueue.map((item, index) => (
                     <div
                       key={item.id}
+                      data-testid="admin-queue-item"
                       className="flex items-center p-3 bg-gray-50 rounded-lg"
                     >
                       <div className="flex-shrink-0 w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center mr-3">
@@ -416,20 +441,44 @@ export function MobileAdminInterface({
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">
+                        <p
+                          data-testid="song-title"
+                          className="font-medium text-gray-900 truncate"
+                        >
                           {item.mediaItem.title}
                         </p>
-                        <p className="text-sm text-gray-600 truncate">
+                        <p
+                          data-testid="song-artist"
+                          className="text-sm text-gray-600 truncate"
+                        >
                           {item.mediaItem.artist}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p
+                          data-testid="added-by"
+                          className="text-xs text-gray-500"
+                        >
                           Added by {item.addedBy}
                         </p>
                       </div>
 
-                      <div className="flex-shrink-0 text-xs text-gray-500">
-                        {Math.floor(item.mediaItem.duration / 60)}:
-                        {String(item.mediaItem.duration % 60).padStart(2, "0")}
+                      <div className="flex items-center space-x-2">
+                        <div className="text-xs text-gray-500">
+                          {Math.floor(item.mediaItem.duration / 60)}:
+                          {String(item.mediaItem.duration % 60).padStart(
+                            2,
+                            "0"
+                          )}
+                        </div>
+                        {onRemoveSong && (
+                          <button
+                            data-testid="admin-remove-song"
+                            onClick={() => onRemoveSong(item.id)}
+                            className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                            title="Remove song"
+                          >
+                            <XMarkIcon className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -440,7 +489,7 @@ export function MobileAdminInterface({
         )}
 
         {activeTab === "emergency" && (
-          <div className="space-y-4">
+          <div data-testid="emergency-controls" className="space-y-4">
             <div className="bg-white rounded-lg p-4 shadow-sm border border-red-200">
               <div className="flex items-center text-red-600 mb-3">
                 <ExclamationTriangleIcon className="w-5 h-5 mr-2" />
@@ -453,6 +502,7 @@ export function MobileAdminInterface({
 
               <div className="space-y-3">
                 <button
+                  data-testid="emergency-stop-button"
                   onClick={handleEmergencyStop}
                   className="w-full flex items-center justify-center px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
                 >
@@ -461,6 +511,7 @@ export function MobileAdminInterface({
                 </button>
 
                 <button
+                  data-testid="restart-song-button"
                   onClick={() => handleSeek(0)}
                   className="w-full flex items-center justify-center px-4 py-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors"
                   disabled={!currentSong}
@@ -480,7 +531,10 @@ export function MobileAdminInterface({
             </div>
 
             {/* System Status */}
-            <div className="bg-white rounded-lg p-4 shadow-sm border">
+            <div
+              data-testid="system-status"
+              className="bg-white rounded-lg p-4 shadow-sm border"
+            >
               <h4 className="text-sm font-medium text-gray-900 mb-3">
                 System Status
               </h4>
@@ -488,14 +542,18 @@ export function MobileAdminInterface({
                 <div className="flex justify-between">
                   <span className="text-gray-600">Connection:</span>
                   <span
+                    data-testid="connection-indicator"
                     className={isConnected ? "text-green-600" : "text-red-600"}
                   >
                     {isConnected ? "Connected" : "Disconnected"}
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div
+                  data-testid="active-users"
+                  className="flex justify-between"
+                >
                   <span className="text-gray-600">Active Users:</span>
-                  <span className="text-gray-900">
+                  <span data-testid="user-count" className="text-gray-900">
                     {session?.connectedUsers.length || 0}
                   </span>
                 </div>

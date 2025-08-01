@@ -82,7 +82,10 @@ export function CacheStatus({
   }
 
   return (
-    <div className={`bg-white rounded-lg border ${className}`}>
+    <div
+      data-testid="cache-status"
+      className={`bg-white rounded-lg border ${className}`}
+    >
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
@@ -125,7 +128,7 @@ export function CacheStatus({
         )}
 
         {/* Cache Info */}
-        <div className="space-y-2">
+        <div data-testid="cache-stats" className="space-y-2">
           <div className="flex justify-between items-center text-sm">
             <span className="text-gray-600">Cached items:</span>
             <span className="font-medium text-gray-900">
@@ -148,7 +151,10 @@ export function CacheStatus({
           )}
 
           {lastCleared && (
-            <div className="flex items-center text-xs text-green-600">
+            <div
+              data-testid="cache-cleared"
+              className="flex items-center text-xs text-green-600"
+            >
               <CheckCircleIcon className="w-3 h-3 mr-1" />
               <span>Cleared {lastCleared.toLocaleTimeString()}</span>
             </div>
@@ -158,6 +164,7 @@ export function CacheStatus({
         {/* Actions */}
         <div className="flex space-x-2">
           <button
+            data-testid="clear-cache-button"
             onClick={handleClearCache}
             disabled={isClearing}
             className="flex-1 flex items-center justify-center px-3 py-2 bg-red-50 hover:bg-red-100 disabled:bg-gray-50 text-red-700 disabled:text-gray-400 text-xs font-medium rounded transition-colors"

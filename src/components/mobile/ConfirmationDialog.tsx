@@ -75,6 +75,7 @@ export function ConfirmationDialog({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div
+        data-testid="confirmation-dialog"
         className={`${bgColor} ${borderColor} border rounded-lg p-6 max-w-sm w-full mx-4 shadow-lg animate-in fade-in-0 zoom-in-95 duration-200`}
       >
         <div className="flex items-start space-x-3">
