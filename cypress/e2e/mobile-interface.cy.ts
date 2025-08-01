@@ -147,12 +147,18 @@ describe("Mobile Interface", () => {
     });
 
     it("should allow going back from artist view", () => {
+      // Perform a search to ensure artist items are available
+      cy.searchFor("Beatles");
+
       // Navigate to artist
       cy.get('[data-testid="artist-item"]').first().click();
       cy.get('[data-testid="artist-songs"]').should("be.visible");
 
       // Go back
       cy.get('[data-testid="back-button"]').click();
+
+      // Wait a moment for state updates to complete
+      cy.wait(500);
 
       // Should be back to main search view
       cy.get('[data-testid="artist-item"]').should("be.visible");
