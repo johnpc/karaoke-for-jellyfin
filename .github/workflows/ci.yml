@@ -45,4 +45,4 @@ jobs:
           echo "JELLYFIN_USERNAME=${{ secrets.JELLYFIN_USERNAME }}" >> .env.local
 
       - name: Acceptance tests
-        run: npm run test:acceptance
+        run: npx bddgen && npx playwright test --project=single-user

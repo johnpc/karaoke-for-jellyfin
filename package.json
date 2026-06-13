@@ -18,12 +18,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:crap": "node scripts/crap-check.js",
-    "test:acceptance": "npx bddgen && npx playwright test",
-    "test:e2e": "cypress run",
-    "test:e2e:open": "cypress open",
-    "test:e2e:mobile": "cypress run --spec 'cypress/e2e/mobile-interface.cy.ts'",
-    "test:e2e:admin": "cypress run --spec 'cypress/e2e/admin-interface.cy.ts'",
-    "test:e2e:tv": "cypress run --spec 'cypress/e2e/tv-interface.cy.ts'",
+    "test:acceptance": "npx bddgen && npx playwright test --project=single-user",
     "prepare": "husky"
   },
   "lint-staged": {
