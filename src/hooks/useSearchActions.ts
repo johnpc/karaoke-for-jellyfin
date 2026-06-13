@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { MediaItem, Artist, Playlist, Album } from "@/types";
 import * as SearchService from "@/services/searchService";
 import {
@@ -397,12 +397,22 @@ export function useSearchActions(
     []
   );
 
-  return {
-    performUnifiedSearch,
-    getSongsByAlbum,
-    getSongsByArtist,
-    getPlaylists,
-    getSongsByPlaylist,
-    loadMoreArtists,
-  };
+  return useMemo(
+    () => ({
+      performUnifiedSearch,
+      getSongsByAlbum,
+      getSongsByArtist,
+      getPlaylists,
+      getSongsByPlaylist,
+      loadMoreArtists,
+    }),
+    [
+      performUnifiedSearch,
+      getSongsByAlbum,
+      getSongsByArtist,
+      getPlaylists,
+      getSongsByPlaylist,
+      loadMoreArtists,
+    ]
+  );
 }

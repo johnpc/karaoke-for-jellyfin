@@ -6,6 +6,7 @@ const singleUserTestDir = defineBddConfig({
   features: [
     "e2e/features/admin-controls.feature",
     "e2e/features/playback-controls.feature",
+    "e2e/features/playlist-browse.feature",
     "e2e/features/queue-management.feature",
     "e2e/features/session-management.feature",
     "e2e/features/song-search.feature",
