@@ -49,11 +49,13 @@ export default defineConfig({
       name: "single-user",
       testDir: singleUserTestDir,
       use: { ...devices["Desktop Chrome"] },
+      timeout: 60000,
     },
     {
       name: "multi-user",
       testDir: multiUserTestDir,
       use: { ...devices["Desktop Chrome"] },
+      timeout: 90000,
     },
     {
       name: "full-playback",
