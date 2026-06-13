@@ -192,6 +192,64 @@ describe("useSearchInterface", () => {
   });
 
   // =========================================================================
+  // REGRESSION: no infinite re-fetch loop
+  // =========================================================================
+
+  describe("no infinite fetch loop", () => {
+    it("does not repeatedly fetch artists after initial load", async () => {
+      mockFetchArtists.mockResolvedValue(
+        makePaginatedResult([makeArtist()], true)
+      );
+
+      renderHook(() => useSearchInterface(mockOnAddSong, true));
+
+      // Flush the initial load
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+
+      const callCount = mockFetchArtists.mock.calls.length;
+      expect(callCount).toBe(1);
+
+      // Advance many more timer ticks — should NOT trigger more fetches
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5000);
+      });
+
+      expect(mockFetchArtists.mock.calls.length).toBe(callCount);
+    });
+
+    it("does not trigger unified search when query is cleared (no loop)", async () => {
+      mockFetchArtists.mockResolvedValue(
+        makePaginatedResult([makeArtist()], true)
+      );
+      mockPerformUnifiedSearch.mockResolvedValue(makeSearchResults());
+
+      const { result } = renderHook(() =>
+        useSearchInterface(mockOnAddSong, true)
+      );
+
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+
+      const searchCountAfterMount = mockPerformUnifiedSearch.mock.calls.length;
+
+      // Simulate clearing the search box — should NOT trigger performUnifiedSearch
+      await act(async () => {
+        result.current.handleSearchInputChange({
+          target: { value: "" },
+        } as React.ChangeEvent<HTMLInputElement>);
+        await vi.advanceTimersByTimeAsync(500);
+      });
+
+      expect(mockPerformUnifiedSearch.mock.calls.length).toBe(
+        searchCountAfterMount
+      );
+    });
+  });
+
+  // =========================================================================
   // DEBOUNCED SEARCH (performUnifiedSearch via searchQuery)
   // =========================================================================
 
@@ -619,8 +677,6 @@ describe("useSearchInterface", () => {
 
   describe("loadMoreArtists (via handleLoadMore)", () => {
     it("loads more artists when on search tab with no query", async () => {
-      // The initial load effect and the debounce effect both call fetchArtists(1)
-      // so we need enough mocked values: initial load + debounce trigger + loadMore
       mockFetchArtists.mockReset();
       mockFetchArtists.mockResolvedValue(
         makePaginatedResult([makeArtist({ id: "a1" })], true)

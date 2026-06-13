@@ -107,8 +107,10 @@ export function useSearchEffects(
   onAddSong: (mediaItem: MediaItem) => Promise<void>,
   isConnected: boolean
 ): UseSearchEffectsReturn {
-  // Debounce search input
+  // Debounce search input — only trigger for non-empty queries
   useEffect(() => {
+    if (!state.searchQuery.trim()) return;
+
     const timeoutId = setTimeout(() => {
       if (state.activeTab === "search" && state.artistViewMode === "artists") {
         actions.performUnifiedSearch(state.searchQuery);
@@ -116,7 +118,8 @@ export function useSearchEffects(
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [state.searchQuery, state.activeTab, state.artistViewMode, actions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.searchQuery, state.activeTab, state.artistViewMode]);
 
   // Load all artists on initial load
   useEffect(() => {
@@ -145,13 +148,28 @@ export function useSearchEffects(
     ) {
       loadInitialArtists();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.hasSearched, state.activeTab, state.artistViewMode]);
 
   // Handle load more
   const handleLoadMore = useCallback(() => {
     if (!state.hasMoreResults || state.isLoadingMore || state.isLoading) return;
     dispatchLoadMore(state, actions);
-  }, [state, actions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    state.hasMoreResults,
+    state.isLoadingMore,
+    state.isLoading,
+    state.activeTab,
+    state.artistViewMode,
+    state.playlistViewMode,
+    state.searchQuery,
+    state.selectedArtist,
+    state.selectedAlbum,
+    state.selectedPlaylist,
+    state.currentPage,
+    actions,
+  ]);
 
   // Handle adding a song
   const handleAddSong = useCallback(
@@ -286,9 +304,18 @@ export function useSearchEffects(
 
   const handleSearchInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setters.setSearchQuery(e.target.value);
+      const value = e.target.value;
+      setters.setSearchQuery(value);
+      if (!value.trim() && state.activeTab === "search") {
+        setters.setSongResults([]);
+        setters.setAlbumResults([]);
+        setters.setHasSearched(false);
+        setters.setHasMoreResults(true);
+        setters.setCurrentPage(1);
+      }
     },
-    [setters]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [setters, state.activeTab]
   );
 
   const handleSearchSubmit = useCallback((e: React.FormEvent) => {
