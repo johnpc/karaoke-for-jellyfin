@@ -38,9 +38,11 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Create .env.local for acceptance tests
+        run: |
+          echo "JELLYFIN_SERVER_URL=${{ secrets.JELLYFIN_SERVER_URL }}" > .env.local
+          echo "JELLYFIN_API_KEY=${{ secrets.JELLYFIN_API_KEY }}" >> .env.local
+          echo "JELLYFIN_USERNAME=${{ secrets.JELLYFIN_USERNAME }}" >> .env.local
+
       - name: Acceptance tests
-        env:
-          JELLYFIN_SERVER_URL: ${{ secrets.JELLYFIN_SERVER_URL }}
-          JELLYFIN_API_KEY: ${{ secrets.JELLYFIN_API_KEY }}
-          JELLYFIN_USERNAME: ${{ secrets.JELLYFIN_USERNAME }}
         run: npm run test:acceptance
