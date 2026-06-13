@@ -1,8 +1,20 @@
 import { expect } from "@playwright/test";
 import { Given, When, Then } from "./fixtures";
 
+Given(
+  "the admin interface is loaded at {string}",
+  async ({ page }, path: string) => {
+    await page.goto(path);
+    await page.evaluate(() => {
+      localStorage.setItem("karaoke-admin-username", "Admin (Admin)");
+    });
+    await page.reload();
+    await page.waitForLoadState("domcontentloaded");
+    await page.waitForTimeout(1000);
+  }
+);
+
 Given("the queue is empty", async ({ page }) => {
-  // Assumes no songs have been added to the queue
   await page.waitForTimeout(300);
 });
 
@@ -11,7 +23,7 @@ When("I click the queue tab", async ({ page }) => {
 });
 
 When("I click the emergency tab", async ({ page }) => {
-  await page.locator("text=Emergency").click();
+  await page.locator("button:has-text('Emergency')").click();
 });
 
 When("I click the remove button on a queue item", async ({ page }) => {
@@ -19,10 +31,16 @@ When("I click the remove button on a queue item", async ({ page }) => {
 });
 
 When("I click the emergency stop button", async ({ page }) => {
+  await page
+    .locator("[data-testid='emergency-stop-button']")
+    .waitFor({ state: "visible", timeout: 10000 });
   await page.locator("[data-testid='emergency-stop-button']").click();
 });
 
 When("I click the restart song button", async ({ page }) => {
+  await page
+    .locator("[data-testid='restart-song-button']")
+    .waitFor({ state: "visible", timeout: 10000 });
   await page.locator("[data-testid='restart-song-button']").click();
 });
 
@@ -39,7 +57,9 @@ Then("I should see the emergency tab", async ({ page }) => {
 });
 
 Then("I should see the queue management section", async ({ page }) => {
-  await expect(page.locator("[data-testid='queue-management']")).toBeVisible();
+  await expect(page.locator("[data-testid='queue-management']")).toBeVisible({
+    timeout: 10000,
+  });
 });
 
 Then("I should see the queue count", async ({ page }) => {
@@ -51,7 +71,9 @@ Then("I should see that there are no songs in queue", async ({ page }) => {
 });
 
 Then("I should see the admin queue list", async ({ page }) => {
-  await expect(page.locator("[data-testid='admin-queue-list']")).toBeVisible();
+  await expect(page.locator("[data-testid='admin-queue-list']")).toBeVisible({
+    timeout: 10000,
+  });
 });
 
 Then("each item should show the song title", async ({ page }) => {
@@ -70,28 +92,27 @@ Then("each item should show who added it", async ({ page }) => {
 });
 
 Then("the queue count should decrease", async ({ page }) => {
-  // After removal, the count should have decreased
   await page.waitForTimeout(500);
 });
 
 Then("I should see the emergency controls", async ({ page }) => {
-  await expect(
-    page.locator("[data-testid='emergency-controls']")
-  ).toBeVisible();
+  await expect(page.locator("[data-testid='emergency-controls']")).toBeVisible({
+    timeout: 10000,
+  });
 });
 
 Then("playback should stop immediately", async ({ page }) => {
-  // Emergency stop was triggered; verify no error occurred
   await page.waitForTimeout(500);
 });
 
 Then("the song should restart from the beginning", async ({ page }) => {
-  // Restart was triggered; verify no error occurred
   await page.waitForTimeout(500);
 });
 
 Then("I should see the system status section", async ({ page }) => {
-  await expect(page.locator("[data-testid='system-status']")).toBeVisible();
+  await expect(page.locator("[data-testid='system-status']")).toBeVisible({
+    timeout: 10000,
+  });
 });
 
 Then("the connection indicator should show connected", async ({ page }) => {
@@ -101,15 +122,19 @@ Then("the connection indicator should show connected", async ({ page }) => {
 });
 
 Then("I should see the active user count", async ({ page }) => {
-  await expect(page.locator("[data-testid='user-count']")).toBeVisible();
+  await expect(page.locator("[data-testid='user-count']")).toBeVisible({
+    timeout: 10000,
+  });
 });
 
 Then("I should see the cache status section", async ({ page }) => {
-  await expect(page.locator("[data-testid='cache-status']")).toBeVisible();
+  await expect(page.locator("[data-testid='cache-status']")).toBeVisible({
+    timeout: 10000,
+  });
 });
 
 Then("I should see the clear cache button", async ({ page }) => {
-  await expect(
-    page.locator("[data-testid='clear-cache-button']")
-  ).toBeVisible();
+  await expect(page.locator("[data-testid='clear-cache-button']")).toBeVisible({
+    timeout: 10000,
+  });
 });

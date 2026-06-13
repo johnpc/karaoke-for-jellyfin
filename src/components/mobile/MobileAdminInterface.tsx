@@ -92,7 +92,10 @@ export function MobileAdminInterface({
             <div
               className={`w-2 h-2 rounded-full mr-2 ${isConnected ? "bg-green-500" : "bg-red-500"}`}
             />
-            <span className="text-sm text-gray-600">
+            <span
+              data-testid="connection-status"
+              className="text-sm text-gray-600"
+            >
               {isConnected ? `Connected as ${userName}` : "Disconnected"}
             </span>
           </div>

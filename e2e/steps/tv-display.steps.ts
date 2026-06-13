@@ -3,7 +3,7 @@ import { Given, When, Then } from "./fixtures";
 
 Given("the TV display is loaded", async ({ page }) => {
   await page.goto("/tv");
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("domcontentloaded");
 });
 
 Given("a song is currently playing on the TV", async ({ page }) => {
@@ -36,6 +36,9 @@ Given("no song is currently playing", async ({ page }) => {
 });
 
 When("I press the {string} key", async ({ page }, key: string) => {
+  // Ensure page is focused first
+  await page.locator("body").click();
+  await page.waitForTimeout(200);
   if (key === "Space") {
     await page.keyboard.press("Space");
   } else if (key === "Escape") {
@@ -43,6 +46,7 @@ When("I press the {string} key", async ({ page }, key: string) => {
   } else {
     await page.keyboard.press(key);
   }
+  await page.waitForTimeout(300);
 });
 
 When("a song is added to the queue", async ({ page }) => {

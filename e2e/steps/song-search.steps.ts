@@ -57,7 +57,7 @@ When("I type {string} in the search input", async ({ page }, query: string) => {
 });
 
 When("the search interface loads", async ({ page }) => {
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("domcontentloaded");
 });
 
 When("I click on an artist item", async ({ page }) => {

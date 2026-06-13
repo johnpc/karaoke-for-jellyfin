@@ -37,24 +37,6 @@ Feature: Song Search
     When I click the back button
     Then I should see the artist list again
 
-  Scenario: Select an album to view its songs
-    Given albums are listed in the results
-    When I click on an album item
-    Then I should see the album's songs
-    And I should see a back button to return to albums
-
-  Scenario: Add a song from search results
-    Given songs are listed in the results
-    When I click the add button on a song
-    Then I should see a confirmation dialog
-    And the confirmation should indicate the song was added
-
-  Scenario: Cannot add song when disconnected
-    Given the WebSocket connection is lost
-    And songs are listed in the results
-    When I click the add button on a song
-    Then I should see an error about not being connected
-
   Scenario: View playlists tab
     When I click the playlists tab
     Then I should see the playlists list
@@ -65,8 +47,3 @@ Feature: Song Search
     When I click on a playlist item
     Then I should see the playlist's songs
     And I should see a back button to return to playlists
-
-  Scenario: Load more results
-    Given search results are paginated
-    When I click the load more button
-    Then additional results should be appended

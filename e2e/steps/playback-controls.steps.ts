@@ -1,22 +1,48 @@
-import { expect } from "@playwright/test";
+import { expect, Page } from "@playwright/test";
 import { Given, When, Then } from "./fixtures";
+
+async function addSongViaSearch(page: Page) {
+  await page.locator("[data-testid='search-tab']").click();
+  await page
+    .locator("[data-testid='artist-item']")
+    .first()
+    .waitFor({ timeout: 15000 });
+  await page.locator("[data-testid='artist-item']").first().click();
+  await page
+    .locator("[data-testid='add-song-button']")
+    .first()
+    .waitFor({ timeout: 15000 });
+  await page.locator("[data-testid='add-song-button']").first().click();
+  await page
+    .locator("[data-testid='confirmation-dialog']")
+    .waitFor({ timeout: 10000 });
+  await page.waitForTimeout(1000);
+}
 
 Given(
   "the admin has completed setup with name {string}",
   async ({ page }, name: string) => {
-    await page.goto("/admin");
-    // Set localStorage to skip admin setup
+    // First add a song via the mobile interface so admin has something to control
+    await page.goto("/");
     await page.evaluate(userName => {
+      localStorage.setItem("karaoke-username", userName);
       localStorage.setItem("karaoke-admin-username", `${userName} (Admin)`);
     }, name);
     await page.reload();
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("domcontentloaded");
+    await page.waitForTimeout(1000);
+    await addSongViaSearch(page);
+    // Now navigate to admin and wait for WebSocket sync
+    await page.goto("/admin");
+    await page.waitForLoadState("domcontentloaded");
+    await page.waitForTimeout(3000);
   }
 );
 
 Given("the admin is on the playback tab", async ({ page }) => {
-  // Playback tab is the default active tab in admin interface
-  await expect(page.locator("[data-testid='playback-controls']")).toBeVisible();
+  await expect(page.locator("[data-testid='playback-controls']")).toBeVisible({
+    timeout: 10000,
+  });
 });
 
 When("I click the play\\/pause button", async ({ page }) => {
@@ -58,7 +84,9 @@ When("I click the lyrics offset minus button", async ({ page }) => {
 });
 
 Then("I should see the playback controls section", async ({ page }) => {
-  await expect(page.locator("[data-testid='playback-controls']")).toBeVisible();
+  await expect(page.locator("[data-testid='playback-controls']")).toBeVisible({
+    timeout: 10000,
+  });
 });
 
 Then("I should see the play\\/pause button", async ({ page }) => {
@@ -79,8 +107,7 @@ Then(
 );
 
 Then("the next song in the queue should start", async ({ page }) => {
-  // Verify that skip was processed (depends on queue state)
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1000);
 });
 
 Then("I should see the volume slider", async ({ page }) => {
@@ -95,17 +122,17 @@ Then(
 );
 
 Then("the audio should be muted", async ({ page }) => {
-  // Check that the mute icon state changed (SpeakerXMark is shown)
   await page.waitForTimeout(300);
 });
 
 Then("the audio should be unmuted", async ({ page }) => {
-  // Check that the unmute icon state changed (SpeakerWave is shown)
   await page.waitForTimeout(300);
 });
 
 Then("I should see the seek control", async ({ page }) => {
-  await expect(page.locator("[data-testid='seek-control']")).toBeVisible();
+  await expect(page.locator("[data-testid='seek-control']")).toBeVisible({
+    timeout: 10000,
+  });
 });
 
 Then("the seek slider should show the current time", async ({ page }) => {
@@ -113,14 +140,12 @@ Then("the seek slider should show the current time", async ({ page }) => {
 });
 
 Then("the seek slider should show the total duration", async ({ page }) => {
-  // Duration is shown as text near the seek slider
   await expect(page.locator("[data-testid='seek-control']")).toContainText(
     /\d+:\d+/
   );
 });
 
 Then("playback should resume from that position", async ({ page }) => {
-  // Verify seek was processed
   await page.waitForTimeout(500);
 });
 
@@ -141,10 +166,12 @@ Then("the lyrics offset should decrease by 1 second", async ({ page }) => {
 });
 
 Then("I should see the current song info", async ({ page }) => {
-  await expect(page.locator("[data-testid='current-song-info']")).toBeVisible();
+  await expect(page.locator("[data-testid='current-song-info']")).toBeVisible({
+    timeout: 10000,
+  });
 });
 
 Then("the song info should show the title and artist", async ({ page }) => {
   const songInfo = page.locator("[data-testid='current-song-info']");
-  await expect(songInfo).toContainText(/.+/); // Contains some text
+  await expect(songInfo).toContainText(/.+/);
 });

@@ -48,14 +48,14 @@ const { Given, When, Then } = createBdd(test);
 
 async function joinSession(page: Page, userName: string): Promise<void> {
   await page.goto("/");
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("domcontentloaded");
 
   // Clear any existing session
   await page.evaluate(() => {
     localStorage.removeItem("karaoke-username");
   });
   await page.reload();
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("domcontentloaded");
 
   // Fill in name and join
   await page.locator("[data-testid='username-input']").fill(userName);
@@ -118,7 +118,7 @@ Given(
 
 Given("the TV display is open", async ({ tvPage }) => {
   await tvPage.goto("/tv");
-  await tvPage.waitForLoadState("networkidle");
+  await tvPage.waitForLoadState("domcontentloaded");
   // Wait for the TV to connect (connection status becomes "Connected")
   await expect(
     tvPage.locator("[data-testid='connection-status']")
