@@ -25,17 +25,23 @@ export function PlaybackFooter({
   return (
     <div className="flex-shrink-0 z-10">
       {/* Progress Bar */}
-      <div className="w-full max-w-4xl mx-auto mb-4">
+      <div
+        data-testid="playback-progress"
+        className="w-full max-w-4xl mx-auto mb-4"
+      >
         <div className="w-full bg-gray-800 rounded-full h-2">
           <div
+            data-testid="progress-bar-fill"
             className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-1000 ease-linear"
             style={{ width: `${Math.min(progress, 100)}%` }}
           ></div>
         </div>
 
         <div className="flex items-center justify-between text-sm text-gray-500 mt-2">
-          <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration)}</span>
+          <span data-testid="playback-current-time">
+            {formatTime(currentTime)}
+          </span>
+          <span data-testid="playback-duration">{formatTime(duration)}</span>
         </div>
       </div>
 

@@ -44,5 +44,8 @@ jobs:
           echo "JELLYFIN_API_KEY=${{ secrets.JELLYFIN_API_KEY }}" >> .env.local
           echo "JELLYFIN_USERNAME=${{ secrets.JELLYFIN_USERNAME }}" >> .env.local
 
-      - name: Acceptance tests
-        run: npx bddgen && npx playwright test
+      - name: Acceptance tests (headless)
+        run: npx bddgen && npx playwright test --project=single-user --project=multi-user
+
+      - name: Full playback tests (headed via xvfb)
+        run: xvfb-run npx playwright test --project=full-playback

@@ -28,6 +28,12 @@ const multiUserTestDir = defineBddConfig({
   steps: "e2e/steps/multi-user.steps.ts",
 });
 
+const fullPlaybackTestDir = defineBddConfig({
+  outputDir: ".features-gen/full-playback",
+  features: "e2e/features/full-playback.feature",
+  steps: "e2e/steps/full-playback.steps.ts",
+});
+
 export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -48,6 +54,18 @@ export default defineConfig({
       name: "multi-user",
       testDir: multiUserTestDir,
       use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "full-playback",
+      testDir: fullPlaybackTestDir,
+      use: {
+        ...devices["Desktop Chrome"],
+        headless: false,
+        launchOptions: {
+          args: ["--autoplay-policy=no-user-gesture-required"],
+        },
+      },
+      timeout: 300000,
     },
   ],
   webServer: {
