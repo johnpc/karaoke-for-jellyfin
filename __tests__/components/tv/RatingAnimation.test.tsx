@@ -230,7 +230,7 @@ describe("RatingAnimation", () => {
     expect(screen.getByText("A+")).toBeInTheDocument();
   });
 
-  it("shows next song coming up message", () => {
+  it("shows no more songs message when nextSong is null", () => {
     render(
       <RatingAnimation
         song={mockSong}
@@ -239,6 +239,38 @@ describe("RatingAnimation", () => {
       />
     );
 
-    expect(screen.getByText("Next song coming up...")).toBeInTheDocument();
+    expect(screen.getByText("No more songs in queue")).toBeInTheDocument();
+  });
+
+  it("shows next song info when nextSong is provided", () => {
+    const nextSong: QueueItem = {
+      id: "next-1",
+      mediaItem: {
+        id: "media-2",
+        title: "Don't Stop Me Now",
+        artist: "Queen",
+        album: "Jazz",
+        duration: 210,
+        jellyfinId: "jellyfin-2",
+        streamUrl: "http://test.com/stream/2",
+      },
+      addedBy: "Alice",
+      addedAt: new Date(),
+      position: 1,
+      status: "pending",
+    };
+
+    render(
+      <RatingAnimation
+        song={mockSong}
+        rating={mockRatingA}
+        nextSong={nextSong}
+        onComplete={mockOnComplete}
+      />
+    );
+
+    expect(screen.getByText("Up Next")).toBeInTheDocument();
+    expect(screen.getByText("Don't Stop Me Now")).toBeInTheDocument();
+    expect(screen.getByText("Queen")).toBeInTheDocument();
   });
 });

@@ -117,6 +117,7 @@ function MainContent({
       <RatingAnimation
         song={transitionState.completedSong}
         rating={transitionState.rating}
+        nextSong={transitionState.nextSong}
         onComplete={onRatingComplete}
         duration={config.ratingAnimationDuration}
       />

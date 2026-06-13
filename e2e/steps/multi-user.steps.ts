@@ -46,9 +46,23 @@ const { Given, When, Then } = createBdd(test);
 // Helpers
 // ---------------------------------------------------------------------------
 
+async function clearQueue(page: Page): Promise<void> {
+  const response = await page.request.get("http://localhost:3000/api/queue");
+  const data = await response.json();
+  const queue = data?.data?.queue || data?.queue || [];
+  for (const item of queue) {
+    await page.request.delete(
+      `http://localhost:3000/api/queue?queueItemId=${item.id}&userId=cleanup`
+    );
+  }
+}
+
 async function joinSession(page: Page, userName: string): Promise<void> {
   await page.goto("/");
   await page.waitForLoadState("domcontentloaded");
+
+  // Clear queue from any prior test
+  await clearQueue(page);
 
   // Clear any existing session
   await page.evaluate(() => {
@@ -79,17 +93,18 @@ async function searchAndAddSong(page: Page): Promise<void> {
   await page.locator("[data-testid='search-tab']").click();
   await page.waitForTimeout(500);
 
-  // If we're in an artist's song view (back button visible), go back first
+  // If we're in an artist's song view, go back first
   const backButton = page.locator("[data-testid='back-button']");
   if (await backButton.isVisible().catch(() => false)) {
     await backButton.click();
+    await page.waitForTimeout(500);
   }
 
-  // Wait for artists to load (search tab shows artists by default)
+  // Wait for artists to load
   await page
     .locator("[data-testid='artist-item']")
     .first()
-    .waitFor({ timeout: 15000 });
+    .waitFor({ timeout: 30000 });
 
   // Click first artist to see their songs
   await page.locator("[data-testid='artist-item']").first().click();

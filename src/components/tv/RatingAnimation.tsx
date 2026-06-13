@@ -160,6 +160,7 @@ function GradeReveal({ rating, phase }: GradeRevealProps) {
 interface RatingAnimationProps {
   song: QueueItem;
   rating: SongRating;
+  nextSong?: QueueItem | null;
   onComplete: () => void;
   duration?: number;
 }
@@ -167,6 +168,7 @@ interface RatingAnimationProps {
 export function RatingAnimation({
   song,
   rating,
+  nextSong,
   onComplete,
   duration = 4000,
 }: RatingAnimationProps) {
@@ -205,8 +207,26 @@ export function RatingAnimation({
           )}
         </div>
 
-        {/* Progress indicator */}
-        <div className="mt-12">
+        {/* Next up / Progress indicator */}
+        <div className="mt-12" data-testid="rating-next-up">
+          {nextSong ? (
+            <div className="mb-4">
+              <p className="text-gray-400 text-sm uppercase tracking-wide mb-2">
+                Up Next
+              </p>
+              <p className="text-white text-xl font-semibold">
+                {nextSong.mediaItem.title}
+              </p>
+              <p className="text-gray-300 text-base">
+                {nextSong.mediaItem.artist}
+              </p>
+              <p className="text-purple-400 text-sm mt-1">
+                🎤 {nextSong.addedBy}
+              </p>
+            </div>
+          ) : (
+            <p className="text-gray-400 text-sm mb-4">No more songs in queue</p>
+          )}
           <div className="w-64 h-2 bg-gray-700 rounded-full mx-auto overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-100"
@@ -215,7 +235,6 @@ export function RatingAnimation({
               }}
             />
           </div>
-          <p className="text-gray-400 text-sm mt-2">Next song coming up...</p>
         </div>
       </div>
     </div>
