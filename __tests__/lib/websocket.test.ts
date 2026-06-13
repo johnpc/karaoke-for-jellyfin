@@ -54,6 +54,16 @@ vi.mock("@/services/session", () => ({
   getSessionManager: () => mockSessionManager,
 }));
 
+// Mock lyrics service
+const mockUpdateSyncState = vi.fn();
+const mockLyricsService = {
+  updateSyncState: mockUpdateSyncState,
+};
+
+vi.mock("@/services/lyrics", () => ({
+  getLyricsService: () => mockLyricsService,
+}));
+
 import {
   initializeWebSocket,
   getWebSocketServer,
@@ -87,6 +97,7 @@ describe("websocket", () => {
     mockSessionManager.startNextSong.mockClear();
     mockSessionManager.skipCurrentSong.mockReset();
     mockSessionManager.removeUser.mockReset();
+    mockUpdateSyncState.mockClear();
   });
 
   describe("initializeWebSocket", () => {
@@ -1032,6 +1043,127 @@ describe("websocket", () => {
         handler();
 
         expect(mockSessionManager.updateUserSocketId).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("lyrics-sync", () => {
+      it("emits error when not in session", async () => {
+        const handler = getSocketEventHandler("lyrics-sync");
+
+        await handler({ songId: "song_1", currentTime: 10.5 });
+
+        expect(mockSocketEmit).toHaveBeenCalledWith("error", {
+          code: "NOT_IN_SESSION",
+          message: "You must join a session first",
+        });
+      });
+
+      it("broadcasts lyrics-sync to session when sync state is returned", async () => {
+        simulateConnection();
+
+        const joinHandler = mockSocketOn.mock.calls.find(
+          (call: [string, (...args: unknown[]) => void]) =>
+            call[0] === "join-session"
+        )?.[1];
+        mockSessionManager.getSession.mockReturnValue(null);
+        mockSessionManager.createSession.mockReturnValue({
+          id: "session_1",
+          connectedUsers: [{ id: "user_1", name: "Host" }],
+        });
+        joinHandler({ sessionId: "session_1", userName: "Host" });
+
+        const lyricsSyncHandler = mockSocketOn.mock.calls.find(
+          (call: [string, (...args: unknown[]) => void]) =>
+            call[0] === "lyrics-sync"
+        )?.[1];
+
+        const syncState = {
+          currentLine: "Hello world",
+          currentTimestamp: 10.5,
+        };
+        mockUpdateSyncState.mockReturnValue(syncState);
+
+        mockEmit.mockClear();
+        mockTo.mockClear().mockReturnValue({ emit: mockEmit });
+
+        await lyricsSyncHandler({ songId: "song_1", currentTime: 10.5 });
+
+        expect(mockUpdateSyncState).toHaveBeenCalledWith("song_1", 10.5);
+        expect(mockTo).toHaveBeenCalledWith("session_1");
+        expect(mockEmit).toHaveBeenCalledWith("lyrics-sync", {
+          currentLine: "Hello world",
+          timestamp: 10.5,
+          songId: "song_1",
+          syncState,
+        });
+      });
+
+      it("does not broadcast when syncState is null", async () => {
+        simulateConnection();
+
+        const joinHandler = mockSocketOn.mock.calls.find(
+          (call: [string, (...args: unknown[]) => void]) =>
+            call[0] === "join-session"
+        )?.[1];
+        mockSessionManager.getSession.mockReturnValue(null);
+        mockSessionManager.createSession.mockReturnValue({
+          id: "session_1",
+          connectedUsers: [{ id: "user_1", name: "Host" }],
+        });
+        joinHandler({ sessionId: "session_1", userName: "Host" });
+
+        const lyricsSyncHandler = mockSocketOn.mock.calls.find(
+          (call: [string, (...args: unknown[]) => void]) =>
+            call[0] === "lyrics-sync"
+        )?.[1];
+
+        mockUpdateSyncState.mockReturnValue(null);
+
+        mockEmit.mockClear();
+        mockTo.mockClear().mockReturnValue({ emit: mockEmit });
+
+        await lyricsSyncHandler({ songId: "song_1", currentTime: 5.0 });
+
+        expect(mockUpdateSyncState).toHaveBeenCalledWith("song_1", 5.0);
+        expect(mockTo).not.toHaveBeenCalled();
+        expect(mockEmit).not.toHaveBeenCalled();
+      });
+
+      it("emits error when lyrics service throws", async () => {
+        simulateConnection();
+
+        const joinHandler = mockSocketOn.mock.calls.find(
+          (call: [string, (...args: unknown[]) => void]) =>
+            call[0] === "join-session"
+        )?.[1];
+        mockSessionManager.getSession.mockReturnValue(null);
+        mockSessionManager.createSession.mockReturnValue({
+          id: "session_1",
+          connectedUsers: [{ id: "user_1", name: "Host" }],
+        });
+        joinHandler({ sessionId: "session_1", userName: "Host" });
+
+        const lyricsSyncHandler = mockSocketOn.mock.calls.find(
+          (call: [string, (...args: unknown[]) => void]) =>
+            call[0] === "lyrics-sync"
+        )?.[1];
+
+        mockUpdateSyncState.mockImplementation(() => {
+          throw new Error("Lyrics fetch failed");
+        });
+
+        const consoleSpy = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
+
+        await lyricsSyncHandler({ songId: "song_1", currentTime: 10.5 });
+
+        expect(mockSocketEmit).toHaveBeenCalledWith("error", {
+          code: "LYRICS_SYNC_FAILED",
+          message: "Lyrics fetch failed",
+        });
+
+        consoleSpy.mockRestore();
       });
     });
   });

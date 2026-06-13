@@ -1235,6 +1235,92 @@ describe("JellyfinService", () => {
     });
   });
 
+  describe("getLibraries", () => {
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ Id: "user123", Name: "test-user" }],
+      } as Response);
+
+      await service.authenticate();
+      mockFetch.mockClear();
+    });
+
+    it("should return libraries on success", async () => {
+      const mockLibraries = {
+        Items: [
+          { Name: "Music", Id: "lib1", CollectionType: "music" },
+          { Name: "Videos", Id: "lib2", CollectionType: "movies" },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockLibraries,
+      } as Response);
+
+      const result = await service.getLibraries();
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toMatchObject({
+        Name: "Music",
+        Id: "lib1",
+        CollectionType: "music",
+      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://test.jellyfin.com/Users/user123/Views",
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            "X-Emby-Token": "test-api-key",
+            "Content-Type": "application/json",
+          }),
+        })
+      );
+    });
+
+    it("should return empty array when response is not ok", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+      } as Response);
+
+      const result = await service.getLibraries();
+
+      expect(result).toEqual([]);
+    });
+
+    it("should return empty array when fetch throws", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
+
+      const result = await service.getLibraries();
+
+      expect(result).toEqual([]);
+    });
+
+    it("should authenticate first when not already authenticated", async () => {
+      const freshService = new JellyfinService();
+
+      // First call: authentication
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ Id: "user123", Name: "test-user" }],
+      } as Response);
+
+      // Second call: getLibraries
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          Items: [{ Name: "Music", Id: "lib1", CollectionType: "music" }],
+        }),
+      } as Response);
+
+      const result = await freshService.getLibraries();
+
+      expect(result).toHaveLength(1);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe("getAllAudioItems", () => {
     beforeEach(async () => {
       mockFetch.mockResolvedValueOnce({

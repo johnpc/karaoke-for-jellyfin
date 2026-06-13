@@ -8,6 +8,29 @@ import { UserSetup } from "@/components/mobile/UserSetup";
 import { NavigationTabs } from "@/components/mobile/NavigationTabs";
 import { PWAInstaller } from "@/components/PWAInstaller";
 
+function getConnectionStatusColor(
+  isConnected: boolean,
+  error: string | null
+): string {
+  if (isConnected) return "bg-green-500";
+  if (error?.includes("Reconnecting") || error?.includes("attempt")) {
+    return "bg-yellow-500 animate-pulse";
+  }
+  return "bg-red-500";
+}
+
+function getConnectionStatusText(
+  isConnected: boolean,
+  userName: string,
+  error: string | null
+): string {
+  if (isConnected) return `Connected as ${userName}`;
+  if (error?.includes("Reconnecting") || error?.includes("attempt")) {
+    return "Reconnecting...";
+  }
+  return "Connecting...";
+}
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"search" | "queue">("search");
   const [userName, setUserName] = useState<string>("");
@@ -41,12 +64,8 @@ export default function Home() {
 
   // Auto-join session when connected and user is set up
   useEffect(() => {
-    if (isConnected && isSetup && userName) {
-      // Always try to join if we don't have a session or if we just reconnected
-      if (!session) {
-        console.log("Auto-joining session:", userName);
-        joinSession("main-session", userName);
-      }
+    if (isConnected && isSetup && userName && !session) {
+      joinSession("main-session", userName);
     }
   }, [isConnected, isSetup, userName, session, joinSession]);
 
@@ -80,24 +99,13 @@ export default function Home() {
           </h1>
           <div className="flex items-center mt-1">
             <div
-              className={`w-2 h-2 rounded-full mr-2 ${
-                isConnected
-                  ? "bg-green-500"
-                  : error?.includes("Reconnecting") ||
-                      error?.includes("attempt")
-                    ? "bg-yellow-500 animate-pulse"
-                    : "bg-red-500"
-              }`}
+              className={`w-2 h-2 rounded-full mr-2 ${getConnectionStatusColor(isConnected, error)}`}
             />
             <span
               data-testid="connection-status"
               className="text-sm text-gray-600"
             >
-              {isConnected
-                ? `Connected as ${userName}`
-                : error?.includes("Reconnecting") || error?.includes("attempt")
-                  ? "Reconnecting..."
-                  : "Connecting..."}
+              {getConnectionStatusText(isConnected, userName, error)}
             </span>
           </div>
         </div>

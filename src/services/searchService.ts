@@ -22,6 +22,27 @@ export interface PaginatedResponse<T> {
 }
 
 /**
+ * Builds an error message based on which search endpoints failed.
+ * Returns undefined if all searches succeeded.
+ */
+function buildSearchErrorMessage(
+  artistSuccess: boolean,
+  albumSuccess: boolean,
+  songSuccess: boolean
+): string | undefined {
+  const failed: string[] = [];
+  if (!artistSuccess) failed.push("artists");
+  if (!albumSuccess) failed.push("albums");
+  if (!songSuccess) failed.push("songs");
+
+  if (failed.length === 0) return undefined;
+  if (failed.length === 1) return `Failed to search ${failed[0]}`;
+  if (failed.length === 2)
+    return `Failed to search ${failed[0]} and ${failed[1]}`;
+  return `Failed to search ${failed.slice(0, -1).join(", ")}, and ${failed[failed.length - 1]}`;
+}
+
+/**
  * Performs a unified search across artists, albums, and songs
  */
 export async function performUnifiedSearch(
@@ -80,23 +101,12 @@ export async function performUnifiedSearch(
       `Has more results: ${hasMore} (artists: ${artistHasMore}, albums: ${albumHasMore}, songs: ${songHasMore})`
     );
 
-    // Set error if all searches failed
-    let error: string | undefined;
-    if (!artistData.success && !albumData.success && !songData.success) {
-      error = "Failed to search artists, albums, and songs";
-    } else if (!artistData.success && !albumData.success) {
-      error = "Failed to search artists and albums";
-    } else if (!artistData.success && !songData.success) {
-      error = "Failed to search artists and songs";
-    } else if (!albumData.success && !songData.success) {
-      error = "Failed to search albums and songs";
-    } else if (!artistData.success) {
-      error = "Failed to search artists";
-    } else if (!albumData.success) {
-      error = "Failed to search albums";
-    } else if (!songData.success) {
-      error = "Failed to search songs";
-    }
+    // Set error if any searches failed
+    const error = buildSearchErrorMessage(
+      artistData.success,
+      albumData.success,
+      songData.success
+    );
 
     return {
       artists,

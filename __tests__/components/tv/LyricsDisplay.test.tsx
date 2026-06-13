@@ -4,20 +4,23 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { LyricsDisplay } from "@/components/tv/LyricsDisplay";
 import { QueueItem, PlaybackState } from "@/types";
 
-// Mock the useLyrics hook
-vi.mock("@/hooks/useLyrics", () => ({
-  useLyrics: vi.fn(() => ({
+// Mock the useLyricsSync hook
+vi.mock("@/hooks/useLyricsSync", () => ({
+  useLyricsSync: vi.fn(() => ({
     lyricsFile: null,
     syncState: null,
     currentLine: "",
     nextLine: "",
-    isLoading: false,
-    error: null,
+    lyricsLoading: false,
+    lyricsError: null,
+    currentTime: 0,
+    isPlaying: true,
+    progress: 0,
   })),
 }));
 
-import { useLyrics } from "@/hooks/useLyrics";
-const mockUseLyrics = vi.mocked(useLyrics);
+import { useLyricsSync } from "@/hooks/useLyricsSync";
+const mockUseLyricsSync = vi.mocked(useLyricsSync);
 
 const mockSong: QueueItem = {
   id: "queue-1",
@@ -50,13 +53,16 @@ const mockPlaybackState: PlaybackState = {
 describe("LyricsDisplay", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseLyrics.mockReturnValue({
+    mockUseLyricsSync.mockReturnValue({
       lyricsFile: null,
       syncState: null,
       currentLine: "",
       nextLine: "",
-      isLoading: false,
-      error: null,
+      lyricsLoading: false,
+      lyricsError: null,
+      currentTime: 0,
+      isPlaying: true,
+      progress: 0,
     });
   });
 
@@ -126,6 +132,18 @@ describe("LyricsDisplay", () => {
   });
 
   it("shows Paused status when isPlaying is false", () => {
+    mockUseLyricsSync.mockReturnValue({
+      lyricsFile: null,
+      syncState: null,
+      currentLine: "",
+      nextLine: "",
+      lyricsLoading: false,
+      lyricsError: null,
+      currentTime: 0,
+      isPlaying: false,
+      progress: 0,
+    });
+
     const pausedState: PlaybackState = {
       ...mockPlaybackState,
       isPlaying: false,
@@ -167,7 +185,7 @@ describe("LyricsDisplay", () => {
   });
 
   it("displays current lyrics line when available", () => {
-    mockUseLyrics.mockReturnValue({
+    mockUseLyricsSync.mockReturnValue({
       lyricsFile: {
         songId: "song-1",
         lines: [{ timestamp: 0, text: "Is this the real life?" }],
@@ -176,8 +194,11 @@ describe("LyricsDisplay", () => {
       syncState: { currentLine: 0, currentTimestamp: 45000, isActive: true },
       currentLine: "Is this the real life?",
       nextLine: "Is this just fantasy?",
-      isLoading: false,
-      error: null,
+      lyricsLoading: false,
+      lyricsError: null,
+      currentTime: 45,
+      isPlaying: true,
+      progress: 12.7,
     });
 
     render(
@@ -195,13 +216,16 @@ describe("LyricsDisplay", () => {
   });
 
   it("shows loading state when lyrics are loading", () => {
-    mockUseLyrics.mockReturnValue({
+    mockUseLyricsSync.mockReturnValue({
       lyricsFile: null,
       syncState: null,
       currentLine: "",
       nextLine: "",
-      isLoading: true,
-      error: null,
+      lyricsLoading: true,
+      lyricsError: null,
+      currentTime: 0,
+      isPlaying: true,
+      progress: 0,
     });
 
     render(
@@ -216,13 +240,16 @@ describe("LyricsDisplay", () => {
   });
 
   it("shows error message when lyrics fail to load", () => {
-    mockUseLyrics.mockReturnValue({
+    mockUseLyricsSync.mockReturnValue({
       lyricsFile: null,
       syncState: null,
       currentLine: "",
       nextLine: "",
-      isLoading: false,
-      error: "Failed to load lyrics",
+      lyricsLoading: false,
+      lyricsError: "Failed to load lyrics",
+      currentTime: 0,
+      isPlaying: true,
+      progress: 0,
     });
 
     render(
@@ -274,7 +301,7 @@ describe("LyricsDisplay", () => {
   });
 
   it("shows lyrics metadata when available", () => {
-    mockUseLyrics.mockReturnValue({
+    mockUseLyricsSync.mockReturnValue({
       lyricsFile: {
         songId: "song-1",
         lines: [],
@@ -286,8 +313,11 @@ describe("LyricsDisplay", () => {
       syncState: null,
       currentLine: "",
       nextLine: "",
-      isLoading: false,
-      error: null,
+      lyricsLoading: false,
+      lyricsError: null,
+      currentTime: 0,
+      isPlaying: true,
+      progress: 0,
     });
 
     render(

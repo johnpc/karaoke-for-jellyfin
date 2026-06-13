@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import Home from "@/app/page";
 
 // Mock useWebSocket hook
@@ -199,5 +199,105 @@ describe("Home Page", () => {
     );
     // Restore
     mockUseWebSocket.session = originalSession;
+  });
+
+  it("switches to queue tab when Queue button is clicked", () => {
+    render(<Home />);
+    // Initially shows search content
+    expect(screen.getByTestId("search-content")).toBeInTheDocument();
+
+    // Click Queue tab button
+    fireEvent.click(screen.getByText(/Queue/));
+
+    // Now queue content should be visible
+    expect(screen.getByTestId("queue-content")).toBeInTheDocument();
+    expect(screen.getByTestId("queue-view")).toBeInTheDocument();
+    expect(screen.queryByTestId("search-content")).not.toBeInTheDocument();
+  });
+
+  it("calls joinSession when user completes setup", () => {
+    vi.spyOn(Storage.prototype, "getItem").mockReturnValue(null);
+    render(<Home />);
+    // Click the Setup button in the mocked UserSetup
+    fireEvent.click(screen.getByText("Setup"));
+    expect(mockUseWebSocket.joinSession).toHaveBeenCalledWith(
+      "main-session",
+      "TestUser"
+    );
+  });
+
+  it("shows correct pending queue count", () => {
+    mockUseWebSocket.queue = [
+      {
+        id: "q1",
+        status: "pending",
+        mediaItem: {},
+        addedBy: "user1",
+        addedAt: new Date(),
+        position: 0,
+      },
+      {
+        id: "q2",
+        status: "playing",
+        mediaItem: {},
+        addedBy: "user1",
+        addedAt: new Date(),
+        position: 1,
+      },
+      {
+        id: "q3",
+        status: "pending",
+        mediaItem: {},
+        addedBy: "user2",
+        addedAt: new Date(),
+        position: 2,
+      },
+      {
+        id: "q4",
+        status: "completed",
+        mediaItem: {},
+        addedBy: "user1",
+        addedAt: new Date(),
+        position: 3,
+      },
+    ];
+    render(<Home />);
+    // NavigationTabs mock shows "Queue ({queueCount})" - only pending items count
+    expect(screen.getByText("Queue (2)")).toBeInTheDocument();
+    // Restore
+    mockUseWebSocket.queue = [];
+  });
+
+  it("shows queue count of 0 when no pending items exist", () => {
+    mockUseWebSocket.queue = [
+      {
+        id: "q1",
+        status: "playing",
+        mediaItem: {},
+        addedBy: "user1",
+        addedAt: new Date(),
+        position: 0,
+      },
+      {
+        id: "q2",
+        status: "completed",
+        mediaItem: {},
+        addedBy: "user1",
+        addedAt: new Date(),
+        position: 1,
+      },
+      {
+        id: "q3",
+        status: "skipped",
+        mediaItem: {},
+        addedBy: "user2",
+        addedAt: new Date(),
+        position: 2,
+      },
+    ];
+    render(<Home />);
+    expect(screen.getByText("Queue (0)")).toBeInTheDocument();
+    // Restore
+    mockUseWebSocket.queue = [];
   });
 });

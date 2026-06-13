@@ -9,4 +9,7 @@ export { PlaylistResults } from "./PlaylistResults";
 export { LoadMoreIndicator } from "./LoadMoreIndicator";
 export { LoadMoreButton } from "./LoadMoreButton";
 export { NoMoreResults } from "./NoMoreResults";
+export { SearchHeader } from "./SearchHeader";
+export { ContentStateDisplay } from "./ContentStateDisplay";
+export { SearchResultsView } from "./SearchResultsView";
 export { SearchContent } from "./SearchContent";

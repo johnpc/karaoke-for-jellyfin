@@ -5,6 +5,7 @@ import path from "path";
 
 const mockReadFile = vi.fn();
 const mockAccess = vi.fn();
+const mockGetLyrics = vi.fn();
 
 vi.mock("fs", () => {
   return {
@@ -22,6 +23,12 @@ vi.mock("fs", () => {
     existsSync: vi.fn(),
   };
 });
+
+vi.mock("@/services/jellyfin", () => ({
+  getJellyfinService: () => ({
+    getLyrics: (...args: unknown[]) => mockGetLyrics(...args),
+  }),
+}));
 
 describe("LyricsService", () => {
   let lyricsService: LyricsService;
@@ -267,6 +274,184 @@ Third line of text`;
 
       // Verify data is cleared
       expect(lyricsService.getCurrentLine("test-song")).toBeNull();
+    });
+  });
+
+  describe("getLyrics", () => {
+    it("should return cached lyrics on second call", async () => {
+      const lrcContent = `[00:10.00]Cached line`;
+      mockReadFile.mockResolvedValue(lrcContent);
+      mockAccess.mockResolvedValue(undefined);
+      mockGetLyrics.mockResolvedValue(null);
+
+      // First call - fetches from source
+      const first = await lyricsService.getLyrics("test-song", ["/test"]);
+      expect(first).toBeTruthy();
+
+      // Reset mocks to verify cache hit
+      mockReadFile.mockClear();
+      mockAccess.mockClear();
+      mockGetLyrics.mockClear();
+
+      // Second call - should come from cache
+      const second = await lyricsService.getLyrics("test-song", ["/test"]);
+      expect(second).toBeTruthy();
+      expect(second?.lines[0].text).toBe("Cached line");
+      expect(mockGetLyrics).not.toHaveBeenCalled();
+      expect(mockReadFile).not.toHaveBeenCalled();
+    });
+
+    it("should parse Jellyfin native array format lyrics", async () => {
+      const jellyfinLyrics = [
+        { Start: 10000000000, Text: "First line" },
+        { Start: 15000000000, Text: "Second line" },
+        { Start: 20000000000, Text: "" }, // empty line should be filtered
+      ];
+      mockGetLyrics.mockResolvedValue(jellyfinLyrics);
+
+      const result = await lyricsService.getLyrics("jellyfin_item123", []);
+
+      expect(result).toBeTruthy();
+      expect(result?.lines.length).toBeGreaterThanOrEqual(2);
+      expect(result?.lines[0].text).toBe("First line");
+      expect(result?.lines[1].text).toBe("Second line");
+    });
+
+    it("should parse Jellyfin string format lyrics as LRC", async () => {
+      const lrcString = `[00:10.00]String format line\n[00:15.00]Second string line`;
+      mockGetLyrics.mockResolvedValue(lrcString);
+
+      const result = await lyricsService.getLyrics("jellyfin_item456", []);
+
+      expect(result).toBeTruthy();
+      expect(result?.format).toBe("lrc");
+      expect(result?.lines[0].text).toBe("String format line");
+    });
+
+    it("should return null for unknown Jellyfin lyrics format", async () => {
+      mockGetLyrics.mockResolvedValue({ unknownFormat: true });
+
+      const result = await lyricsService.getLyrics("jellyfin_item789", []);
+
+      expect(result).toBeNull();
+    });
+
+    it("should fallback to local files when Jellyfin fetch fails", async () => {
+      mockGetLyrics.mockRejectedValue(new Error("Network error"));
+      mockAccess.mockResolvedValueOnce(undefined); // File found
+      mockReadFile.mockResolvedValue(`[00:10.00]Local file line`);
+
+      const result = await lyricsService.getLyrics("jellyfin_local", [
+        "/lyrics",
+      ]);
+
+      expect(result).toBeTruthy();
+      expect(result?.lines[0].text).toBe("Local file line");
+    });
+
+    it("should return null when Jellyfin returns null and no local files found", async () => {
+      mockGetLyrics.mockResolvedValue(null);
+      mockAccess.mockRejectedValue(new Error("Not found"));
+
+      const result = await lyricsService.getLyrics("jellyfin_missing", [
+        "/lyrics",
+      ]);
+
+      expect(result).toBeNull();
+    });
+
+    it("should handle local .srt file fallback", async () => {
+      mockGetLyrics.mockResolvedValue(null);
+      // LRC not found, SRT found
+      mockAccess
+        .mockRejectedValueOnce(new Error("Not found")) // .lrc
+        .mockResolvedValueOnce(undefined); // .srt
+
+      const srtContent = `1\n00:00:10,000 --> 00:00:13,000\nSRT line`;
+      mockReadFile.mockResolvedValue(srtContent);
+
+      const result = await lyricsService.getLyrics("jellyfin_srt", ["/lyrics"]);
+
+      expect(result).toBeTruthy();
+      expect(result?.format).toBe("srt");
+    });
+
+    it("should return null for unsupported local file extension", async () => {
+      mockGetLyrics.mockResolvedValue(null);
+      // All standard extensions fail, but we can't easily test the default case
+      // since findLyricsFile only tries known extensions
+      mockAccess.mockRejectedValue(new Error("Not found"));
+
+      const result = await lyricsService.getLyrics("jellyfin_none", [
+        "/lyrics",
+      ]);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("updateSyncState - edge cases", () => {
+    it("should use look-ahead when no line matches exact timestamp", async () => {
+      // Create lyrics where the first line starts at 10s
+      const lrcContent = `[00:10.00]First line\n[00:20.00]Second line`;
+      mockReadFile.mockResolvedValue(lrcContent);
+      mockAccess.mockResolvedValue(undefined);
+      mockGetLyrics.mockResolvedValue(null);
+
+      await lyricsService.getLyrics("lookahead-song", ["/test"]);
+
+      // At 9.6 seconds, the look-ahead of 500ms should catch the first line (starts at 10s)
+      const syncState = lyricsService.updateSyncState("lookahead-song", 9.6);
+
+      expect(syncState).toBeTruthy();
+      expect(syncState?.currentLine).toBe(0);
+      expect(syncState?.isActive).toBe(true);
+    });
+
+    it("should return inactive state when before all lyrics", async () => {
+      const lrcContent = `[00:10.00]First line\n[00:20.00]Second line`;
+      mockReadFile.mockResolvedValue(lrcContent);
+      mockAccess.mockResolvedValue(undefined);
+      mockGetLyrics.mockResolvedValue(null);
+
+      await lyricsService.getLyrics("early-song", ["/test"]);
+
+      // At 2 seconds, no line should match (first starts at 10s, look-ahead 500ms from 2s = 2.5s)
+      const syncState = lyricsService.updateSyncState("early-song", 2);
+
+      expect(syncState).toBeTruthy();
+      expect(syncState?.currentLine).toBe(-1);
+      expect(syncState?.isActive).toBe(false);
+    });
+
+    it("should set nextLine to undefined on last line", async () => {
+      const lrcContent = `[00:10.00]Only line`;
+      mockReadFile.mockResolvedValue(lrcContent);
+      mockAccess.mockResolvedValue(undefined);
+      mockGetLyrics.mockResolvedValue(null);
+
+      await lyricsService.getLyrics("last-line-song", ["/test"]);
+
+      const syncState = lyricsService.updateSyncState("last-line-song", 15);
+
+      expect(syncState).toBeTruthy();
+      expect(syncState?.currentLine).toBe(0);
+      expect(syncState?.nextLine).toBeUndefined();
+    });
+
+    it("should create sync state if none exists", async () => {
+      const lrcContent = `[00:10.00]Line one`;
+      mockReadFile.mockResolvedValue(lrcContent);
+      mockAccess.mockResolvedValue(undefined);
+      mockGetLyrics.mockResolvedValue(null);
+
+      await lyricsService.getLyrics("new-sync-song", ["/test"]);
+
+      // Don't call createSyncState first - updateSyncState should create it
+      const syncState = lyricsService.updateSyncState("new-sync-song", 12);
+
+      expect(syncState).toBeTruthy();
+      expect(syncState?.currentLine).toBe(0);
     });
   });
 });

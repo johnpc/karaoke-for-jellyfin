@@ -327,6 +327,62 @@ describe("KaraokeSessionManager", () => {
       expect(state?.volume).toBe(75);
       expect(state?.currentTime).toBe(30);
     });
+
+    it("should return error when skipping with no active session", () => {
+      const freshManager = new KaraokeSessionManager();
+      const result = freshManager.skipCurrentSong("some-user-id");
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe("No active session");
+    });
+
+    it("should return error when no song is currently playing", () => {
+      // End the current song so nothing is playing
+      sessionManager.endCurrentSong();
+
+      const result = sessionManager.skipCurrentSong(regularUser.id);
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe("No song currently playing");
+    });
+
+    it("should prevent concurrent skips", () => {
+      sessionManager.startNextSong();
+
+      // Simulate skip already in progress
+      (
+        sessionManager as unknown as { skipInProgress: boolean }
+      ).skipInProgress = true;
+
+      const result = sessionManager.skipCurrentSong(regularUser.id);
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe("Skip already in progress");
+
+      // Reset to avoid affecting other tests
+      (
+        sessionManager as unknown as { skipInProgress: boolean }
+      ).skipInProgress = false;
+    });
+
+    it("should prevent skip during song transition", () => {
+      sessionManager.startNextSong();
+
+      // Simulate song transition in progress
+      (
+        sessionManager as unknown as { songTransitionInProgress: boolean }
+      ).songTransitionInProgress = true;
+
+      const result = sessionManager.skipCurrentSong(regularUser.id);
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe("Song transition in progress");
+
+      // Reset to avoid affecting other tests
+      (
+        sessionManager as unknown as { songTransitionInProgress: boolean }
+      ).songTransitionInProgress = false;
+    });
   });
 
   describe("Event System", () => {
