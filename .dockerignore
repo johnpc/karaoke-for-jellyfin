@@ -18,11 +18,17 @@ out
 # Testing
 coverage
 __tests__
+e2e
+.features-gen
+playwright-report
+test-results
 *.test.js
 *.test.ts
 *.test.tsx
 jest.config.js
 jest.setup.js
+vitest.config.ts
+playwright.config.ts
 
 # Development files
 .vscode
