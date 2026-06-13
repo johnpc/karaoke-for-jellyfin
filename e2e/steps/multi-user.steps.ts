@@ -51,9 +51,30 @@ async function clearQueue(page: Page): Promise<void> {
   const data = await response.json();
   const queue = data?.data?.queue || data?.queue || [];
   for (const item of queue) {
-    await page.request.delete(
-      `http://localhost:3000/api/queue?queueItemId=${item.id}&userId=cleanup`
-    );
+    if (item.status === "playing") {
+      await page.request.put("http://localhost:3000/api/queue", {
+        data: { action: "skip", userId: item.addedBy || "cleanup" },
+      });
+    } else {
+      await page.request.delete(
+        `http://localhost:3000/api/queue?itemId=${item.id}&userId=${item.addedBy || "cleanup"}`
+      );
+    }
+  }
+  // After skipping, wait for server to settle and re-check
+  const recheck = await page.request.get("http://localhost:3000/api/queue");
+  const recheckData = await recheck.json();
+  const remaining = recheckData?.data?.queue || recheckData?.queue || [];
+  for (const item of remaining) {
+    if (item.status === "playing") {
+      await page.request.put("http://localhost:3000/api/queue", {
+        data: { action: "skip", userId: item.addedBy || "cleanup" },
+      });
+    } else {
+      await page.request.delete(
+        `http://localhost:3000/api/queue?itemId=${item.id}&userId=${item.addedBy || "cleanup"}`
+      );
+    }
   }
 }
 
@@ -100,11 +121,11 @@ async function searchAndAddSong(page: Page): Promise<void> {
     await page.waitForTimeout(500);
   }
 
-  // Wait for artists to load
+  // Wait for artists to load (remote Jellyfin can be slow from CI)
   await page
     .locator("[data-testid='artist-item']")
     .first()
-    .waitFor({ timeout: 30000 });
+    .waitFor({ timeout: 60000 });
 
   // Click first artist to see their songs
   await page.locator("[data-testid='artist-item']").first().click();
@@ -113,7 +134,7 @@ async function searchAndAddSong(page: Page): Promise<void> {
   await page
     .locator("[data-testid='add-song-button']")
     .first()
-    .waitFor({ timeout: 15000 });
+    .waitFor({ timeout: 30000 });
 
   // Click the first add button
   await page.locator("[data-testid='add-song-button']").first().click();
@@ -207,14 +228,14 @@ When("Alice adds two songs to the queue", async ({ alicePage }) => {
   await alicePage
     .locator("[data-testid='artist-item']")
     .first()
-    .waitFor({ timeout: 15000 });
+    .waitFor({ timeout: 60000 });
 
   // Pick a different artist for the second song
   await alicePage.locator("[data-testid='artist-item']").nth(1).click();
   await alicePage
     .locator("[data-testid='add-song-button']")
     .first()
-    .waitFor({ timeout: 15000 });
+    .waitFor({ timeout: 30000 });
   await alicePage.locator("[data-testid='add-song-button']").first().click();
 
   await dismissConfirmation(alicePage);
