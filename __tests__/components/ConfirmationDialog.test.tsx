@@ -1,17 +1,18 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ConfirmationDialog } from "@/components/mobile/ConfirmationDialog";
 
 describe("ConfirmationDialog", () => {
-  const mockOnClose = jest.fn();
+  const mockOnClose = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
+    vi.clearAllMocks();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
   });
 
   it("renders when open", () => {
@@ -71,7 +72,7 @@ describe("ConfirmationDialog", () => {
     expect(mockOnClose).not.toHaveBeenCalled();
 
     // Fast-forward time
-    jest.advanceTimersByTime(1000);
+    vi.advanceTimersByTime(1000);
 
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
@@ -87,7 +88,7 @@ describe("ConfirmationDialog", () => {
       />
     );
 
-    jest.advanceTimersByTime(5000);
+    vi.advanceTimersByTime(5000);
 
     expect(mockOnClose).not.toHaveBeenCalled();
   });

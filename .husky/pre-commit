@@ -1,1 +1,3 @@
-npm run lint
+npx lint-staged
+npx vitest run
+npm run build

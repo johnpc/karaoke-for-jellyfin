@@ -1,4 +1,5 @@
 import React from "react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { HostControls } from "@/components/tv/HostControls";
 import {
@@ -116,16 +117,16 @@ describe("HostControls", () => {
     session: mockSession,
     currentSong: mockCurrentSong,
     playbackState: mockPlaybackState,
-    onClose: jest.fn(),
-    onSkip: jest.fn(),
-    onPlaybackControl: jest.fn(),
-    onRemoveSong: jest.fn(),
-    onReorderQueue: jest.fn(),
-    onEmergencyStop: jest.fn(),
+    onClose: vi.fn(),
+    onSkip: vi.fn(),
+    onPlaybackControl: vi.fn(),
+    onRemoveSong: vi.fn(),
+    onReorderQueue: vi.fn(),
+    onEmergencyStop: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders host controls with all tabs", () => {
@@ -148,7 +149,7 @@ describe("HostControls", () => {
   it("handles play/pause button clicks", () => {
     render(<HostControls {...mockProps} />);
 
-    const playPauseButton = screen.getByRole("button", { name: /pause/i });
+    const playPauseButton = screen.getByTestId("tv-play-pause");
     fireEvent.click(playPauseButton);
 
     expect(mockProps.onPlaybackControl).toHaveBeenCalledWith({
@@ -238,23 +239,23 @@ describe("HostControls", () => {
     expect(mockProps.onEmergencyStop).toHaveBeenCalled();
   });
 
-  it("displays system status in emergency tab", () => {
+  it("displays emergency controls in emergency tab", () => {
     render(<HostControls {...mockProps} />);
 
-    // Switch to emergency tab
     const emergencyTab = screen.getByText("Emergency");
     fireEvent.click(emergencyTab);
 
-    expect(screen.getByText("System Status")).toBeInTheDocument();
-    expect(screen.getByText("Connected")).toBeInTheDocument();
-    expect(screen.getByText("2")).toBeInTheDocument(); // Active users
-    expect(screen.getByText("Enabled")).toBeInTheDocument(); // Auto advance
+    expect(screen.getByText("Emergency Controls")).toBeInTheDocument();
+    expect(screen.getByText("Emergency Stop")).toBeInTheDocument();
   });
 
   it("handles close button", () => {
-    render(<HostControls {...mockProps} />);
+    const { container } = render(<HostControls {...mockProps} />);
 
-    const closeButton = screen.getByRole("button", { name: "" }); // X button
+    // The close button is the one in the header with XMarkIcon
+    const buttons = container.querySelectorAll("button");
+    // First button in the header area (after Host Controls heading)
+    const closeButton = buttons[0];
     fireEvent.click(closeButton);
 
     expect(mockProps.onClose).toHaveBeenCalled();

@@ -1,24 +1,34 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { LyricsService } from "@/services/lyrics";
 import { LyricsFormat } from "@/types";
-import { promises as fs } from "fs";
 import path from "path";
 
-// Mock fs module
-jest.mock("fs", () => ({
-  promises: {
-    readFile: jest.fn(),
-    access: jest.fn(),
-  },
-}));
+const mockReadFile = vi.fn();
+const mockAccess = vi.fn();
 
-const mockFs = fs as jest.Mocked<typeof fs>;
+vi.mock("fs", () => {
+  return {
+    default: {
+      promises: {
+        readFile: (...args: unknown[]) => mockReadFile(...args),
+        access: (...args: unknown[]) => mockAccess(...args),
+      },
+    },
+    promises: {
+      readFile: (...args: unknown[]) => mockReadFile(...args),
+      access: (...args: unknown[]) => mockAccess(...args),
+    },
+    readFileSync: vi.fn(),
+    existsSync: vi.fn(),
+  };
+});
 
 describe("LyricsService", () => {
   let lyricsService: LyricsService;
 
   beforeEach(() => {
     lyricsService = new LyricsService();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("parseLyricsFile", () => {
@@ -30,7 +40,7 @@ describe("LyricsService", () => {
 [00:15.25]Second line of lyrics
 [00:20.00]Third line of lyrics`;
 
-      mockFs.readFile.mockResolvedValue(lrcContent);
+      mockReadFile.mockResolvedValue(lrcContent);
 
       const result = await lyricsService.parseLyricsFile(
         "/test/song.lrc",
@@ -69,7 +79,7 @@ First subtitle line
 00:00:15,250 --> 00:00:18,750
 Second subtitle line`;
 
-      mockFs.readFile.mockResolvedValue(srtContent);
+      mockReadFile.mockResolvedValue(srtContent);
 
       const result = await lyricsService.parseLyricsFile(
         "/test/song.srt",
@@ -100,7 +110,7 @@ First VTT line
 00:15.250 --> 00:18.750
 Second VTT line`;
 
-      mockFs.readFile.mockResolvedValue(vttContent);
+      mockReadFile.mockResolvedValue(vttContent);
 
       const result = await lyricsService.parseLyricsFile(
         "/test/song.vtt",
@@ -122,7 +132,7 @@ Second VTT line`;
 Second line of text
 Third line of text`;
 
-      mockFs.readFile.mockResolvedValue(txtContent);
+      mockReadFile.mockResolvedValue(txtContent);
 
       const result = await lyricsService.parseLyricsFile(
         "/test/song.txt",
@@ -148,7 +158,7 @@ Third line of text`;
     });
 
     it("should return null when file read fails", async () => {
-      mockFs.readFile.mockRejectedValue(new Error("File not found"));
+      mockReadFile.mockRejectedValue(new Error("File not found"));
 
       const result = await lyricsService.parseLyricsFile(
         "/test/nonexistent.lrc",
@@ -161,7 +171,7 @@ Third line of text`;
 
   describe("findLyricsFile", () => {
     it("should find lyrics file in search paths", async () => {
-      mockFs.access.mockResolvedValueOnce(undefined); // Found on first try!
+      mockAccess.mockResolvedValueOnce(undefined); // Found on first try!
 
       const result = await lyricsService.findLyricsFile("test-song", [
         "/path1",
@@ -170,11 +180,11 @@ Third line of text`;
       ]);
 
       expect(result).toBe("/path1/test-song.lrc");
-      expect(mockFs.access).toHaveBeenCalledTimes(1);
+      expect(mockAccess).toHaveBeenCalledTimes(1);
     });
 
     it("should return null when no lyrics file found", async () => {
-      mockFs.access.mockRejectedValue(new Error("Not found"));
+      mockAccess.mockRejectedValue(new Error("Not found"));
 
       const result = await lyricsService.findLyricsFile("test-song", [
         "/path1",
@@ -192,8 +202,8 @@ Third line of text`;
 [00:15.00]Second line
 [00:20.00]Third line`;
 
-      mockFs.readFile.mockResolvedValue(lrcContent);
-      mockFs.access.mockResolvedValue(undefined);
+      mockReadFile.mockResolvedValue(lrcContent);
+      mockAccess.mockResolvedValue(undefined);
 
       await lyricsService.getLyrics("test-song", ["/test"]);
 
@@ -222,8 +232,8 @@ Third line of text`;
       const lrcContent = `[00:10.00]Current line
 [00:15.00]Next line`;
 
-      mockFs.readFile.mockResolvedValue(lrcContent);
-      mockFs.access.mockResolvedValue(undefined);
+      mockReadFile.mockResolvedValue(lrcContent);
+      mockAccess.mockResolvedValue(undefined);
 
       await lyricsService.getLyrics("test-song", ["/test"]);
       lyricsService.updateSyncState("test-song", 12);
@@ -243,8 +253,8 @@ Third line of text`;
   describe("clearCache", () => {
     it("should clear all cached data", async () => {
       const lrcContent = `[00:10.00]Test line`;
-      mockFs.readFile.mockResolvedValue(lrcContent);
-      mockFs.access.mockResolvedValue(undefined);
+      mockReadFile.mockResolvedValue(lrcContent);
+      mockAccess.mockResolvedValue(undefined);
 
       await lyricsService.getLyrics("test-song", ["/test"]);
       lyricsService.updateSyncState("test-song", 12);

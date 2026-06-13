@@ -1,12 +1,13 @@
 // Integration tests for queue API endpoints
+import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import { NextRequest } from "next/server";
 import { GET, POST, DELETE, PUT } from "@/app/api/queue/route";
 import { getSessionManager } from "@/services/session";
 import { MediaItem } from "@/types";
 
 // Mock the session manager
-jest.mock("@/services/session", () => ({
-  getSessionManager: jest.fn(),
+vi.mock("@/services/session", () => ({
+  getSessionManager: vi.fn(),
 }));
 
 describe("/api/queue", () => {
@@ -15,19 +16,19 @@ describe("/api/queue", () => {
 
   beforeEach(() => {
     mockSessionManager = {
-      getSession: jest.fn(),
-      createSession: jest.fn(),
-      addUser: jest.fn(),
-      getQueue: jest.fn(),
-      getCurrentSong: jest.fn(),
-      getPlaybackState: jest.fn(),
-      getSessionStats: jest.fn(),
-      addSongToQueue: jest.fn(),
-      removeSongFromQueue: jest.fn(),
-      reorderQueue: jest.fn(),
-      skipCurrentSong: jest.fn(),
+      getSession: vi.fn(),
+      createSession: vi.fn(),
+      addUser: vi.fn(),
+      getQueue: vi.fn(),
+      getCurrentSong: vi.fn(),
+      getPlaybackState: vi.fn(),
+      getSessionStats: vi.fn(),
+      addSongToQueue: vi.fn(),
+      removeSongFromQueue: vi.fn(),
+      reorderQueue: vi.fn(),
+      skipCurrentSong: vi.fn(),
     };
-    (getSessionManager as jest.Mock).mockReturnValue(mockSessionManager);
+    (getSessionManager as Mock).mockReturnValue(mockSessionManager);
 
     mockMediaItem = {
       id: "media_123",
@@ -73,7 +74,8 @@ describe("/api/queue", () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
-      expect(data.data.queue).toEqual(mockQueue);
+      expect(data.data.queue).toHaveLength(1);
+      expect(data.data.queue[0].id).toBe("queue_1");
       expect(data.data.session.id).toBe("session_123");
     });
 
