@@ -18,7 +18,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:crap": "node scripts/crap-check.js",
-    "test:acceptance": "npx bddgen && npx playwright test --project=single-user",
+    "test:acceptance": "npx bddgen && npx playwright test",
     "prepare": "husky"
   },
   "lint-staged": {

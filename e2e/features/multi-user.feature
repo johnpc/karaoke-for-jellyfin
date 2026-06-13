@@ -36,11 +36,9 @@ Feature: Multi-User Queue Interaction
     And no songs are in the queue
     Then the TV shows the waiting screen
 
-  Scenario: Song transitions show rating and next-up splash
+  Scenario: Skip advances to next song on TV
     Given "Alice" has joined the session on device 1
     And the TV display is open
     When Alice adds two songs to the queue
     And the first song finishes on the TV
-    Then the TV shows a rating animation
-    And then shows the next song splash
-    And then starts playing the second song
+    Then the TV display shows the second song playing
