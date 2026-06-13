@@ -39,4 +39,8 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Acceptance tests
+        env:
+          JELLYFIN_SERVER_URL: ${{ secrets.JELLYFIN_SERVER_URL }}
+          JELLYFIN_API_KEY: ${{ secrets.JELLYFIN_API_KEY }}
+          JELLYFIN_USERNAME: ${{ secrets.JELLYFIN_USERNAME }}
         run: npm run test:acceptance

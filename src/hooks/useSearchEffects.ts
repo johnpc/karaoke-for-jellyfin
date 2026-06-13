@@ -145,8 +145,6 @@ export function useSearchEffects(
     ) {
       loadInitialArtists();
     }
-    // Only run on mount-like conditions
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.hasSearched, state.activeTab, state.artistViewMode]);
 
   // Handle load more

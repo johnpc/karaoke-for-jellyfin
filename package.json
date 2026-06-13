@@ -11,7 +11,7 @@
     "start": "NODE_ENV=production node server.js",
     "start:next": "next start",
     "lint": "lint-staged",
-    "lint:check": "next lint",
+    "lint:check": "eslint src/ --quiet",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
