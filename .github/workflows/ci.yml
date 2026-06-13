@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Lint check
+        run: npm run lint:check
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Unit tests with coverage
+        run: npx vitest run --coverage
+
+      - name: CRAP score analysis
+        run: node scripts/crap-check.js
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Create .env.local for acceptance tests
+        run: |
+          echo "JELLYFIN_SERVER_URL=${{ secrets.JELLYFIN_SERVER_URL }}" > .env.local
+          echo "JELLYFIN_API_KEY=${{ secrets.JELLYFIN_API_KEY }}" >> .env.local
+          echo "JELLYFIN_USERNAME=${{ secrets.JELLYFIN_USERNAME }}" >> .env.local
+
+      - name: Acceptance tests (headless)
+        run: npx bddgen && npx playwright test --project=single-user --project=multi-user
+
+      - name: Full playback tests (headed via xvfb)
+        run: xvfb-run npx playwright test --project=full-playback

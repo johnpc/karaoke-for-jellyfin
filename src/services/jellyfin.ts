@@ -178,38 +178,9 @@ export class JellyfinService {
       const finalResults = Array.from(uniqueResults.values());
 
       // Sort results by relevance (exact matches first, then partial matches)
-      const queryLower = query.toLowerCase();
-      finalResults.sort((a, b) => {
-        const aTitle = a.title.toLowerCase();
-        const bTitle = b.title.toLowerCase();
-        const aArtist = a.artist.toLowerCase();
-        const bArtist = b.artist.toLowerCase();
+      const sorted = this.sortByRelevance(finalResults, query);
 
-        // Exact title matches first
-        if (aTitle === queryLower && bTitle !== queryLower) return -1;
-        if (bTitle === queryLower && aTitle !== queryLower) return 1;
-
-        // Exact artist matches second
-        if (aArtist === queryLower && bArtist !== queryLower) return -1;
-        if (bArtist === queryLower && aArtist !== queryLower) return 1;
-
-        // Title starts with query
-        if (aTitle.startsWith(queryLower) && !bTitle.startsWith(queryLower))
-          return -1;
-        if (bTitle.startsWith(queryLower) && !aTitle.startsWith(queryLower))
-          return 1;
-
-        // Artist starts with query
-        if (aArtist.startsWith(queryLower) && !bArtist.startsWith(queryLower))
-          return -1;
-        if (bArtist.startsWith(queryLower) && !aArtist.startsWith(queryLower))
-          return 1;
-
-        // Alphabetical by title as fallback
-        return aTitle.localeCompare(bTitle);
-      });
-
-      return finalResults.slice(0, limit);
+      return sorted.slice(0, limit);
     } catch (error) {
       console.error("Jellyfin search error:", error);
       throw error;
@@ -530,60 +501,7 @@ export class JellyfinService {
           `Fetching all songs for artist "${query}" - this may take a moment...`
         );
 
-        // Fetch all audio items in batches to avoid memory issues
-        const batchSize = 1000;
-        let currentStartIndex = 0;
-        let hasMoreItems = true;
-        const allItems: MediaItem[] = [];
-
-        while (hasMoreItems) {
-          console.log(
-            `Fetching batch ${Math.floor(currentStartIndex / batchSize) + 1} starting at index ${currentStartIndex}`
-          );
-
-          const searchParams = new URLSearchParams({
-            includeItemTypes: "Audio",
-            recursive: "true",
-            limit: batchSize.toString(),
-            startIndex: currentStartIndex.toString(),
-            userId: this.userId!,
-            fields: "Artists,Album,RunTimeTicks",
-            sortBy: "SortName",
-            sortOrder: "Ascending",
-          });
-
-          const response = await fetch(
-            `${this.baseUrl}/Items?${searchParams.toString()}`,
-            {
-              headers: {
-                "X-Emby-Token": this.apiKey,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error(`Artist search failed: ${response.status}`);
-          }
-
-          const data: JellyfinSearchResponse = await response.json();
-          const batchItems = this.transformMediaItems(data.Items || []);
-
-          console.log(
-            `Batch ${Math.floor(currentStartIndex / batchSize) + 1}: Got ${batchItems.length} items`
-          );
-          allItems.push(...batchItems);
-
-          // Check if we have more items to fetch
-          hasMoreItems = batchItems.length === batchSize;
-          currentStartIndex += batchSize;
-
-          // Safety check to prevent infinite loops
-          if (currentStartIndex > 50000) {
-            console.warn("Reached maximum fetch limit of 50,000 items");
-            break;
-          }
-        }
+        const allItems = await this.fetchAllAudioItemsBatched();
 
         console.log(`Fetched ${allItems.length} total audio items`);
 
@@ -598,26 +516,7 @@ export class JellyfinService {
         );
 
         // Sort by relevance (exact matches first, then partial matches)
-        allMatchingItems.sort((a, b) => {
-          const aArtist = a.artist.toLowerCase();
-          const bArtist = b.artist.toLowerCase();
-
-          // Exact artist matches first
-          if (aArtist === queryLower && bArtist !== queryLower) return -1;
-          if (bArtist === queryLower && aArtist !== queryLower) return 1;
-
-          // Artist starts with query
-          if (aArtist.startsWith(queryLower) && !bArtist.startsWith(queryLower))
-            return -1;
-          if (bArtist.startsWith(queryLower) && !aArtist.startsWith(queryLower))
-            return 1;
-
-          // Alphabetical by artist, then by title
-          const artistCompare = aArtist.localeCompare(bArtist);
-          if (artistCompare !== 0) return artistCompare;
-
-          return a.title.localeCompare(b.title);
-        });
+        allMatchingItems = this.sortByArtistRelevance(allMatchingItems, query);
 
         // Cache the results for this query (cache for 5 minutes)
         this.artistSearchCache.set(cacheKey, allMatchingItems);
@@ -649,6 +548,126 @@ export class JellyfinService {
       throw error;
     }
   }
+  /**
+   * Compute a relevance score for a media item against a query.
+   * Lower score = higher relevance.
+   */
+  private getRelevanceScore(item: MediaItem, queryLower: string): number {
+    const title = item.title.toLowerCase();
+    const artist = item.artist.toLowerCase();
+
+    if (title === queryLower) return 0;
+    if (artist === queryLower) return 1;
+    if (title.startsWith(queryLower)) return 2;
+    if (artist.startsWith(queryLower)) return 3;
+    return 4;
+  }
+
+  /**
+   * Sort media items by relevance to the query (exact matches first, then partial)
+   */
+  private sortByRelevance(items: MediaItem[], query: string): MediaItem[] {
+    const queryLower = query.toLowerCase();
+    return [...items].sort((a, b) => {
+      const aScore = this.getRelevanceScore(a, queryLower);
+      const bScore = this.getRelevanceScore(b, queryLower);
+
+      if (aScore !== bScore) return aScore - bScore;
+      return a.title.toLowerCase().localeCompare(b.title.toLowerCase());
+    });
+  }
+
+  /**
+   * Sort media items by artist relevance to the query
+   */
+  private sortByArtistRelevance(
+    items: MediaItem[],
+    query: string
+  ): MediaItem[] {
+    const queryLower = query.toLowerCase();
+    return [...items].sort((a, b) => {
+      const aArtist = a.artist.toLowerCase();
+      const bArtist = b.artist.toLowerCase();
+
+      // Exact artist matches first
+      if (aArtist === queryLower && bArtist !== queryLower) return -1;
+      if (bArtist === queryLower && aArtist !== queryLower) return 1;
+
+      // Artist starts with query
+      if (aArtist.startsWith(queryLower) && !bArtist.startsWith(queryLower))
+        return -1;
+      if (bArtist.startsWith(queryLower) && !aArtist.startsWith(queryLower))
+        return 1;
+
+      // Alphabetical by artist, then by title
+      const artistCompare = aArtist.localeCompare(bArtist);
+      if (artistCompare !== 0) return artistCompare;
+
+      return a.title.localeCompare(b.title);
+    });
+  }
+
+  /**
+   * Fetch all audio items from the library in batches
+   */
+  private async fetchAllAudioItemsBatched(): Promise<MediaItem[]> {
+    const batchSize = 1000;
+    let currentStartIndex = 0;
+    let hasMoreItems = true;
+    const allItems: MediaItem[] = [];
+
+    while (hasMoreItems) {
+      console.log(
+        `Fetching batch ${Math.floor(currentStartIndex / batchSize) + 1} starting at index ${currentStartIndex}`
+      );
+
+      const searchParams = new URLSearchParams({
+        includeItemTypes: "Audio",
+        recursive: "true",
+        limit: batchSize.toString(),
+        startIndex: currentStartIndex.toString(),
+        userId: this.userId!,
+        fields: "Artists,Album,RunTimeTicks",
+        sortBy: "SortName",
+        sortOrder: "Ascending",
+      });
+
+      const response = await fetch(
+        `${this.baseUrl}/Items?${searchParams.toString()}`,
+        {
+          headers: {
+            "X-Emby-Token": this.apiKey,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Batch fetch failed: ${response.status}`);
+      }
+
+      const data: JellyfinSearchResponse = await response.json();
+      const batchItems = this.transformMediaItems(data.Items || []);
+
+      console.log(
+        `Batch ${Math.floor(currentStartIndex / batchSize) + 1}: Got ${batchItems.length} items`
+      );
+      allItems.push(...batchItems);
+
+      // Check if we have more items to fetch
+      hasMoreItems = batchItems.length === batchSize;
+      currentStartIndex += batchSize;
+
+      // Safety check to prevent infinite loops
+      if (currentStartIndex > 50000) {
+        console.warn("Reached maximum fetch limit of 50,000 items");
+        break;
+      }
+    }
+
+    return allItems;
+  }
+
   private async performSearch(
     query: string,
     limit: number,

@@ -13,3 +13,6 @@ Dockerfile
 *.mp3
 .env*
 .husky/
+test-results/
+.features-gen/
+playwright-report/

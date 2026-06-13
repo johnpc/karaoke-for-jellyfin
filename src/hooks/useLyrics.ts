@@ -20,6 +20,50 @@ interface UseLyricsReturn {
   clearLyrics: () => void;
 }
 
+async function fetchLyrics(
+  targetSongId: string
+): Promise<ApiResponse<LyricsFile>> {
+  const response = await fetch(
+    `/api/lyrics/${encodeURIComponent(targetSongId)}`
+  );
+  return response.json();
+}
+
+async function fetchLyricsSync(
+  targetSongId: string,
+  time: number
+): Promise<ApiResponse<LyricsSyncState>> {
+  const response = await fetch(
+    `/api/lyrics/${encodeURIComponent(targetSongId)}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ currentTime: time }),
+    }
+  );
+  return response.json();
+}
+
+function getCurrentLineText(
+  lyricsFile: LyricsFile | null,
+  syncState: LyricsSyncState | null
+): string {
+  if (!lyricsFile || !syncState || syncState.currentLine < 0) {
+    return "♪ Instrumental ♪";
+  }
+  const line = lyricsFile.lines[syncState.currentLine];
+  return line?.text || "♪ Instrumental ♪";
+}
+
+function getNextLineText(syncState: LyricsSyncState | null): string {
+  if (!syncState?.nextLine) {
+    return "";
+  }
+  return syncState.nextLine.text;
+}
+
 export function useLyrics(options: UseLyricsOptions = {}): UseLyricsReturn {
   const { songId, currentTime, autoSync = true } = options;
 
@@ -27,23 +71,6 @@ export function useLyrics(options: UseLyricsOptions = {}): UseLyricsReturn {
   const [syncState, setSyncState] = useState<LyricsSyncState | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Load lyrics when songId changes
-  useEffect(() => {
-    console.log("useLyrics - songId changed:", songId);
-    if (songId) {
-      loadLyrics(songId);
-    } else {
-      clearLyrics();
-    }
-  }, [songId]);
-
-  // Auto-sync when time changes
-  useEffect(() => {
-    if (autoSync && songId && currentTime !== undefined && lyricsFile) {
-      syncLyrics(songId, currentTime);
-    }
-  }, [autoSync, songId, currentTime, lyricsFile]);
 
   const loadLyrics = useCallback(async (targetSongId: string) => {
     if (!targetSongId) return;
@@ -53,10 +80,7 @@ export function useLyrics(options: UseLyricsOptions = {}): UseLyricsReturn {
     setError(null);
 
     try {
-      const response = await fetch(
-        `/api/lyrics/${encodeURIComponent(targetSongId)}`
-      );
-      const result: ApiResponse<LyricsFile> = await response.json();
+      const result = await fetchLyrics(targetSongId);
 
       console.log("useLyrics - Lyrics API response:", result);
 
@@ -85,18 +109,7 @@ export function useLyrics(options: UseLyricsOptions = {}): UseLyricsReturn {
     if (!targetSongId || time < 0) return;
 
     try {
-      const response = await fetch(
-        `/api/lyrics/${encodeURIComponent(targetSongId)}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ currentTime: time }),
-        }
-      );
-
-      const result: ApiResponse<LyricsSyncState> = await response.json();
+      const result = await fetchLyricsSync(targetSongId, time);
 
       if (result.success && result.data) {
         setSyncState(result.data);
@@ -113,24 +126,25 @@ export function useLyrics(options: UseLyricsOptions = {}): UseLyricsReturn {
     setIsLoading(false);
   }, []);
 
-  // Get current line text
-  const currentLine = (() => {
-    if (!lyricsFile || !syncState || syncState.currentLine < 0) {
-      return "♪ Instrumental ♪";
+  // Load lyrics when songId changes
+  useEffect(() => {
+    console.log("useLyrics - songId changed:", songId);
+    if (songId) {
+      loadLyrics(songId);
+    } else {
+      clearLyrics();
     }
+  }, [songId, loadLyrics, clearLyrics]);
 
-    const line = lyricsFile.lines[syncState.currentLine];
-    return line?.text || "♪ Instrumental ♪";
-  })();
-
-  // Get next line text
-  const nextLine = (() => {
-    if (!syncState?.nextLine) {
-      return "";
+  // Auto-sync when time changes
+  useEffect(() => {
+    if (autoSync && songId && currentTime !== undefined && lyricsFile) {
+      syncLyrics(songId, currentTime);
     }
+  }, [autoSync, songId, currentTime, lyricsFile, syncLyrics]);
 
-    return syncState.nextLine.text;
-  })();
+  const currentLine = getCurrentLineText(lyricsFile, syncState);
+  const nextLine = getNextLineText(syncState);
 
   return {
     lyricsFile,

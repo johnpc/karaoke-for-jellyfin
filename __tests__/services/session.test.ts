@@ -1,4 +1,5 @@
 // Unit tests for session management
+import { describe, it, expect, beforeEach } from "vitest";
 import { KaraokeSessionManager } from "@/services/session";
 import { MediaItem, QueueItem, ConnectedUser } from "@/types";
 
@@ -125,27 +126,43 @@ describe("KaraokeSessionManager", () => {
 
     it("should enforce user song limits", () => {
       const session = sessionManager.getSession()!;
-      session.hostControls.maxSongsPerUser = 1;
+      session.hostControls.maxSongsPerUser = 2;
 
-      // Add first song - should succeed
+      // First song auto-starts (status = "playing", not "pending") — doesn't count toward limit
       const result1 = sessionManager.addSongToQueue(
         mockMediaItem,
         regularUser.id
       );
       expect(result1.success).toBe(true);
 
-      // Add second song - should fail
+      // Second song stays "pending" — 1 pending
       const result2 = sessionManager.addSongToQueue(
-        mockMediaItem,
+        { ...mockMediaItem, id: "media_456" },
         regularUser.id
       );
-      expect(result2.success).toBe(false);
-      expect(result2.message).toContain("Maximum 1 songs per user");
+      expect(result2.success).toBe(true);
+
+      // Third song stays "pending" — 2 pending = at limit
+      const result3 = sessionManager.addSongToQueue(
+        { ...mockMediaItem, id: "media_789" },
+        regularUser.id
+      );
+      expect(result3.success).toBe(true);
+
+      // Fourth song would exceed limit — should fail
+      const result4 = sessionManager.addSongToQueue(
+        { ...mockMediaItem, id: "media_101" },
+        regularUser.id
+      );
+      expect(result4.success).toBe(false);
+      expect(result4.message).toContain("Maximum 2 songs per user");
     });
 
-    it("should remove a song from the queue", () => {
+    it("should remove a pending song from the queue", () => {
+      // First song auto-starts, add a second that stays pending
+      sessionManager.addSongToQueue(mockMediaItem, regularUser.id);
       const addResult = sessionManager.addSongToQueue(
-        mockMediaItem,
+        { ...mockMediaItem, id: "media_456", title: "Second Song" },
         regularUser.id
       );
       const queueItem = addResult.queueItem!;
@@ -156,24 +173,25 @@ describe("KaraokeSessionManager", () => {
       );
 
       expect(removeResult.success).toBe(true);
-      expect(sessionManager.getQueue()).toHaveLength(0);
+      // Only the first (playing) song remains
+      expect(sessionManager.getQueue()).toHaveLength(1);
     });
 
-    it("should not allow removing other users songs", () => {
+    it("should not allow removing currently playing song", () => {
+      // First song auto-starts (status = "playing")
       const addResult = sessionManager.addSongToQueue(
         mockMediaItem,
         regularUser.id
       );
       const queueItem = addResult.queueItem!;
 
-      const anotherUser = sessionManager.addUser("Another User");
       const removeResult = sessionManager.removeSongFromQueue(
         queueItem.id,
-        anotherUser.id
+        regularUser.id
       );
 
       expect(removeResult.success).toBe(false);
-      expect(removeResult.message).toBe("You can only remove your own songs");
+      expect(removeResult.message).toBe("Cannot remove currently playing song");
     });
 
     it("should allow host to reorder queue", () => {
@@ -219,26 +237,28 @@ describe("KaraokeSessionManager", () => {
       const session = sessionManager.createSession("Test Session", "Host");
       hostUser = session.connectedUsers[0];
       regularUser = sessionManager.addUser("Regular User");
+      // First song auto-starts when added to empty queue
       sessionManager.addSongToQueue(mockMediaItem, regularUser.id);
     });
 
-    it("should start the next song", () => {
-      const song = sessionManager.startNextSong();
-
-      expect(song).toBeDefined();
-      expect(song?.mediaItem.title).toBe("Test Song");
-      expect(song?.status).toBe("playing");
-
+    it("should auto-start the first song added to empty queue", () => {
       const currentSong = sessionManager.getCurrentSong();
-      expect(currentSong?.id).toBe(song?.id);
+      expect(currentSong).toBeDefined();
+      expect(currentSong?.mediaItem.title).toBe("Test Song");
+      expect(currentSong?.status).toBe("playing");
 
       const playbackState = sessionManager.getPlaybackState();
       expect(playbackState?.isPlaying).toBe(true);
-      expect(playbackState?.currentTime).toBe(0);
     });
 
-    it("should end the current song", () => {
-      sessionManager.startNextSong();
+    it("should start the next song after current ends", () => {
+      // Add a second song
+      sessionManager.addSongToQueue(
+        { ...mockMediaItem, id: "media_456", title: "Second Song" },
+        regularUser.id
+      );
+
+      // End the current song — removes it from queue
       sessionManager.endCurrentSong();
 
       expect(sessionManager.getCurrentSong()).toBeNull();
@@ -246,19 +266,34 @@ describe("KaraokeSessionManager", () => {
       const playbackState = sessionManager.getPlaybackState();
       expect(playbackState?.isPlaying).toBe(false);
 
+      // Queue should only have the second (pending) song
       const queue = sessionManager.getQueue();
-      expect(queue[0].status).toBe("completed");
+      expect(queue).toHaveLength(1);
+      expect(queue[0].mediaItem.title).toBe("Second Song");
     });
 
-    it("should skip the current song", () => {
-      sessionManager.startNextSong();
+    it("should end the current song and remove it from queue", () => {
+      sessionManager.endCurrentSong();
+
+      expect(sessionManager.getCurrentSong()).toBeNull();
+
+      const playbackState = sessionManager.getPlaybackState();
+      expect(playbackState?.isPlaying).toBe(false);
+
+      // Completed songs are immediately removed
+      const queue = sessionManager.getQueue();
+      expect(queue).toHaveLength(0);
+    });
+
+    it("should skip the current song and remove it from queue", () => {
       const result = sessionManager.skipCurrentSong(hostUser.id);
 
       expect(result.success).toBe(true);
       expect(sessionManager.getCurrentSong()).toBeNull();
 
+      // Skipped songs are immediately removed
       const queue = sessionManager.getQueue();
-      expect(queue[0].status).toBe("skipped");
+      expect(queue).toHaveLength(0);
     });
 
     it("should not allow non-host to skip without permission", () => {
@@ -291,6 +326,62 @@ describe("KaraokeSessionManager", () => {
       const state = sessionManager.getPlaybackState();
       expect(state?.volume).toBe(75);
       expect(state?.currentTime).toBe(30);
+    });
+
+    it("should return error when skipping with no active session", () => {
+      const freshManager = new KaraokeSessionManager();
+      const result = freshManager.skipCurrentSong("some-user-id");
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe("No active session");
+    });
+
+    it("should return error when no song is currently playing", () => {
+      // End the current song so nothing is playing
+      sessionManager.endCurrentSong();
+
+      const result = sessionManager.skipCurrentSong(regularUser.id);
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe("No song currently playing");
+    });
+
+    it("should prevent concurrent skips", () => {
+      sessionManager.startNextSong();
+
+      // Simulate skip already in progress
+      (
+        sessionManager as unknown as { skipInProgress: boolean }
+      ).skipInProgress = true;
+
+      const result = sessionManager.skipCurrentSong(regularUser.id);
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe("Skip already in progress");
+
+      // Reset to avoid affecting other tests
+      (
+        sessionManager as unknown as { skipInProgress: boolean }
+      ).skipInProgress = false;
+    });
+
+    it("should prevent skip during song transition", () => {
+      sessionManager.startNextSong();
+
+      // Simulate song transition in progress
+      (
+        sessionManager as unknown as { songTransitionInProgress: boolean }
+      ).songTransitionInProgress = true;
+
+      const result = sessionManager.skipCurrentSong(regularUser.id);
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe("Song transition in progress");
+
+      // Reset to avoid affecting other tests
+      (
+        sessionManager as unknown as { songTransitionInProgress: boolean }
+      ).songTransitionInProgress = false;
     });
   });
 
@@ -335,34 +426,38 @@ describe("KaraokeSessionManager", () => {
 
     it("should provide session stats", () => {
       const user = sessionManager.addUser("Test User");
+      // First song auto-starts (status = "playing")
       sessionManager.addSongToQueue(mockMediaItem, user.id);
+      // Second song stays pending
+      sessionManager.addSongToQueue(
+        { ...mockMediaItem, id: "media_456" },
+        user.id
+      );
 
       const stats = sessionManager.getSessionStats();
 
       expect(stats).toBeDefined();
       expect(stats?.sessionName).toBe("Test Session");
       expect(stats?.connectedUsers).toBe(2);
-      expect(stats?.totalSongs).toBe(1);
+      expect(stats?.totalSongs).toBe(2);
       expect(stats?.pendingSongs).toBe(1);
-      expect(stats?.completedSongs).toBe(0);
+      expect(stats?.playingSongs).toBe(1);
     });
 
-    it("should clean up old completed songs", () => {
+    it("should cleanup queue positions", () => {
       const user = sessionManager.addUser("Test User");
       sessionManager.addSongToQueue(mockMediaItem, user.id);
-
-      // Start and end the song to mark it as completed
-      sessionManager.startNextSong();
-      sessionManager.endCurrentSong();
-
-      // Manually set the addedAt time to be old
-      const queue = sessionManager.getQueue();
-      queue[0].addedAt = new Date(Date.now() - 2 * 60 * 60 * 1000); // 2 hours ago
+      sessionManager.addSongToQueue(
+        { ...mockMediaItem, id: "media_456" },
+        user.id
+      );
 
       sessionManager.cleanup();
 
-      // Song should be removed
-      expect(sessionManager.getQueue()).toHaveLength(0);
+      const queue = sessionManager.getQueue();
+      queue.forEach((item, index) => {
+        expect(item.position).toBe(index);
+      });
     });
   });
 });

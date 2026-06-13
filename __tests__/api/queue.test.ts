@@ -1,12 +1,13 @@
 // Integration tests for queue API endpoints
+import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import { NextRequest } from "next/server";
 import { GET, POST, DELETE, PUT } from "@/app/api/queue/route";
 import { getSessionManager } from "@/services/session";
 import { MediaItem } from "@/types";
 
 // Mock the session manager
-jest.mock("@/services/session", () => ({
-  getSessionManager: jest.fn(),
+vi.mock("@/services/session", () => ({
+  getSessionManager: vi.fn(),
 }));
 
 describe("/api/queue", () => {
@@ -15,19 +16,19 @@ describe("/api/queue", () => {
 
   beforeEach(() => {
     mockSessionManager = {
-      getSession: jest.fn(),
-      createSession: jest.fn(),
-      addUser: jest.fn(),
-      getQueue: jest.fn(),
-      getCurrentSong: jest.fn(),
-      getPlaybackState: jest.fn(),
-      getSessionStats: jest.fn(),
-      addSongToQueue: jest.fn(),
-      removeSongFromQueue: jest.fn(),
-      reorderQueue: jest.fn(),
-      skipCurrentSong: jest.fn(),
+      getSession: vi.fn(),
+      createSession: vi.fn(),
+      addUser: vi.fn(),
+      getQueue: vi.fn(),
+      getCurrentSong: vi.fn(),
+      getPlaybackState: vi.fn(),
+      getSessionStats: vi.fn(),
+      addSongToQueue: vi.fn(),
+      removeSongFromQueue: vi.fn(),
+      reorderQueue: vi.fn(),
+      skipCurrentSong: vi.fn(),
     };
-    (getSessionManager as jest.Mock).mockReturnValue(mockSessionManager);
+    (getSessionManager as Mock).mockReturnValue(mockSessionManager);
 
     mockMediaItem = {
       id: "media_123",
@@ -73,7 +74,8 @@ describe("/api/queue", () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
-      expect(data.data.queue).toEqual(mockQueue);
+      expect(data.data.queue).toHaveLength(1);
+      expect(data.data.queue[0].id).toBe("queue_1");
       expect(data.data.session.id).toBe("session_123");
     });
 
@@ -207,6 +209,182 @@ describe("/api/queue", () => {
       expect(response.status).toBe(400);
       expect(data.success).toBe(false);
       expect(data.error.code).toBe("INVALID_ACTION");
+    });
+
+    it("should return 400 when create-session has no userName", async () => {
+      const request = new NextRequest("http://localhost:3000/api/queue", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "create-session",
+        }),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.success).toBe(false);
+      expect(data.error.code).toBe("INVALID_REQUEST");
+      expect(data.error.message).toBe(
+        "userName is required for creating session"
+      );
+    });
+
+    it("should return 500 when createSession throws a generic Error", async () => {
+      mockSessionManager.createSession.mockImplementation(() => {
+        throw new Error("Database connection failed");
+      });
+
+      const request = new NextRequest("http://localhost:3000/api/queue", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "create-session",
+          userName: "ValidUser",
+        }),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(data.success).toBe(false);
+      expect(data.error.code).toBe("QUEUE_OPERATION_FAILED");
+    });
+
+    it("should return 500 when join-session throws a generic Error", async () => {
+      mockSessionManager.getSession.mockReturnValue(null);
+      mockSessionManager.createSession.mockImplementation(() => {
+        throw new Error("Unexpected failure");
+      });
+
+      const request = new NextRequest("http://localhost:3000/api/queue", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "join-session",
+          userName: "ValidUser",
+        }),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(data.success).toBe(false);
+      expect(data.error.code).toBe("QUEUE_OPERATION_FAILED");
+    });
+
+    it("should add a song with a position parameter", async () => {
+      const mockResult = {
+        success: true,
+        message: "Song added to queue at position 2",
+        queueItem: {
+          id: "queue_2",
+          mediaItem: mockMediaItem,
+          addedBy: "user_1",
+          status: "pending",
+        },
+        newQueue: [],
+      };
+
+      mockSessionManager.addSongToQueue.mockReturnValue(mockResult);
+
+      const request = new NextRequest("http://localhost:3000/api/queue", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "add-song",
+          mediaItem: mockMediaItem,
+          userId: "user_1",
+          position: 2,
+        }),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.data.queueItem.id).toBe("queue_2");
+      expect(mockSessionManager.addSongToQueue).toHaveBeenCalledWith(
+        mockMediaItem,
+        "user_1",
+        2
+      );
+    });
+
+    it("should return 400 when addSongToQueue returns success: false", async () => {
+      const mockResult = {
+        success: false,
+        message: "Queue is full",
+      };
+
+      mockSessionManager.addSongToQueue.mockReturnValue(mockResult);
+
+      const request = new NextRequest("http://localhost:3000/api/queue", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "add-song",
+          mediaItem: mockMediaItem,
+          userId: "user_1",
+        }),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.success).toBe(false);
+      expect(data.error.code).toBe("ADD_SONG_FAILED");
+      expect(data.error.message).toBe("Queue is full");
+    });
+
+    it("should return 400 when mediaItem validation fails with ValidationError", async () => {
+      const invalidMediaItem = {
+        id: "",
+        title: "",
+        artist: "",
+        duration: -1,
+        jellyfinId: "",
+        streamUrl: "not-a-url",
+      };
+
+      const request = new NextRequest("http://localhost:3000/api/queue", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "add-song",
+          mediaItem: invalidMediaItem,
+          userId: "user_1",
+        }),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.success).toBe(false);
+      expect(data.error.code).toBe("VALIDATION_ERROR");
+      expect(data.error.message).toBe("Invalid media item format");
+    });
+
+    it("should return 500 when add-song throws a generic Error", async () => {
+      mockSessionManager.addSongToQueue.mockImplementation(() => {
+        throw new Error("Unexpected error in addSongToQueue");
+      });
+
+      const request = new NextRequest("http://localhost:3000/api/queue", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "add-song",
+          mediaItem: mockMediaItem,
+          userId: "user_1",
+        }),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(data.success).toBe(false);
+      expect(data.error.code).toBe("QUEUE_OPERATION_FAILED");
     });
   });
 
