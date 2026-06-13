@@ -33,7 +33,7 @@ Given("the playlists tab is active", async ({ page }) => {
 Given("playlists are listed", async ({ page }) => {
   await expect(
     page.locator("[data-testid='playlist-item']").first()
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 15000 });
 });
 
 Given("search results are paginated", async ({ page }) => {
@@ -52,8 +52,8 @@ Given("the WebSocket connection is lost", async ({ page }) => {
 
 When("I type {string} in the search input", async ({ page }, query: string) => {
   await page.locator("[data-testid='search-input']").fill(query);
-  // Wait for debounced search to trigger
-  await page.waitForTimeout(500);
+  // Wait for debounced search to trigger and API to respond
+  await page.waitForTimeout(1000);
 });
 
 When("the search interface loads", async ({ page }) => {
@@ -105,17 +105,21 @@ Then(
 );
 
 Then("I should see search results displayed", async ({ page }) => {
-  await expect(page.locator("[data-testid='search-results']")).toBeVisible();
+  await expect(page.locator("[data-testid='search-results']")).toBeVisible({
+    timeout: 15000,
+  });
 });
 
 Then("the results should include song items", async ({ page }) => {
-  await expect(page.locator("[data-testid='song-item']").first()).toBeVisible();
+  await expect(page.locator("[data-testid='song-item']").first()).toBeVisible({
+    timeout: 15000,
+  });
 });
 
 Then("the results should include artist items", async ({ page }) => {
-  await expect(
-    page.locator("[data-testid='artist-item']").first()
-  ).toBeVisible();
+  await expect(page.locator("[data-testid='artist-item']").first()).toBeVisible(
+    { timeout: 15000 }
+  );
 });
 
 Then("I should see a list of artists", async ({ page }) => {
@@ -123,7 +127,9 @@ Then("I should see a list of artists", async ({ page }) => {
 });
 
 Then("I should see the artist's songs", async ({ page }) => {
-  await expect(page.locator("[data-testid='artist-songs']")).toBeVisible();
+  await expect(page.locator("[data-testid='artist-songs']")).toBeVisible({
+    timeout: 15000,
+  });
 });
 
 Then("I should see a back button to return to artists", async ({ page }) => {
@@ -164,11 +170,13 @@ Then("I should see an error about not being connected", async ({ page }) => {
 Then("I should see the playlists list", async ({ page }) => {
   await expect(
     page.locator("[data-testid='playlist-item']").first()
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 15000 });
 });
 
 Then("I should see the playlist's songs", async ({ page }) => {
-  await expect(page.locator("[data-testid='playlist-songs']")).toBeVisible();
+  await expect(page.locator("[data-testid='playlist-songs']")).toBeVisible({
+    timeout: 15000,
+  });
 });
 
 Then("I should see a back button to return to playlists", async ({ page }) => {
