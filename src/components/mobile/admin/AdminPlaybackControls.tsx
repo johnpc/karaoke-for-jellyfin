@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { QueueItem, PlaybackState, PlaybackCommand } from "@/types";
 import {
   PlayIcon,
@@ -10,6 +9,13 @@ import {
   SpeakerWaveIcon,
   SpeakerXMarkIcon,
 } from "@heroicons/react/24/outline";
+import {
+  createPlayPauseCommand,
+  createVolumeCommand,
+  createMuteCommand,
+  createSeekCommand,
+} from "./playbackHandlers";
+import { SeekSlider } from "./SeekSlider";
 
 interface AdminPlaybackControlsProps {
   currentSong: QueueItem | null;
@@ -26,41 +32,18 @@ export function AdminPlaybackControls({
   onSkip,
   onPlaybackControl,
 }: AdminPlaybackControlsProps) {
-  const [dragTime, setDragTime] = useState<number | null>(null);
+  const userId = "mobile-admin";
+
   const handlePlayPause = () => {
     if (playbackState) {
-      onPlaybackControl({
-        action: playbackState.isPlaying ? "pause" : "play",
-        userId: "mobile-admin",
-        timestamp: new Date(),
-      });
+      onPlaybackControl(
+        createPlayPauseCommand(playbackState.isPlaying, userId)
+      );
     }
   };
 
-  const handleVolumeChange = (volume: number) => {
-    onPlaybackControl({
-      action: "volume",
-      value: Math.max(0, Math.min(100, volume)),
-      userId: "mobile-admin",
-      timestamp: new Date(),
-    });
-  };
-
-  const handleMute = () => {
-    onPlaybackControl({
-      action: "mute",
-      userId: "mobile-admin",
-      timestamp: new Date(),
-    });
-  };
-
   const handleSeek = (seconds: number) => {
-    onPlaybackControl({
-      action: "seek",
-      value: Math.max(0, seconds),
-      userId: "mobile-admin",
-      timestamp: new Date(),
-    });
+    onPlaybackControl(createSeekCommand(seconds, userId));
   };
 
   return (
@@ -69,7 +52,6 @@ export function AdminPlaybackControls({
       className="bg-white rounded-lg p-4 shadow-sm border"
     >
       <h3 className="text-sm font-medium text-gray-500 mb-4">Controls</h3>
-
       <div className="flex items-center justify-center space-x-4 mb-4">
         <button
           onClick={() => handleSeek((playbackState?.currentTime || 0) - 10)}
@@ -99,7 +81,6 @@ export function AdminPlaybackControls({
           <ForwardIcon className="w-5 h-5 text-gray-700" />
         </button>
       </div>
-
       <div data-testid="playback-status" className="text-center mb-4">
         <span
           className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
@@ -111,45 +92,19 @@ export function AdminPlaybackControls({
           {playbackState?.isPlaying ? "Playing" : "Paused"}
         </span>
       </div>
-
       {currentSong && (
-        <div data-testid="seek-control" className="mb-4">
-          <div className="flex justify-between text-xs text-gray-500 mb-1">
-            <span>
-              {Math.floor((dragTime ?? playbackState?.currentTime ?? 0) / 60)}:
-              {String(
-                Math.floor((dragTime ?? playbackState?.currentTime ?? 0) % 60)
-              ).padStart(2, "0")}
-            </span>
-            <span>
-              {Math.floor(currentSong.mediaItem.duration / 60)}:
-              {String(currentSong.mediaItem.duration % 60).padStart(2, "0")}
-            </span>
-          </div>
-          <input
-            data-testid="seek-slider"
-            type="range"
-            min="0"
-            max={currentSong.mediaItem.duration}
-            value={dragTime ?? playbackState?.currentTime ?? 0}
-            onMouseDown={() => setDragTime(playbackState?.currentTime ?? 0)}
-            onTouchStart={() => setDragTime(playbackState?.currentTime ?? 0)}
-            onChange={e => setDragTime(parseInt(e.target.value))}
-            onMouseUp={() => {
-              if (dragTime !== null) handleSeek(dragTime);
-              setDragTime(null);
-            }}
-            onTouchEnd={() => {
-              if (dragTime !== null) handleSeek(dragTime);
-              setDragTime(null);
-            }}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-          />
-        </div>
+        <SeekSlider
+          currentTime={playbackState?.currentTime ?? 0}
+          duration={currentSong.mediaItem.duration}
+          onSeek={handleSeek}
+        />
       )}
-
       <div className="flex items-center space-x-3">
-        <button data-testid="mute-button" onClick={handleMute} className="p-1">
+        <button
+          data-testid="mute-button"
+          onClick={() => onPlaybackControl(createMuteCommand(userId))}
+          className="p-1"
+        >
           {playbackState?.isMuted ? (
             <SpeakerXMarkIcon className="w-5 h-5 text-red-500" />
           ) : (
@@ -163,7 +118,11 @@ export function AdminPlaybackControls({
             min="0"
             max="100"
             value={playbackState?.volume || 80}
-            onChange={e => handleVolumeChange(parseInt(e.target.value))}
+            onChange={e =>
+              onPlaybackControl(
+                createVolumeCommand(parseInt(e.target.value), userId)
+              )
+            }
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
           />
         </div>

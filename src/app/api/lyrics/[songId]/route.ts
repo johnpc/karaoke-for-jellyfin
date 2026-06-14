@@ -1,8 +1,7 @@
-// API route for lyrics retrieval and synchronization
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getLyricsService } from "@/services/lyrics";
-import { ApiResponse, LyricsFile, LyricsSyncState } from "@/types";
 import path from "path";
+import { errorResponse, successResponse } from "./helpers";
 
 export async function GET(
   request: NextRequest,
@@ -14,95 +13,49 @@ export async function GET(
     const currentTime = searchParams.get("time");
 
     if (!songId) {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: {
-            code: "INVALID_REQUEST",
-            message: "Song ID is required",
-            timestamp: new Date(),
-          },
-          timestamp: new Date(),
-        },
-        { status: 400 }
-      );
+      return errorResponse("INVALID_REQUEST", "Song ID is required", 400);
     }
 
     const lyricsService = getLyricsService();
-
-    // Define search paths for lyrics files
     const searchPaths = [
       process.env.LYRICS_PATH || "/lyrics",
       process.env.JELLYFIN_MEDIA_PATH || "/media",
       path.join(process.cwd(), "lyrics"),
     ];
 
-    // Get lyrics file
     const lyricsFile = await lyricsService.getLyrics(songId, searchPaths);
 
     if (!lyricsFile) {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: {
-            code: "LYRICS_NOT_FOUND",
-            message: `No lyrics found for song: ${songId}`,
-            timestamp: new Date(),
-          },
-          timestamp: new Date(),
-        },
-        { status: 404 }
+      return errorResponse(
+        "LYRICS_NOT_FOUND",
+        `No lyrics found for song: ${songId}`,
+        404
       );
     }
 
-    // If time parameter is provided, return sync state
     if (currentTime !== null) {
-      const timeInSeconds = parseFloat(currentTime);
-      const syncState = lyricsService.updateSyncState(songId, timeInSeconds);
-
+      const syncState = lyricsService.updateSyncState(
+        songId,
+        parseFloat(currentTime)
+      );
       if (!syncState) {
-        return NextResponse.json<ApiResponse<never>>(
-          {
-            success: false,
-            error: {
-              code: "SYNC_FAILED",
-              message: "Unable to sync lyrics at current time",
-              timestamp: new Date(),
-            },
-            timestamp: new Date(),
-          },
-          { status: 404 }
+        return errorResponse(
+          "SYNC_FAILED",
+          "Unable to sync lyrics at current time",
+          404
         );
       }
-
-      return NextResponse.json<ApiResponse<LyricsSyncState>>({
-        success: true,
-        data: syncState,
-        timestamp: new Date(),
-      });
+      return successResponse(syncState);
     }
 
-    // Return full lyrics file
-    return NextResponse.json<ApiResponse<LyricsFile>>({
-      success: true,
-      data: lyricsFile,
-      timestamp: new Date(),
-    });
+    return successResponse(lyricsFile);
   } catch (error) {
     console.error("Lyrics API error:", error);
-
-    return NextResponse.json<ApiResponse>(
-      {
-        success: false,
-        error: {
-          code: "INTERNAL_ERROR",
-          message: "Failed to retrieve lyrics",
-          details: error instanceof Error ? error.message : "Unknown error",
-          timestamp: new Date(),
-        },
-        timestamp: new Date(),
-      },
-      { status: 500 }
+    return errorResponse(
+      "INTERNAL_ERROR",
+      "Failed to retrieve lyrics",
+      500,
+      error instanceof Error ? error.message : "Unknown error"
     );
   }
 }
@@ -117,17 +70,10 @@ export async function POST(
     const { currentTime } = body;
 
     if (!songId || typeof currentTime !== "number") {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: {
-            code: "INVALID_REQUEST",
-            message: "Song ID and current time are required",
-            timestamp: new Date(),
-          },
-          timestamp: new Date(),
-        },
-        { status: 400 }
+      return errorResponse(
+        "INVALID_REQUEST",
+        "Song ID and current time are required",
+        400
       );
     }
 
@@ -135,40 +81,21 @@ export async function POST(
     const syncState = lyricsService.updateSyncState(songId, currentTime);
 
     if (!syncState) {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: {
-            code: "LYRICS_NOT_FOUND",
-            message: `No lyrics loaded for song: ${songId}`,
-            timestamp: new Date(),
-          },
-          timestamp: new Date(),
-        },
-        { status: 404 }
+      return errorResponse(
+        "LYRICS_NOT_FOUND",
+        `No lyrics loaded for song: ${songId}`,
+        404
       );
     }
 
-    return NextResponse.json<ApiResponse<LyricsSyncState>>({
-      success: true,
-      data: syncState,
-      timestamp: new Date(),
-    });
+    return successResponse(syncState);
   } catch (error) {
     console.error("Lyrics sync API error:", error);
-
-    return NextResponse.json<ApiResponse>(
-      {
-        success: false,
-        error: {
-          code: "INTERNAL_ERROR",
-          message: "Failed to sync lyrics",
-          details: error instanceof Error ? error.message : "Unknown error",
-          timestamp: new Date(),
-        },
-        timestamp: new Date(),
-      },
-      { status: 500 }
+    return errorResponse(
+      "INTERNAL_ERROR",
+      "Failed to sync lyrics",
+      500,
+      error instanceof Error ? error.message : "Unknown error"
     );
   }
 }

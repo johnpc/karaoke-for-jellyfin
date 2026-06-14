@@ -1,68 +1,16 @@
 // React hook for lyrics functionality
 import { useState, useEffect, useCallback } from "react";
-import { LyricsFile, LyricsSyncState, ApiResponse } from "@/types";
+import { LyricsFile, LyricsSyncState } from "@/types";
+import {
+  UseLyricsOptions,
+  UseLyricsReturn,
+  fetchLyrics,
+  fetchLyricsSync,
+  getCurrentLineText,
+  getNextLineText,
+} from "./lyricsHelpers";
 
-interface UseLyricsOptions {
-  songId?: string;
-  currentTime?: number;
-  autoSync?: boolean;
-}
-
-interface UseLyricsReturn {
-  lyricsFile: LyricsFile | null;
-  syncState: LyricsSyncState | null;
-  currentLine: string;
-  nextLine: string;
-  isLoading: boolean;
-  error: string | null;
-  loadLyrics: (songId: string) => Promise<void>;
-  syncLyrics: (songId: string, time: number) => Promise<void>;
-  clearLyrics: () => void;
-}
-
-async function fetchLyrics(
-  targetSongId: string
-): Promise<ApiResponse<LyricsFile>> {
-  const response = await fetch(
-    `/api/lyrics/${encodeURIComponent(targetSongId)}`
-  );
-  return response.json();
-}
-
-async function fetchLyricsSync(
-  targetSongId: string,
-  time: number
-): Promise<ApiResponse<LyricsSyncState>> {
-  const response = await fetch(
-    `/api/lyrics/${encodeURIComponent(targetSongId)}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ currentTime: time }),
-    }
-  );
-  return response.json();
-}
-
-function getCurrentLineText(
-  lyricsFile: LyricsFile | null,
-  syncState: LyricsSyncState | null
-): string {
-  if (!lyricsFile || !syncState || syncState.currentLine < 0) {
-    return "♪ Instrumental ♪";
-  }
-  const line = lyricsFile.lines[syncState.currentLine];
-  return line?.text || "♪ Instrumental ♪";
-}
-
-function getNextLineText(syncState: LyricsSyncState | null): string {
-  if (!syncState?.nextLine) {
-    return "";
-  }
-  return syncState.nextLine.text;
-}
+export type { UseLyricsOptions, UseLyricsReturn };
 
 export function useLyrics(options: UseLyricsOptions = {}): UseLyricsReturn {
   const { songId, currentTime, autoSync = true } = options;

@@ -1,37 +1,7 @@
 "use client";
 
-import { MediaItem, Artist, Album, Playlist } from "@/types";
 import { ArtistResults, AlbumResults, SongResults, PlaylistResults } from "./";
-
-type SearchTab = "search" | "playlist";
-type ArtistViewMode = "artists" | "songs";
-type PlaylistViewMode = "playlists" | "songs";
-
-interface SearchResultsViewProps {
-  activeTab: SearchTab;
-  artistViewMode: ArtistViewMode;
-  playlistViewMode: PlaylistViewMode;
-  hasSearched: boolean;
-  songResults: MediaItem[];
-  artistResults: Artist[];
-  albumResults: Album[];
-  playlistResults: Playlist[];
-  selectedArtist: Artist | null;
-  selectedAlbum: Album | null;
-  selectedPlaylist: Playlist | null;
-  addingSongId: string | null;
-  isConnected: boolean;
-  isArtistSectionCollapsed: boolean;
-  isSongSectionCollapsed: boolean;
-  isAlbumSectionCollapsed: boolean;
-  setIsArtistSectionCollapsed: (collapsed: boolean) => void;
-  setIsSongSectionCollapsed: (collapsed: boolean) => void;
-  setIsAlbumSectionCollapsed: (collapsed: boolean) => void;
-  handleArtistSelect: (artist: Artist) => void;
-  handleAlbumSelect: (album: Album) => void;
-  handlePlaylistSelect: (playlist: Playlist) => void;
-  handleAddSong: (song: MediaItem) => void;
-}
+import { SearchResultsViewProps } from "./searchResultsTypes";
 
 export function SearchResultsView(props: SearchResultsViewProps) {
   const {

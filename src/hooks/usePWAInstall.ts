@@ -1,30 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  BeforeInstallPromptEvent,
+  PWAInstallState,
+  PWAInstallActions,
+} from "./pwaInstallTypes";
 
-interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: string[];
-  readonly userChoice: Promise<{
-    outcome: "accepted" | "dismissed";
-    platform: string;
-  }>;
-  prompt(): Promise<void>;
-}
-
-export interface PWAInstallState {
-  showInstallPrompt: boolean;
-  showUpdatePrompt: boolean;
-  isInstalled: boolean;
-  isUpdating: boolean;
-  hasWaitingWorker: boolean;
-}
-
-export interface PWAInstallActions {
-  handleInstallClick: () => Promise<void>;
-  handleUpdateClick: () => Promise<void>;
-  handleDismissInstall: () => void;
-  handleDismissUpdate: () => void;
-}
+export type { BeforeInstallPromptEvent, PWAInstallState, PWAInstallActions };
 
 export function usePWAInstall(): PWAInstallState & PWAInstallActions {
   const [deferredPrompt, setDeferredPrompt] =
