@@ -147,11 +147,64 @@ function analyze() {
     console.log(
       `\n${violations.length} function(s) exceed CRAP threshold of ${CRAP_THRESHOLD}`
     );
-    process.exit(1);
   } else {
     console.log("\nAll functions pass CRAP threshold. Great job!");
-    process.exit(0);
   }
+
+  return violations.length;
 }
 
-analyze();
+function checkFileLines() {
+  const MAX_FILE_LINES = 150;
+  const dirs = ["src", "server"];
+  const extensions = [".ts", ".tsx", ".js", ".jsx"];
+  const violations = [];
+
+  function walk(dir) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name === "node_modules" || entry.name === ".next") continue;
+        walk(fullPath);
+      } else if (extensions.some(ext => entry.name.endsWith(ext))) {
+        const content = fs.readFileSync(fullPath, "utf-8");
+        const lineCount = content.split("\n").length;
+        if (lineCount > MAX_FILE_LINES) {
+          violations.push({
+            file: path.relative(process.cwd(), fullPath),
+            lines: lineCount,
+          });
+        }
+      }
+    }
+  }
+
+  for (const dir of dirs) {
+    if (fs.existsSync(dir)) walk(dir);
+  }
+
+  console.log(`\n=== File Length Check (max ${MAX_FILE_LINES} lines) ===\n`);
+  if (violations.length > 0) {
+    violations
+      .sort((a, b) => b.lines - a.lines)
+      .forEach(v => {
+        console.log(`  ${v.file}: ${v.lines} lines`);
+      });
+    console.log(
+      `\n${violations.length} file(s) exceed ${MAX_FILE_LINES} line limit`
+    );
+  } else {
+    console.log("All source files are within the line limit. Great job!");
+  }
+
+  return violations.length;
+}
+
+const crapViolations = analyze();
+const lineViolations = checkFileLines();
+
+if (crapViolations > 0 || lineViolations > 0) {
+  process.exit(1);
+}
+process.exit(0);

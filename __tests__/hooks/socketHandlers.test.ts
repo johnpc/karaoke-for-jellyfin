@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   setupSessionHandlers,
   setupConnectionHandlers,
+  setupReconnectHandlers,
   setupErrorHandler,
   SessionSetters,
   ConnectionSetters,
@@ -513,7 +514,7 @@ describe("socketHandlers", () => {
 
     describe("connect_error", () => {
       it("sets error message from error object", () => {
-        setupConnectionHandlers(mockSocket, setters, options);
+        setupReconnectHandlers(mockSocket, setters, options);
 
         mockSocket.handlers["connect_error"]({ message: "Connection refused" });
 
@@ -523,7 +524,7 @@ describe("socketHandlers", () => {
       });
 
       it("uses 'Unknown error' when message is missing", () => {
-        setupConnectionHandlers(mockSocket, setters, options);
+        setupReconnectHandlers(mockSocket, setters, options);
 
         mockSocket.handlers["connect_error"]({});
 
@@ -535,7 +536,7 @@ describe("socketHandlers", () => {
 
     describe("reconnect", () => {
       it("clears error on successful reconnect", () => {
-        setupConnectionHandlers(mockSocket, setters, options);
+        setupReconnectHandlers(mockSocket, setters, options);
 
         mockSocket.handlers["reconnect"](3);
 
@@ -545,7 +546,7 @@ describe("socketHandlers", () => {
 
     describe("reconnect_attempt", () => {
       it("sets reconnecting error with attempt number", () => {
-        setupConnectionHandlers(mockSocket, setters, options);
+        setupReconnectHandlers(mockSocket, setters, options);
 
         mockSocket.handlers["reconnect_attempt"](2);
 
@@ -558,7 +559,7 @@ describe("socketHandlers", () => {
     describe("reconnect_failed", () => {
       it("creates fresh socket when userName exists", () => {
         options.userNameRef.current = "TestUser";
-        setupConnectionHandlers(mockSocket, setters, options);
+        setupReconnectHandlers(mockSocket, setters, options);
 
         mockSocket.handlers["reconnect_failed"]();
 
@@ -575,7 +576,7 @@ describe("socketHandlers", () => {
 
       it("sets final error when userName is null", () => {
         options.userNameRef.current = null;
-        setupConnectionHandlers(mockSocket, setters, options);
+        setupReconnectHandlers(mockSocket, setters, options);
 
         mockSocket.handlers["reconnect_failed"]();
 

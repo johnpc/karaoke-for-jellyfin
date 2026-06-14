@@ -7,29 +7,10 @@ import { QueueView } from "@/components/mobile/QueueView";
 import { UserSetup } from "@/components/mobile/UserSetup";
 import { NavigationTabs } from "@/components/mobile/NavigationTabs";
 import { PWAInstaller } from "@/components/PWAInstaller";
-
-function getConnectionStatusColor(
-  isConnected: boolean,
-  error: string | null
-): string {
-  if (isConnected) return "bg-green-500";
-  if (error?.includes("Reconnecting") || error?.includes("attempt")) {
-    return "bg-yellow-500 animate-pulse";
-  }
-  return "bg-red-500";
-}
-
-function getConnectionStatusText(
-  isConnected: boolean,
-  userName: string,
-  error: string | null
-): string {
-  if (isConnected) return `Connected as ${userName}`;
-  if (error?.includes("Reconnecting") || error?.includes("attempt")) {
-    return "Reconnecting...";
-  }
-  return "Connecting...";
-}
+import {
+  getConnectionStatusColor,
+  getConnectionStatusText,
+} from "./pageHelpers";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"search" | "queue">("search");

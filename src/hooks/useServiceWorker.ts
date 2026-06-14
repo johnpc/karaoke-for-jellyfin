@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import {
+  clearServiceWorkerCache,
+  getServiceWorkerCacheInfo,
+} from "./serviceWorkerHelpers";
 
 interface ServiceWorkerState {
   isSupported: boolean;
@@ -38,7 +42,6 @@ export function useServiceWorker() {
           registration,
         }));
 
-        // Check for updates
         registration.addEventListener("updatefound", () => {
           const newWorker = registration.installing;
           if (newWorker) {
@@ -57,13 +60,11 @@ export function useServiceWorker() {
           }
         });
 
-        // Listen for controlling service worker changes
         navigator.serviceWorker.addEventListener("controllerchange", () => {
           setState(prev => ({ ...prev, isUpdating: false }));
           window.location.reload();
         });
 
-        // Check for waiting service worker
         if (registration.waiting) {
           setState(prev => ({
             ...prev,
@@ -72,10 +73,9 @@ export function useServiceWorker() {
           }));
         }
 
-        // Check for updates periodically
         const updateInterval = setInterval(() => {
           registration.update();
-        }, 60000); // Check every minute
+        }, 60000);
 
         return () => clearInterval(updateInterval);
       } catch (error) {
@@ -93,64 +93,11 @@ export function useServiceWorker() {
     }
   }, [state.waitingWorker]);
 
-  const clearCache = useCallback(async (): Promise<boolean> => {
-    if (!navigator.serviceWorker.controller) {
-      return false;
-    }
+  const clearCache = useCallback(clearServiceWorkerCache, []);
 
-    try {
-      const messageChannel = new MessageChannel();
-
-      const clearPromise = new Promise<{ success: boolean; error?: string }>(
-        resolve => {
-          messageChannel.port1.onmessage = event => {
-            resolve(event.data);
-          };
-        }
-      );
-
-      navigator.serviceWorker.controller.postMessage({ type: "CLEAR_CACHE" }, [
-        messageChannel.port2,
-      ]);
-
-      const result = await clearPromise;
-      return result.success;
-    } catch (error) {
-      console.error("Failed to clear cache:", error);
-      return false;
-    }
-  }, []);
-
-  const getCacheInfo = useCallback(async (): Promise<
-    Record<string, number>
-  > => {
-    if (!navigator.serviceWorker.controller) {
-      return {};
-    }
-
-    try {
-      const messageChannel = new MessageChannel();
-
-      const infoPromise = new Promise<Record<string, number>>(resolve => {
-        messageChannel.port1.onmessage = event => {
-          resolve(event.data);
-        };
-      });
-
-      navigator.serviceWorker.controller.postMessage(
-        { type: "GET_CACHE_INFO" },
-        [messageChannel.port2]
-      );
-
-      return await infoPromise;
-    } catch (error) {
-      console.error("Failed to get cache info:", error);
-      return {};
-    }
-  }, []);
+  const getCacheInfo = useCallback(getServiceWorkerCacheInfo, []);
 
   const forceRefresh = useCallback(() => {
-    // Clear all storage and reload
     localStorage.clear();
     sessionStorage.clear();
     window.location.reload();

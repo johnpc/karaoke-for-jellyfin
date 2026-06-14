@@ -6,17 +6,22 @@ import {
   PlaybackState,
   PlaybackCommand,
 } from "@/types";
-import {
-  XMarkIcon,
-  Cog6ToothIcon,
-  ExclamationTriangleIcon,
-  QueueListIcon,
-  MusicalNoteIcon,
-} from "@heroicons/react/24/outline";
+import { XMarkIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { PlaybackTab } from "./host-controls/PlaybackTab";
 import { QueueTab } from "./host-controls/QueueTab";
 import { EmergencyTab } from "./host-controls/EmergencyTab";
+import {
+  HostTabNavigation,
+  type HostTab,
+} from "./host-controls/HostTabNavigation";
+import {
+  createHostPlayPauseCommand,
+  createHostVolumeCommand,
+  createHostMuteCommand,
+  createHostSeekCommand,
+  createHostStopCommand,
+} from "./host-controls/hostControlHandlers";
 
 interface HostControlsProps {
   session: KaraokeSession | null;
@@ -41,58 +46,32 @@ export function HostControls({
   onReorderQueue,
   onEmergencyStop,
 }: HostControlsProps) {
-  const [activeTab, setActiveTab] = useState<
-    "playback" | "queue" | "emergency"
-  >("playback");
+  const [activeTab, setActiveTab] = useState<HostTab>("playback");
 
   const pendingQueue =
     session?.queue.filter(item => item.status === "pending") || [];
 
   const handlePlayPause = () => {
     if (playbackState) {
-      onPlaybackControl({
-        action: playbackState.isPlaying ? "pause" : "play",
-        userId: "tv-host",
-        timestamp: new Date(),
-      });
+      onPlaybackControl(createHostPlayPauseCommand(playbackState.isPlaying));
     }
   };
 
   const handleVolumeChange = (volume: number) => {
-    onPlaybackControl({
-      action: "volume",
-      value: Math.max(0, Math.min(100, volume)),
-      userId: "tv-host",
-      timestamp: new Date(),
-    });
+    onPlaybackControl(createHostVolumeCommand(volume));
   };
 
   const handleMute = () => {
-    onPlaybackControl({
-      action: "mute",
-      userId: "tv-host",
-      timestamp: new Date(),
-    });
+    onPlaybackControl(createHostMuteCommand());
   };
 
   const handleSeek = (seconds: number) => {
-    onPlaybackControl({
-      action: "seek",
-      value: Math.max(0, seconds),
-      userId: "tv-host",
-      timestamp: new Date(),
-    });
+    onPlaybackControl(createHostSeekCommand(seconds));
   };
 
   const handleEmergencyStop = () => {
-    onPlaybackControl({
-      action: "stop",
-      userId: "tv-host",
-      timestamp: new Date(),
-    });
-    if (onEmergencyStop) {
-      onEmergencyStop();
-    }
+    onPlaybackControl(createHostStopCommand());
+    onEmergencyStop?.();
   };
 
   return (
@@ -115,44 +94,11 @@ export function HostControls({
           </button>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex space-x-1 mb-6 bg-gray-800 rounded-lg p-1">
-          <button
-            onClick={() => setActiveTab("playback")}
-            className={`flex items-center px-4 py-2 rounded-md transition-colors ${
-              activeTab === "playback"
-                ? "bg-purple-600 text-white"
-                : "text-gray-400 hover:text-white hover:bg-gray-700"
-            }`}
-          >
-            <MusicalNoteIcon className="w-5 h-5 mr-2" />
-            Playback
-          </button>
-          <button
-            onClick={() => setActiveTab("queue")}
-            className={`flex items-center px-4 py-2 rounded-md transition-colors ${
-              activeTab === "queue"
-                ? "bg-purple-600 text-white"
-                : "text-gray-400 hover:text-white hover:bg-gray-700"
-            }`}
-          >
-            <QueueListIcon className="w-5 h-5 mr-2" />
-            Queue ({pendingQueue.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("emergency")}
-            className={`flex items-center px-4 py-2 rounded-md transition-colors ${
-              activeTab === "emergency"
-                ? "bg-red-600 text-white"
-                : "text-gray-400 hover:text-white hover:bg-gray-700"
-            }`}
-          >
-            <ExclamationTriangleIcon className="w-5 h-5 mr-2" />
-            Emergency
-          </button>
-        </div>
-
-        {/* Tab Content */}
+        <HostTabNavigation
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          queueCount={pendingQueue.length}
+        />
         <div className="flex-1 overflow-y-auto">
           {activeTab === "playback" && (
             <PlaybackTab
@@ -188,7 +134,6 @@ export function HostControls({
           )}
         </div>
 
-        {/* Footer */}
         <div className="pt-4 border-t border-gray-700 mt-4">
           <div className="flex items-center justify-between text-sm text-gray-400">
             <span>
@@ -199,30 +144,6 @@ export function HostControls({
           </div>
         </div>
       </div>
-
-      {/* Custom slider styles */}
-      <style jsx>{`
-        .slider::-webkit-slider-thumb {
-          appearance: none;
-          height: 20px;
-          width: 20px;
-          border-radius: 50%;
-          background: #8b5cf6;
-          cursor: pointer;
-          border: 2px solid #ffffff;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        .slider::-moz-range-thumb {
-          height: 20px;
-          width: 20px;
-          border-radius: 50%;
-          background: #8b5cf6;
-          cursor: pointer;
-          border: 2px solid #ffffff;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-      `}</style>
     </div>
   );
 }
