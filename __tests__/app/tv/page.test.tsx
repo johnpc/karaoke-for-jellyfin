@@ -103,6 +103,16 @@ vi.mock("@/components/tv/ApplausePlayer", () => ({
   ApplausePlayer: () => <div data-testid="applause-player">ApplausePlayer</div>,
 }));
 
+vi.mock("@/components/tv/FloatingReactions", () => ({
+  FloatingReactions: () => (
+    <div data-testid="floating-reactions">FloatingReactions</div>
+  ),
+}));
+
+vi.mock("@/hooks/useReactions", () => ({
+  useReactions: () => ({ reactions: [] }),
+}));
+
 describe("TV Display Page", () => {
   beforeEach(() => {
     vi.clearAllMocks();

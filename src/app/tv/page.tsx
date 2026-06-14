@@ -7,6 +7,7 @@ import { AudioPlayer } from "@/components/tv/AudioPlayer";
 import { NextUpSidebar } from "@/components/tv/NextUpSidebar";
 import { QRCode } from "@/components/tv/QRCode";
 import { ApplausePlayer } from "@/components/tv/ApplausePlayer";
+import { FloatingReactions } from "@/components/tv/FloatingReactions";
 import {
   ConnectionStatus,
   AutoplayCountdownOverlay,
@@ -28,6 +29,7 @@ export default function TVDisplay() {
     showQueuePreview,
     autoplayCountdown,
     transitionState,
+    reactions,
     setShowHostControls,
     setShowQueuePreview,
     handleRatingComplete,
@@ -133,6 +135,8 @@ export default function TVDisplay() {
       />
 
       <NextUpSidebar queue={queue} currentSong={currentSong} />
+
+      <FloatingReactions reactions={reactions} />
 
       <div className="absolute bottom-4 left-4 text-gray-500 text-sm">
         <div className="bg-black bg-opacity-50 rounded px-3 py-2">

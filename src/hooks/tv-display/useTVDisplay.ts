@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useConfig } from "@/contexts/ConfigContext";
+import { useReactions } from "@/hooks/useReactions";
 import { UseTVDisplayReturn } from "./types";
 import { useTransitionState } from "./useTransitionState";
 import { useAutoplay } from "./useAutoplay";
@@ -17,6 +18,7 @@ export function useTVDisplay(): UseTVDisplayReturn {
   const [isClient, setIsClient] = useState(false);
 
   const {
+    socket,
     isConnected,
     joinSession,
     session,
@@ -101,6 +103,9 @@ export function useTVDisplay(): UseTVDisplayReturn {
       timeUpdateInterval: config.timeUpdateInterval,
     });
 
+  // Floating reactions
+  const { reactions } = useReactions(socket);
+
   return {
     isClient,
     isConnected,
@@ -113,6 +118,7 @@ export function useTVDisplay(): UseTVDisplayReturn {
     showQueuePreview,
     autoplayCountdown,
     transitionState,
+    reactions,
     setShowHostControls,
     setShowQueuePreview,
     handleRatingComplete,

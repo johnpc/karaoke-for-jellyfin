@@ -94,6 +94,15 @@ export function useSocketActions(deps: ActionDeps): SocketActions {
     [emitIfConnected]
   );
 
+  const sendReaction = useCallback(
+    (emoji: string) => {
+      if (socketRef.current) {
+        socketRef.current.emit("send-reaction", { emoji });
+      }
+    },
+    [socketRef]
+  );
+
   const updateLocalPlaybackState = useCallback(
     (updates: Partial<PlaybackState>) => {
       setPlaybackState(prevState => {
@@ -130,6 +139,7 @@ export function useSocketActions(deps: ActionDeps): SocketActions {
     skipSong,
     songEnded,
     startNextSong,
+    sendReaction,
     updateLocalPlaybackState,
     setSongCompletedHandler,
   };
