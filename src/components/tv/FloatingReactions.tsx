@@ -31,14 +31,17 @@ export function FloatingReactions({ reactions }: FloatingReactionsProps) {
       className="fixed inset-0 z-50 pointer-events-none overflow-hidden"
     >
       {reactions.map(reaction => (
-        <span
+        <div
           key={reaction.id}
           data-testid="floating-reaction"
-          className="absolute bottom-0 text-5xl animate-float-up"
+          className="absolute bottom-20 flex flex-col items-center animate-float-up"
           style={{ left: `${positions.get(reaction.id) ?? 50}%` }}
         >
-          {reaction.emoji}
-        </span>
+          <span className="text-7xl drop-shadow-lg">{reaction.emoji}</span>
+          <span className="mt-2 px-6 py-2 rounded-full bg-gray-900/90 text-2xl font-bold text-white whitespace-nowrap drop-shadow-lg">
+            {reaction.userName}
+          </span>
+        </div>
       ))}
     </div>
   );

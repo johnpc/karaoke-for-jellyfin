@@ -6,6 +6,7 @@ import { Socket } from "socket.io-client";
 export interface Reaction {
   id: string;
   emoji: string;
+  userName: string;
   timestamp: number;
 }
 
@@ -29,10 +30,15 @@ export function useReactions(socket: Socket | null): UseReactionsReturn {
   useEffect(() => {
     if (!socket) return;
 
-    const handleReaction = (data: { id: string; emoji: string }) => {
+    const handleReaction = (data: {
+      id: string;
+      emoji: string;
+      userName: string;
+    }) => {
       const reaction: Reaction = {
         id: data.id,
         emoji: data.emoji,
+        userName: data.userName,
         timestamp: Date.now(),
       };
 

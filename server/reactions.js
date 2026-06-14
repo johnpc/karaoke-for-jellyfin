@@ -29,6 +29,7 @@ function handleSendReaction(io, socket, data, connectedUsers, currentSession) {
     id: `reaction_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     emoji,
     userId: user.id,
+    userName: user.name,
     timestamp: Date.now(),
   };
 
