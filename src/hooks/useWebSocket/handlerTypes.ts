@@ -56,6 +56,7 @@ export interface SocketActions {
   skipSong: () => void;
   songEnded: () => void;
   startNextSong: () => void;
+  sendReaction: (emoji: string) => void;
   updateLocalPlaybackState: (updates: Partial<PlaybackState>) => void;
   setSongCompletedHandler: (
     handler: (data: { song: QueueItem; rating: unknown }) => void

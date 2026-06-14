@@ -1,0 +1,54 @@
+"use client";
+
+import { useMemo } from "react";
+import { Reaction } from "@/hooks/useReactions";
+
+interface FloatingReactionsProps {
+  reactions: Reaction[];
+}
+
+export function FloatingReactions({ reactions }: FloatingReactionsProps) {
+  // Generate stable random horizontal positions per reaction ID
+  const positions = useMemo(() => {
+    const map = new Map<string, number>();
+    reactions.forEach(r => {
+      if (!map.has(r.id)) {
+        // Simple hash from ID to get a pseudo-random position 5-95%
+        const hash = r.id
+          .split("")
+          .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        map.set(r.id, 5 + (hash % 90));
+      }
+    });
+    return map;
+  }, [reactions]);
+
+  if (reactions.length === 0) return null;
+
+  return (
+    <div
+      data-testid="floating-reactions-container"
+      className="fixed inset-0 z-50 pointer-events-none overflow-hidden"
+    >
+      {reactions.map(reaction => (
+        <div
+          key={reaction.id}
+          data-testid="floating-reaction"
+          className="absolute bottom-20 flex flex-col items-center animate-float-up"
+          style={{ left: `${positions.get(reaction.id) ?? 50}%` }}
+        >
+          <span className="text-6xl drop-shadow-lg">{reaction.emoji}</span>
+          <span
+            className="mt-2 px-4 py-1 rounded-full text-lg font-bold whitespace-nowrap"
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.85)",
+              color: "#1a1a2e",
+            }}
+          >
+            {reaction.userName}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}

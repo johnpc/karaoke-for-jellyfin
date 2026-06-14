@@ -48,3 +48,22 @@ input[type="email"]:focus,
 input[type="password"]:focus {
   color: #111827 !important;
 }
+
+/* Floating reaction animation for TV display */
+@keyframes float-up {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) scale(1.2);
+    opacity: 0;
+  }
+}
+
+.animate-float-up {
+  animation: float-up 3s ease-out forwards;
+}

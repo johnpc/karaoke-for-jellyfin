@@ -5,6 +5,7 @@ import {
   PlaybackCommand,
   KaraokeSession,
 } from "@/types";
+import { Reaction } from "@/hooks/useReactions";
 
 export interface UseTVDisplayReturn {
   // State
@@ -19,6 +20,7 @@ export interface UseTVDisplayReturn {
   showQueuePreview: boolean;
   autoplayCountdown: number | null;
   transitionState: TransitionState;
+  reactions: Reaction[];
 
   // State setters
   setShowHostControls: (value: boolean) => void;

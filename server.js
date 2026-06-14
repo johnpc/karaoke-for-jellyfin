@@ -4,6 +4,7 @@ const { parse } = require("url");
 const next = require("next");
 const { Server } = require("socket.io");
 const fetch = require("node-fetch");
+const { handleSendReaction } = require("./server/reactions");
 
 // Simple rating generator for server-side use
 function generateRandomRating() {
@@ -1070,6 +1071,10 @@ app.prepare().then(() => {
       if (user) {
         user.lastSeen = new Date();
       }
+    });
+
+    socket.on("send-reaction", data => {
+      handleSendReaction(io, socket, data, connectedUsers, currentSession);
     });
 
     socket.on("disconnect", () => {

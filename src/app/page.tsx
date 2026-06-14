@@ -6,6 +6,7 @@ import { SearchInterface } from "@/components/mobile/SearchInterface";
 import { QueueView } from "@/components/mobile/QueueView";
 import { UserSetup } from "@/components/mobile/UserSetup";
 import { NavigationTabs } from "@/components/mobile/NavigationTabs";
+import { ReactionsPanel } from "@/components/mobile/ReactionsPanel";
 import { PWAInstaller } from "@/components/PWAInstaller";
 import {
   getConnectionStatusColor,
@@ -23,6 +24,7 @@ export default function Home() {
     joinSession,
     addSong,
     removeSong,
+    sendReaction,
     session,
     queue,
     currentSong,
@@ -111,6 +113,9 @@ export default function Home() {
         onTabChange={setActiveTab}
         queueCount={queue.filter(item => item.status === "pending").length}
       />
+
+      {/* Reactions FAB - visible during playback */}
+      {currentSong && <ReactionsPanel onReaction={sendReaction} />}
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
