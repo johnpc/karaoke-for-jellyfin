@@ -35,6 +35,12 @@ const adminSyncTestDir = defineBddConfig({
   steps: "e2e/steps/admin-playback-sync.steps.ts",
 });
 
+const audienceReactionsTestDir = defineBddConfig({
+  outputDir: ".features-gen/audience-reactions",
+  features: "e2e/features/audience-reactions.feature",
+  steps: "e2e/steps/audience-reactions.steps.ts",
+});
+
 const fullPlaybackTestDir = defineBddConfig({
   outputDir: ".features-gen/full-playback",
   features: "e2e/features/full-playback.feature",
@@ -61,6 +67,12 @@ export default defineConfig({
     {
       name: "multi-user",
       testDir: multiUserTestDir,
+      use: { ...devices["Desktop Chrome"] },
+      timeout: 90000,
+    },
+    {
+      name: "audience-reactions",
+      testDir: audienceReactionsTestDir,
       use: { ...devices["Desktop Chrome"] },
       timeout: 90000,
     },
