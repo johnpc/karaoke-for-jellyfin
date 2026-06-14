@@ -182,15 +182,16 @@ describe("AdminPlaybackControls", () => {
       expect(screen.getByTestId("seek-control")).toBeInTheDocument();
     });
 
-    it("sends seek command when slider changed", () => {
+    it("sends seek command when slider drag completes", () => {
       renderControls({
         currentSong: createQueueItem(),
         playbackState: createPlaybackState({ currentTime: 30 }),
       });
 
-      fireEvent.change(screen.getByTestId("seek-slider"), {
-        target: { value: "120" },
-      });
+      const slider = screen.getByTestId("seek-slider");
+      fireEvent.mouseDown(slider);
+      fireEvent.change(slider, { target: { value: "120" } });
+      fireEvent.mouseUp(slider);
 
       expect(mockOnPlaybackControl).toHaveBeenCalledWith(
         expect.objectContaining({
