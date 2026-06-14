@@ -30,3 +30,4 @@ Feature: Playback Controls
     Then the lyrics offset should increase by 1 second
     When I click the lyrics offset minus button
     Then the lyrics offset should decrease by 1 second
+

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { QueueItem, PlaybackState, PlaybackCommand } from "@/types";
 import {
   PlayIcon,
@@ -25,6 +26,7 @@ export function AdminPlaybackControls({
   onSkip,
   onPlaybackControl,
 }: AdminPlaybackControlsProps) {
+  const [dragTime, setDragTime] = useState<number | null>(null);
   const handlePlayPause = () => {
     if (playbackState) {
       onPlaybackControl({
@@ -114,9 +116,9 @@ export function AdminPlaybackControls({
         <div data-testid="seek-control" className="mb-4">
           <div className="flex justify-between text-xs text-gray-500 mb-1">
             <span>
-              {Math.floor((playbackState?.currentTime || 0) / 60)}:
+              {Math.floor((dragTime ?? playbackState?.currentTime ?? 0) / 60)}:
               {String(
-                Math.floor((playbackState?.currentTime || 0) % 60)
+                Math.floor((dragTime ?? playbackState?.currentTime ?? 0) % 60)
               ).padStart(2, "0")}
             </span>
             <span>
@@ -129,8 +131,18 @@ export function AdminPlaybackControls({
             type="range"
             min="0"
             max={currentSong.mediaItem.duration}
-            value={playbackState?.currentTime || 0}
-            onChange={e => handleSeek(parseInt(e.target.value))}
+            value={dragTime ?? playbackState?.currentTime ?? 0}
+            onMouseDown={() => setDragTime(playbackState?.currentTime ?? 0)}
+            onTouchStart={() => setDragTime(playbackState?.currentTime ?? 0)}
+            onChange={e => setDragTime(parseInt(e.target.value))}
+            onMouseUp={() => {
+              if (dragTime !== null) handleSeek(dragTime);
+              setDragTime(null);
+            }}
+            onTouchEnd={() => {
+              if (dragTime !== null) handleSeek(dragTime);
+              setDragTime(null);
+            }}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
           />
         </div>

@@ -29,6 +29,12 @@ const multiUserTestDir = defineBddConfig({
   steps: "e2e/steps/multi-user.steps.ts",
 });
 
+const adminSyncTestDir = defineBddConfig({
+  outputDir: ".features-gen/admin-sync",
+  features: "e2e/features/admin-playback-sync.feature",
+  steps: "e2e/steps/admin-playback-sync.steps.ts",
+});
+
 const fullPlaybackTestDir = defineBddConfig({
   outputDir: ".features-gen/full-playback",
   features: "e2e/features/full-playback.feature",
@@ -55,6 +61,12 @@ export default defineConfig({
     {
       name: "multi-user",
       testDir: multiUserTestDir,
+      use: { ...devices["Desktop Chrome"] },
+      timeout: 90000,
+    },
+    {
+      name: "admin-sync",
+      testDir: adminSyncTestDir,
       use: { ...devices["Desktop Chrome"] },
       timeout: 90000,
     },
