@@ -836,10 +836,13 @@ app.prepare().then(() => {
             );
             break;
           case "time-update":
-            // Update the server's tracking of current playback time
             if (command.value !== undefined && currentSession.playbackState) {
               currentSession.playbackState.currentTime = command.value;
-              // Don't broadcast time updates - they're just for server tracking
+              // Broadcast to other clients so admin UI stays in sync
+              socket.broadcast.emit(
+                "playback-state-changed",
+                currentSession.playbackState
+              );
             }
             break;
           case "lyrics-offset":
