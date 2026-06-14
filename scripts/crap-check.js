@@ -168,7 +168,7 @@ function checkFileLines() {
         if (entry.name === "node_modules" || entry.name === ".next") continue;
         walk(fullPath);
       } else if (extensions.some(ext => entry.name.endsWith(ext))) {
-        const content = fs.readFileSync(fullPath, "utf-8");
+        const content = fs.readFileSync(fullPath, "utf-8").trimEnd();
         const lineCount = content.split("\n").length;
         if (lineCount > MAX_FILE_LINES) {
           violations.push({
