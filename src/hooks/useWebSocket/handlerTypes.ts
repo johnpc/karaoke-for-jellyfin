@@ -32,3 +32,32 @@ export interface ConnectionOptions {
   createSocket: () => Socket;
   setupSocketListeners: (socket: Socket) => void;
 }
+
+export interface ActionDeps {
+  socketRef: MutableRefObject<Socket | null>;
+  userNameRef: MutableRefObject<string | null>;
+  sessionIdRef: MutableRefObject<string>;
+  setError: Dispatch<SetStateAction<string | null>>;
+  setPlaybackState: Dispatch<SetStateAction<PlaybackState | null>>;
+  songCompletedHandlerRef: MutableRefObject<
+    ((data: { song: QueueItem; rating: unknown }) => void) | null
+  >;
+}
+
+export interface SocketActions {
+  joinSession: (sessionId: string, userName: string) => void;
+  addSong: (
+    mediaItem: import("@/types").MediaItem,
+    position?: number
+  ) => Promise<void>;
+  removeSong: (queueItemId: string) => void;
+  reorderQueue: (queueItemId: string, newPosition: number) => void;
+  playbackControl: (command: import("@/types").PlaybackCommand) => void;
+  skipSong: () => void;
+  songEnded: () => void;
+  startNextSong: () => void;
+  updateLocalPlaybackState: (updates: Partial<PlaybackState>) => void;
+  setSongCompletedHandler: (
+    handler: (data: { song: QueueItem; rating: unknown }) => void
+  ) => void;
+}

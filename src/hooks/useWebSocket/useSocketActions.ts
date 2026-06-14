@@ -1,38 +1,14 @@
 "use client";
 
-import { useCallback, MutableRefObject } from "react";
-import { Socket } from "socket.io-client";
-import { MediaItem, QueueItem, PlaybackState, PlaybackCommand } from "@/types";
+import { useCallback } from "react";
+import { MediaItem, PlaybackState, PlaybackCommand, QueueItem } from "@/types";
 import {
   handleAddSongConnected,
   handleAddSongDisconnected,
 } from "./addSongHelpers";
+import { ActionDeps, SocketActions } from "./handlerTypes";
 
-interface ActionDeps {
-  socketRef: MutableRefObject<Socket | null>;
-  userNameRef: MutableRefObject<string | null>;
-  sessionIdRef: MutableRefObject<string>;
-  setError: React.Dispatch<React.SetStateAction<string | null>>;
-  setPlaybackState: React.Dispatch<React.SetStateAction<PlaybackState | null>>;
-  songCompletedHandlerRef: MutableRefObject<
-    ((data: { song: QueueItem; rating: unknown }) => void) | null
-  >;
-}
-
-export interface SocketActions {
-  joinSession: (sessionId: string, userName: string) => void;
-  addSong: (mediaItem: MediaItem, position?: number) => Promise<void>;
-  removeSong: (queueItemId: string) => void;
-  reorderQueue: (queueItemId: string, newPosition: number) => void;
-  playbackControl: (command: PlaybackCommand) => void;
-  skipSong: () => void;
-  songEnded: () => void;
-  startNextSong: () => void;
-  updateLocalPlaybackState: (updates: Partial<PlaybackState>) => void;
-  setSongCompletedHandler: (
-    handler: (data: { song: QueueItem; rating: unknown }) => void
-  ) => void;
-}
+export type { SocketActions };
 
 export function useSocketActions(deps: ActionDeps): SocketActions {
   const {
@@ -76,27 +52,24 @@ export function useSocketActions(deps: ActionDeps): SocketActions {
 
   const removeSong = useCallback(
     (queueItemId: string) => {
-      if (socketRef.current) {
+      if (socketRef.current)
         socketRef.current.emit("remove-song", { queueItemId });
-      }
     },
     [socketRef]
   );
 
   const reorderQueue = useCallback(
     (queueItemId: string, newPosition: number) => {
-      if (socketRef.current) {
+      if (socketRef.current)
         socketRef.current.emit("reorder-queue", { queueItemId, newPosition });
-      }
     },
     [socketRef]
   );
 
   const playbackControl = useCallback(
     (command: PlaybackCommand) => {
-      if (socketRef.current) {
+      if (socketRef.current)
         socketRef.current.emit("playback-control", command);
-      }
     },
     [socketRef]
   );

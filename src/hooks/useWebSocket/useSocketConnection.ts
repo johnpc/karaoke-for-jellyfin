@@ -4,12 +4,6 @@ import { useEffect, useRef, useCallback, MutableRefObject } from "react";
 import { Socket } from "socket.io-client";
 import { QueueItem, PlaybackState, KaraokeSession } from "@/types";
 import {
-  setupSessionHandlers,
-  setupConnectionHandlers,
-  setupReconnectHandlers,
-  setupErrorHandler,
-} from "./socketHandlers";
-import {
   createSocketFactory,
   getClientType,
   createVisibilityHandler,
@@ -22,6 +16,7 @@ import {
   disconnectSocket,
   setupCypressTestHelpers,
 } from "./lifecycleHelpers";
+import { createSocketListenerSetup } from "./socketSetup";
 
 type Setter<T> = React.Dispatch<React.SetStateAction<T>>;
 
@@ -47,15 +42,6 @@ export function useSocketConnection(setters: ConnectionSettersInput): {
   const sessionIdRef = useRef<string>("main-session");
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const {
-    setIsConnected,
-    setSession,
-    setQueue,
-    setCurrentSong,
-    setPlaybackState,
-    setError,
-    songCompletedHandlerRef,
-  } = setters;
 
   const rejoinSession = useCallback(() => {
     if (!socketRef.current?.connected || !userNameRef.current) return;
@@ -80,54 +66,16 @@ export function useSocketConnection(setters: ConnectionSettersInput): {
     const socket = createSocket();
     socketRef.current = socket;
 
-    const setupSocketListeners = (socketInstance: Socket) => {
-      setupSessionHandlers(socketInstance, {
-        setSession,
-        setQueue,
-        setCurrentSong,
-        setPlaybackState,
-        setError,
-        songCompletedHandlerRef,
-      });
-      setupConnectionHandlers(
-        socketInstance,
-        {
-          setIsConnected,
-          setError,
-          setSession,
-          setQueue,
-          setCurrentSong,
-          setPlaybackState,
-        },
-        {
-          userNameRef,
-          heartbeatIntervalRef,
-          socketRef,
-          reconnectTimeoutRef,
-          setupHeartbeat,
-          rejoinSession,
-          createSocket,
-          setupSocketListeners,
-        }
-      );
-      setupReconnectHandlers(
-        socketInstance,
-        { setIsConnected, setError },
-        { userNameRef, socketRef, createSocket, setupSocketListeners }
-      );
-      setupErrorHandler(
-        socketInstance,
-        { setError },
-        {
-          userNameRef,
-          reconnectTimeoutRef,
-          socketRef,
-          createSocket,
-          setupSocketListeners,
-        }
-      );
-    };
-
+    const setupSocketListeners = createSocketListenerSetup({
+      setters,
+      userNameRef,
+      heartbeatIntervalRef,
+      socketRef,
+      reconnectTimeoutRef,
+      setupHeartbeat,
+      rejoinSession,
+      createSocket,
+    });
     setupSocketListeners(socket);
 
     const handleVisibilityChange = createVisibilityHandler({
@@ -143,7 +91,7 @@ export function useSocketConnection(setters: ConnectionSettersInput): {
       userNameRef,
       createSocket,
       setupSocketListeners,
-      setError,
+      setError: setters.setError,
     });
 
     addEventListeners(handleVisibilityChange, handleOnline, handleOffline);
@@ -157,11 +105,11 @@ export function useSocketConnection(setters: ConnectionSettersInput): {
 
   useEffect(() => {
     setupCypressTestHelpers({
-      setQueue,
-      setCurrentSong,
-      setPlaybackState,
-      setSession,
-      setError,
+      setQueue: setters.setQueue,
+      setCurrentSong: setters.setCurrentSong,
+      setPlaybackState: setters.setPlaybackState,
+      setSession: setters.setSession,
+      setError: setters.setError,
     });
   }, []);
 

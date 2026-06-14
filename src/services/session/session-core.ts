@@ -10,10 +10,10 @@ import { SessionEventEmitter } from "./event-emitter";
 import { addUser, removeUser, updateUserSocketId } from "./users";
 
 export class SessionCore extends SessionEventEmitter {
-  protected session: KaraokeSession | null = null;
-  protected skipInProgress: boolean = false;
-  protected songTransitionInProgress: boolean = false;
-  protected queueOperationInProgress: boolean = false;
+  session: KaraokeSession | null = null;
+  skipInProgress: boolean = false;
+  songTransitionInProgress: boolean = false;
+  queueOperationInProgress: boolean = false;
 
   createSession(sessionName: string, hostName: string): KaraokeSession {
     if (this.session) throw new ValidationError("A session is already active");

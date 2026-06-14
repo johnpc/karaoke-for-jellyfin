@@ -2,9 +2,6 @@ import { MediaItem } from "@/types";
 import { JellyfinContext, SongResult } from "./types";
 import { transformMediaItems } from "./transformers";
 
-/**
- * Get all songs by a specific artist ID, filtered to those with lyrics
- */
 export async function getSongsByArtistId(
   ctx: JellyfinContext,
   artistId: string,
@@ -56,9 +53,6 @@ export async function getSongsByArtistId(
   return { songs, totalCount };
 }
 
-/**
- * Search for audio items by title, filtered to those with lyrics
- */
 export async function searchByTitle(
   ctx: JellyfinContext,
   query: string,

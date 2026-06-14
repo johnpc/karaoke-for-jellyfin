@@ -1,4 +1,3 @@
-// Full session manager — extends core with queue, playback, and utility methods
 import {
   QueueItem,
   MediaItem,
@@ -9,16 +8,9 @@ import { SessionCore } from "./session-core";
 import { SessionStats } from "./types";
 import { getSessionStats, cleanupQueue } from "./stats";
 import { addSongToQueue, removeSongFromQueue, reorderQueue } from "./queue";
-import {
-  startNextSong as doStartNextSong,
-  endCurrentSong as doEndCurrentSong,
-  skipCurrentSong as doSkipCurrentSong,
-  updatePlaybackState as doUpdatePlaybackState,
-} from "./playback";
+import * as pb from "./playback-operations";
 
 export class KaraokeSessionManager extends SessionCore {
-  // QUEUE
-
   addSongToQueue(
     mediaItem: MediaItem,
     userId: string,
@@ -98,74 +90,24 @@ export class KaraokeSessionManager extends SessionCore {
   getQueue(): QueueItem[] {
     return this.session?.queue || [];
   }
-
   getCurrentSong(): QueueItem | null {
     return this.session?.currentSong || null;
   }
-
-  // PLAYBACK
-
   startNextSong(): QueueItem | null {
-    if (!this.session || this.songTransitionInProgress) return null;
-    this.songTransitionInProgress = true;
-    try {
-      const result = doStartNextSong(this.session, this);
-      if (result) this.updateSessionActivity();
-      return result;
-    } finally {
-      this.songTransitionInProgress = false;
-    }
+    return pb.startNextSong(this);
   }
-
   endCurrentSong(): void {
-    if (!this.session?.currentSong || this.songTransitionInProgress) return;
-    this.songTransitionInProgress = true;
-    try {
-      doEndCurrentSong(this.session, this, () => {
-        if (!this.songTransitionInProgress) this.startNextSong();
-      });
-      this.updateSessionActivity();
-    } finally {
-      this.songTransitionInProgress = false;
-    }
+    pb.endCurrentSong(this);
   }
-
   skipCurrentSong(userId: string): QueueOperationResult {
-    if (!this.session) return { success: false, message: "No active session" };
-    if (!this.session.currentSong)
-      return { success: false, message: "No song currently playing" };
-    if (this.skipInProgress)
-      return { success: false, message: "Skip already in progress" };
-    if (this.songTransitionInProgress) {
-      return { success: false, message: "Song transition in progress" };
-    }
-    this.skipInProgress = true;
-    this.songTransitionInProgress = true;
-    try {
-      if (!this.session.currentSong)
-        return { success: false, message: "No song currently playing" };
-      const result = doSkipCurrentSong(this.session, userId, this, () => {
-        if (!this.songTransitionInProgress) this.startNextSong();
-      });
-      if (result.success) this.updateSessionActivity();
-      return result;
-    } finally {
-      this.skipInProgress = false;
-      this.songTransitionInProgress = false;
-    }
+    return pb.skipCurrentSong(this, userId);
   }
-
   updatePlaybackState(updates: Partial<PlaybackState>): void {
-    if (!this.session) return;
-    doUpdatePlaybackState(this.session, updates, this);
-    this.updateSessionActivity();
+    pb.updatePlaybackState(this, updates);
   }
-
   getPlaybackState(): PlaybackState | null {
-    return this.session?.playbackState || null;
+    return pb.getPlaybackState(this);
   }
-
-  // UTILITY
 
   getSessionStats(): SessionStats | null {
     if (!this.session) return null;
