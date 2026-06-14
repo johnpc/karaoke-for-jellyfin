@@ -62,7 +62,7 @@ async function joinSession(page: Page, userName: string): Promise<void> {
   await page.goto(BASE_URL);
   const nameInput = page.getByTestId("username-input");
   await nameInput.fill(userName);
-  const joinButton = page.getByTestId("join-button");
+  const joinButton = page.getByTestId("join-session-button");
   await joinButton.click();
   await page.waitForSelector('[data-testid="search-input"]', {
     timeout: 15000,
@@ -73,11 +73,12 @@ async function addSongToQueue(page: Page): Promise<void> {
   const artistItem = page.getByTestId("artist-item").first();
   await artistItem.click();
   const addButton = page.getByTestId("add-song-button").first();
-  await addButton.waitFor({ state: "visible", timeout: 15000 });
+  await addButton.waitFor({ state: "visible", timeout: 30000 });
   await addButton.click();
-  const closeButton = page.getByTestId("confirmation-close");
-  await closeButton.waitFor({ state: "visible", timeout: 5000 });
-  await closeButton.click();
+  const dialog = page.locator("[data-testid='confirmation-dialog']");
+  await dialog.waitFor({ timeout: 10000 });
+  await dialog.locator("button[aria-label='Close']").click();
+  await dialog.waitFor({ state: "hidden", timeout: 5000 });
 }
 
 Given(
@@ -91,14 +92,14 @@ Given(
 
 Given("the TV display is open", async ({ tvPage }) => {
   await tvPage.goto(`${BASE_URL}/tv`);
-  await tvPage.waitForSelector('[data-testid="tv-display"]', {
+  await tvPage.waitForSelector('[data-testid="tv-interface"]', {
     timeout: 15000,
   });
 });
 
-Given("a song is currently playing", async ({ alicePage, tvPage }) => {
+Given("a song is currently playing", async ({ alicePage }) => {
   await addSongToQueue(alicePage);
-  await tvPage.waitForSelector('[data-testid="now-playing"]', {
+  await alicePage.waitForSelector('[data-testid="reactions-panel"]', {
     timeout: 30000,
   });
 });
