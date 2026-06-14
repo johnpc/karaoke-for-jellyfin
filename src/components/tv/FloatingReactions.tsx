@@ -37,8 +37,14 @@ export function FloatingReactions({ reactions }: FloatingReactionsProps) {
           className="absolute bottom-20 flex flex-col items-center animate-float-up"
           style={{ left: `${positions.get(reaction.id) ?? 50}%` }}
         >
-          <span className="text-7xl drop-shadow-lg">{reaction.emoji}</span>
-          <span className="mt-2 px-6 py-2 rounded-full bg-gray-900/90 text-2xl font-bold text-white whitespace-nowrap drop-shadow-lg">
+          <span className="text-6xl drop-shadow-lg">{reaction.emoji}</span>
+          <span
+            className="mt-2 px-4 py-1 rounded-full text-lg font-bold whitespace-nowrap"
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.85)",
+              color: "#1a1a2e",
+            }}
+          >
             {reaction.userName}
           </span>
         </div>
