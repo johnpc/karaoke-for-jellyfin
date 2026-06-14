@@ -114,12 +114,8 @@ export default function Home() {
         queueCount={queue.filter(item => item.status === "pending").length}
       />
 
-      {/* Reactions Panel - visible during playback */}
-      {currentSong && (
-        <div className="px-4 pt-2">
-          <ReactionsPanel onReaction={sendReaction} />
-        </div>
-      )}
+      {/* Reactions FAB - visible during playback */}
+      {currentSong && <ReactionsPanel onReaction={sendReaction} />}
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">

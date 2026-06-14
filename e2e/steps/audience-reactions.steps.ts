@@ -108,9 +108,17 @@ Given("no songs are in the queue", async ({ alicePage }) => {
   await clearQueue(alicePage);
 });
 
+async function openReactionsFab(page: Page): Promise<void> {
+  const fab = page
+    .getByTestId("reactions-panel")
+    .locator("button[aria-label='Open reactions']");
+  await fab.click();
+}
+
 When(
   "Alice sends a {string} reaction",
   async ({ alicePage }, emoji: string) => {
+    await openReactionsFab(alicePage);
     const reactionButton = alicePage.getByTestId(`reaction-${emoji}`);
     await reactionButton.waitFor({ state: "visible", timeout: 10000 });
     await reactionButton.click();
@@ -118,6 +126,7 @@ When(
 );
 
 When("Bob sends a {string} reaction", async ({ bobPage }, emoji: string) => {
+  await openReactionsFab(bobPage);
   const reactionButton = bobPage.getByTestId(`reaction-${emoji}`);
   await reactionButton.waitFor({ state: "visible", timeout: 10000 });
   await reactionButton.click();
@@ -162,6 +171,7 @@ Then(
     e5: string,
     e6: string
   ) => {
+    await openReactionsFab(alicePage);
     for (const emoji of [e1, e2, e3, e4, e5, e6]) {
       const button = alicePage.getByTestId(`reaction-${emoji}`);
       await expect(button).toBeVisible();
