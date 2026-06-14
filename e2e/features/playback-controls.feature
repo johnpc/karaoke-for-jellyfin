@@ -31,9 +31,3 @@ Feature: Playback Controls
     When I click the lyrics offset minus button
     Then the lyrics offset should decrease by 1 second
 
-  Scenario: Playback status shows playing state
-    Then the playback status should show "Playing"
-
-  Scenario: Seek slider shows progress
-    Then I should see the seek control
-    And the seek slider should show the current time

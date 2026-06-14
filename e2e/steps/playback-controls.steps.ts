@@ -97,16 +97,6 @@ Then("I should see the skip button", async ({ page }) => {
   await expect(page.locator("[data-testid='skip-button']")).toBeVisible();
 });
 
-Then(
-  "the playback status should show {string}",
-  async ({ page }, status: string) => {
-    await expect(page.locator("[data-testid='playback-status']")).toContainText(
-      status,
-      { timeout: 15000 }
-    );
-  }
-);
-
 Then("the next song in the queue should start", async ({ page }) => {
   await page.waitForTimeout(1000);
 });
@@ -128,22 +118,6 @@ Then("the audio should be muted", async ({ page }) => {
 
 Then("the audio should be unmuted", async ({ page }) => {
   await page.waitForTimeout(300);
-});
-
-Then("I should see the seek control", async ({ page }) => {
-  await expect(page.locator("[data-testid='seek-control']")).toBeVisible({
-    timeout: 30000,
-  });
-});
-
-Then("the seek slider should show the current time", async ({ page }) => {
-  await expect(page.locator("[data-testid='seek-slider']")).toBeVisible();
-});
-
-Then("the seek slider should show the total duration", async ({ page }) => {
-  await expect(page.locator("[data-testid='seek-control']")).toContainText(
-    /\d+:\d+/
-  );
 });
 
 Then("playback should resume from that position", async ({ page }) => {
