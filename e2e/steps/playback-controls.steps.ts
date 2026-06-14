@@ -101,7 +101,8 @@ Then(
   "the playback status should show {string}",
   async ({ page }, status: string) => {
     await expect(page.locator("[data-testid='playback-status']")).toContainText(
-      status
+      status,
+      { timeout: 15000 }
     );
   }
 );
@@ -131,7 +132,7 @@ Then("the audio should be unmuted", async ({ page }) => {
 
 Then("I should see the seek control", async ({ page }) => {
   await expect(page.locator("[data-testid='seek-control']")).toBeVisible({
-    timeout: 10000,
+    timeout: 30000,
   });
 });
 

@@ -439,7 +439,7 @@ app.prepare().then(() => {
         session: currentSession,
         queue: currentSession.queue,
         currentSong: currentSession.currentSong,
-        playbackState: {
+        playbackState: currentSession.playbackState || {
           isPlaying: false,
           currentTime: 0,
           volume: 80,
