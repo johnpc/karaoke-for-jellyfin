@@ -5,16 +5,15 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import { SearchInterface } from "@/components/mobile/SearchInterface";
 import { QueueView } from "@/components/mobile/QueueView";
 import { UserSetup } from "@/components/mobile/UserSetup";
-import { NavigationTabs } from "@/components/mobile/NavigationTabs";
+import { NavigationTabs, TabType } from "@/components/mobile/NavigationTabs";
 import { ReactionsPanel } from "@/components/mobile/ReactionsPanel";
+import { MySongs } from "@/components/mobile/MySongs";
+import { AppHeader } from "@/components/mobile/AppHeader";
+import { useSongHistory } from "@/hooks/useSongHistory";
 import { PWAInstaller } from "@/components/PWAInstaller";
-import {
-  getConnectionStatusColor,
-  getConnectionStatusText,
-} from "./pageHelpers";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"search" | "queue">("search");
+  const [activeTab, setActiveTab] = useState<TabType>("search");
   const [userName, setUserName] = useState<string>("");
   const [isSetup, setIsSetup] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -31,13 +30,14 @@ export default function Home() {
     error,
   } = useWebSocket();
 
-  // Prevent hydration mismatch by only rendering WebSocket-dependent content on client
+  const { favorites, recentHistory, addToHistory, toggleFavorite } =
+    useSongHistory(userName);
+
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   useEffect(() => {
-    // Check if user has already set up their name
     const savedUserName = localStorage.getItem("karaoke-username");
     if (savedUserName) {
       setUserName(savedUserName);
@@ -45,12 +45,16 @@ export default function Home() {
     }
   }, []);
 
-  // Auto-join session when connected and user is set up
   useEffect(() => {
     if (isConnected && isSetup && userName && !session) {
       joinSession("main-session", userName);
     }
   }, [isConnected, isSetup, userName, session, joinSession]);
+
+  const handleAddSong = async (mediaItem: Parameters<typeof addSong>[0]) => {
+    await addSong(mediaItem);
+    addToHistory(mediaItem);
+  };
 
   const handleUserSetup = (name: string) => {
     setUserName(name);
@@ -63,7 +67,6 @@ export default function Home() {
     return <UserSetup onSetup={handleUserSetup} />;
   }
 
-  // Prevent hydration mismatch by only rendering WebSocket-dependent content on client
   if (!isClient) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -74,56 +77,23 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="px-4 py-3">
-          <h1 className="text-lg font-semibold text-gray-900">
-            Karaoke For Jellyfin
-          </h1>
-          <div className="flex items-center mt-1">
-            <div
-              className={`w-2 h-2 rounded-full mr-2 ${getConnectionStatusColor(isConnected, error)}`}
-            />
-            <span
-              data-testid="connection-status"
-              className="text-sm text-gray-600"
-            >
-              {getConnectionStatusText(isConnected, userName, error)}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Error Banner */}
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4 mx-4 mt-4">
-          <div className="flex">
-            <div className="ml-3">
-              <p data-testid="error-message" className="text-sm text-red-700">
-                {error}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Navigation Tabs */}
+      <AppHeader isConnected={isConnected} userName={userName} error={error} />
       <NavigationTabs
         activeTab={activeTab}
         onTabChange={setActiveTab}
         queueCount={queue.filter(item => item.status === "pending").length}
       />
-
-      {/* Reactions FAB - visible during playback */}
       {currentSong && <ReactionsPanel onReaction={sendReaction} />}
-
-      {/* Main Content */}
       <div className="flex-1 overflow-hidden">
-        {activeTab === "search" ? (
+        {activeTab === "search" && (
           <div data-testid="search-content">
-            <SearchInterface onAddSong={addSong} isConnected={isConnected} />
+            <SearchInterface
+              onAddSong={handleAddSong}
+              isConnected={isConnected}
+            />
           </div>
-        ) : (
+        )}
+        {activeTab === "queue" && (
           <div data-testid="queue-content">
             <QueueView
               queue={queue}
@@ -134,9 +104,17 @@ export default function Home() {
             />
           </div>
         )}
+        {activeTab === "my-songs" && (
+          <div data-testid="my-songs-content">
+            <MySongs
+              favorites={favorites}
+              recentHistory={recentHistory}
+              onToggleFavorite={toggleFavorite}
+              onAddSong={handleAddSong}
+            />
+          </div>
+        )}
       </div>
-
-      {/* PWA Install Prompt */}
       <PWAInstaller />
     </div>
   );
