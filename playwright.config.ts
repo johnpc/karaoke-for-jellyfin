@@ -41,6 +41,18 @@ const audienceReactionsTestDir = defineBddConfig({
   steps: "e2e/steps/audience-reactions.steps.ts",
 });
 
+const fairRotationTestDir = defineBddConfig({
+  outputDir: ".features-gen/fair-rotation",
+  features: "e2e/features/fair-rotation.feature",
+  steps: "e2e/steps/fair-rotation.steps.ts",
+});
+
+const favoritesHistoryTestDir = defineBddConfig({
+  outputDir: ".features-gen/favorites-history",
+  features: "e2e/features/favorites-history.feature",
+  steps: "e2e/steps/favorites-history.steps.ts",
+});
+
 const fullPlaybackTestDir = defineBddConfig({
   outputDir: ".features-gen/full-playback",
   features: "e2e/features/full-playback.feature",
@@ -81,6 +93,19 @@ export default defineConfig({
       testDir: adminSyncTestDir,
       use: { ...devices["Desktop Chrome"] },
       timeout: 90000,
+    },
+    {
+      name: "fair-rotation",
+      testDir: fairRotationTestDir,
+      use: { ...devices["Desktop Chrome"] },
+      timeout: 90000,
+    },
+    {
+      name: "favorites-history",
+      testDir: favoritesHistoryTestDir,
+      use: { ...devices["Desktop Chrome"] },
+      timeout: 60000,
+      fullyParallel: false,
     },
     {
       name: "full-playback",

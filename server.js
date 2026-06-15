@@ -5,6 +5,7 @@ const next = require("next");
 const { Server } = require("socket.io");
 const fetch = require("node-fetch");
 const { handleSendReaction } = require("./server/reactions");
+const { getFairInsertionIndex } = require("./server/fair-rotation");
 
 // Simple rating generator for server-side use
 function generateRandomRating() {
@@ -504,7 +505,8 @@ app.prepare().then(() => {
       if (position !== undefined) {
         currentSession.queue.splice(position, 0, queueItem);
       } else {
-        currentSession.queue.push(queueItem);
+        const fairIndex = getFairInsertionIndex(currentSession.queue, user.id);
+        currentSession.queue.splice(fairIndex, 0, queueItem);
       }
 
       // Update positions

@@ -23,7 +23,7 @@ describe("NavigationTabs", () => {
     expect(screen.getByTestId("queue-tab")).toBeInTheDocument();
   });
 
-  it("displays Search Songs and Queue labels", () => {
+  it("displays Search, Queue, and My Songs labels", () => {
     render(
       <NavigationTabs
         activeTab="search"
@@ -32,8 +32,9 @@ describe("NavigationTabs", () => {
       />
     );
 
-    expect(screen.getByText("Search Songs")).toBeInTheDocument();
+    expect(screen.getByText("Search")).toBeInTheDocument();
     expect(screen.getByText("Queue")).toBeInTheDocument();
+    expect(screen.getByText("My Songs")).toBeInTheDocument();
   });
 
   it("highlights the active search tab", () => {

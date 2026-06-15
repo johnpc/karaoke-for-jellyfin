@@ -3,11 +3,14 @@
 import {
   MagnifyingGlassIcon,
   QueueListIcon,
+  MusicalNoteIcon,
 } from "@heroicons/react/24/outline";
 
+export type TabType = "search" | "queue" | "my-songs";
+
 interface NavigationTabsProps {
-  activeTab: "search" | "queue";
-  onTabChange: (tab: "search" | "queue") => void;
+  activeTab: TabType;
+  onTabChange: (tab: TabType) => void;
   queueCount: number;
 }
 
@@ -28,8 +31,8 @@ export function NavigationTabs({
               : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
           }`}
         >
-          <MagnifyingGlassIcon className="w-5 h-5 mr-2" />
-          Search Songs
+          <MagnifyingGlassIcon className="w-5 h-5 mr-1" />
+          Search
         </button>
 
         <button
@@ -41,13 +44,26 @@ export function NavigationTabs({
               : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
           }`}
         >
-          <QueueListIcon className="w-5 h-5 mr-2" />
+          <QueueListIcon className="w-5 h-5 mr-1" />
           Queue
           {queueCount > 0 && (
-            <span className="ml-2 bg-purple-600 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
+            <span className="ml-1 bg-purple-600 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center">
               {queueCount}
             </span>
           )}
+        </button>
+
+        <button
+          data-testid="my-songs-tab"
+          onClick={() => onTabChange("my-songs")}
+          className={`flex-1 flex items-center justify-center py-4 px-4 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "my-songs"
+              ? "border-purple-500 text-purple-600 bg-purple-50 active"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+          }`}
+        >
+          <MusicalNoteIcon className="w-5 h-5 mr-1" />
+          My Songs
         </button>
       </div>
     </div>
