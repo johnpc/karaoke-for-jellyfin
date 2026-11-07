@@ -216,3 +216,7 @@ src/
 ## Development Status
 
 This project is currently in development. See the implementation tasks in `.kiro/specs/self-hosted-karaoke/tasks.md` for current progress.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

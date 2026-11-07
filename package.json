@@ -1,6 +1,7 @@
 {
   "name": "karaoke-for-jellyfin",
   "version": "0.1.0",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "npm run kill-server && node server.js",
