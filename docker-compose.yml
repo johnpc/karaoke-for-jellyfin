@@ -10,6 +10,10 @@ services:
       - JELLYFIN_API_KEY=${JELLYFIN_API_KEY}
       - JELLYFIN_USERNAME=${JELLYFIN_USERNAME}
 
+      # Optional: auto-queue a playlist whenever the queue is empty
+      - AUTOPLAY_PLAYLIST=${AUTOPLAY_PLAYLIST}
+      - AUTOPLAY_PLAYLIST_SHUFFLE=${AUTOPLAY_PLAYLIST_SHUFFLE:-false}
+
       # TV Display Timing Configuration (in milliseconds)
       - RATING_ANIMATION_DURATION=${RATING_ANIMATION_DURATION:-15000}
       - NEXT_SONG_DURATION=${NEXT_SONG_DURATION:-15000}

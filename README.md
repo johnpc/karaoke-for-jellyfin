@@ -98,6 +98,10 @@ services:
       # OPTIONAL Playlist Filtering
       - PLAYLIST_FILTER_REGEX=${PLAYLIST_FILTER_REGEX}
 
+      # OPTIONAL Auto-queue a playlist whenever the queue is empty
+      - AUTOPLAY_PLAYLIST=${AUTOPLAY_PLAYLIST}
+      - AUTOPLAY_PLAYLIST_SHUFFLE=${AUTOPLAY_PLAYLIST_SHUFFLE:-false}
+
       # OPTIONAL TV Display Timing Configuration (in milliseconds)
       - RATING_ANIMATION_DURATION=${RATING_ANIMATION_DURATION:-15000}
       - NEXT_SONG_DURATION=${NEXT_SONG_DURATION:-15000}
@@ -114,6 +118,24 @@ services:
 networks: {}
 
 ```
+
+#### Auto-queue a playlist (hands-free mode)
+
+Running the TV page on a tablet for a kid, or want music to start on its own
+instead of building a queue by hand? Point the server at a Jellyfin playlist:
+
+| Variable                    | Description                                                                                                                                                               | Default |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `AUTOPLAY_PLAYLIST`         | Name (case-insensitive) or Jellyfin id of a playlist. Whenever the queue is empty — when the TV page connects and after the last song finishes — its songs are queued up. | _unset_ |
+| `AUTOPLAY_PLAYLIST_SHUFFLE` | Set to `true` to shuffle the playlist each time it is queued.                                                                                                             | `false` |
+
+Notes:
+
+- Leaving `AUTOPLAY_PLAYLIST` unset keeps the current behaviour (empty queue waits for phones).
+- Only songs with lyrics are queued, the same rule the phone UI applies.
+- Songs added from a phone are interleaved ahead of the playlist by the fair-rotation queue, so a kid can still pick a favourite without waiting for the whole playlist.
+- The playlist lookup ignores `PLAYLIST_FILTER_REGEX`, so the auto-queued playlist does not have to be visible in the phone UI.
+- Queued songs show the playlist name as "added by", and the TV waiting screen shows which playlist is in use.
 
 ### Local Development
 

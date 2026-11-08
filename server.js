@@ -6,6 +6,13 @@ const { Server } = require("socket.io");
 const fetch = require("node-fetch");
 const { handleSendReaction } = require("./server/reactions");
 const { getFairInsertionIndex } = require("./server/fair-rotation");
+const {
+  getAutoplayPlaylistConfig,
+  createAutoplayPlaylist,
+} = require("./server/autoplay-playlist");
+const {
+  createPlaylistSongFetcher,
+} = require("./server/autoplay-playlist-fetch");
 
 // Simple rating generator for server-side use
 function generateRandomRating() {
@@ -245,6 +252,33 @@ app.prepare().then(() => {
   let currentSession = null;
   const connectedUsers = new Map();
 
+  // Optional AUTOPLAY_PLAYLIST: refills the queue from a Jellyfin playlist
+  // whenever it runs dry. No-op when the env var is unset.
+  const autoplayPlaylist = createAutoplayPlaylist({
+    config: getAutoplayPlaylistConfig(process.env),
+    fetchPlaylistSongs: createPlaylistSongFetcher({
+      appBaseUrl: `http://${hostname}:${port}`,
+      jellyfinUrl: process.env.JELLYFIN_SERVER_URL,
+      apiKey: process.env.JELLYFIN_API_KEY,
+    }),
+  });
+  if (autoplayPlaylist.enabled) {
+    console.log(
+      `Autoplay playlist enabled: "${autoplayPlaylist.playlistName}"`
+    );
+  }
+
+  // Fill an empty queue from the autoplay playlist and tell clients about it.
+  // The TV display's existing autoplay then starts the first song.
+  const refillQueueFromPlaylist = async () => {
+    const session = currentSession;
+    const added = await autoplayPlaylist.refillIfEmpty(session);
+    if (added.length > 0 && currentSession === session) {
+      io.to(session.id || "main-session").emit("queue-updated", session.queue);
+    }
+    return added;
+  };
+
   // Periodic cleanup of stale connections
   const cleanupStaleConnections = () => {
     if (!currentSession) return;
@@ -365,6 +399,10 @@ app.prepare().then(() => {
       });
 
       console.log("TV client auto-joined to main-session (deduplicated)");
+
+      // Startup: the TV is on and nothing is queued, so seed the queue
+      // from the autoplay playlist (no-op unless AUTOPLAY_PLAYLIST is set).
+      refillQueueFromPlaylist();
     }
 
     socket.on("join-session", data => {
@@ -885,7 +923,7 @@ app.prepare().then(() => {
       }
     });
 
-    socket.on("skip-song", () => {
+    socket.on("skip-song", async () => {
       console.log("Skipping song");
       if (!currentSession || !currentSession.currentSong) {
         socket.emit("error", {
@@ -931,6 +969,10 @@ app.prepare().then(() => {
       const sessionId = currentSession.id || "main-session";
       io.to(sessionId).emit("song-ended", skippedSong);
 
+      // Last song skipped: refill from the autoplay playlist if configured
+      await refillQueueFromPlaylist();
+      if (!currentSession) return;
+
       // Start next song if available
       const nextSong = currentSession.queue.find(
         item => item.status === "pending"
@@ -952,7 +994,7 @@ app.prepare().then(() => {
       }
     });
 
-    socket.on("song-ended", () => {
+    socket.on("song-ended", async () => {
       console.log("Song ended naturally");
       if (!currentSession || !currentSession.currentSong) {
         console.log("No current song to end");
@@ -996,6 +1038,11 @@ app.prepare().then(() => {
           lyricsOffset: 0,
         };
       }
+
+      // Queue ran dry: refill from the autoplay playlist (if configured) so the
+      // TV can show the next-up splash instead of dropping to the waiting screen
+      await refillQueueFromPlaylist();
+      if (!currentSession) return;
 
       // Find next song but don't start it immediately - let the client handle transitions
       const nextSong = currentSession.queue.find(
