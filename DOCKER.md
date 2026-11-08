@@ -63,13 +63,14 @@ This document provides instructions for building and running the Karaoke For Jel
 
 #### Core Configuration
 
-| Variable              | Description                 | Default                 | Required |
-| --------------------- | --------------------------- | ----------------------- | -------- |
-| `JELLYFIN_SERVER_URL` | URL to your Jellyfin server | `http://localhost:8096` | Yes      |
-| `JELLYFIN_API_KEY`    | Jellyfin API key            | -                       | Yes      |
-| `JELLYFIN_USERNAME`   | Jellyfin username           | -                       | Yes      |
-| `LYRICS_PATH`         | Path to lyrics folder       | `/app/lyrics`           | No       |
-| `JELLYFIN_MEDIA_PATH` | Path to Jellyfin media      | `/app/media`            | No       |
+| Variable                | Description                                                                        | Default                 | Required |
+| ----------------------- | ---------------------------------------------------------------------------------- | ----------------------- | -------- |
+| `JELLYFIN_SERVER_URL`   | URL to your Jellyfin server                                                        | `http://localhost:8096` | Yes      |
+| `JELLYFIN_API_KEY`      | Jellyfin API key                                                                   | -                       | Yes      |
+| `JELLYFIN_USERNAME`     | Jellyfin username                                                                  | -                       | Yes      |
+| `LYRICS_PATH`           | Path to lyrics folder                                                              | `/app/lyrics`           | No       |
+| `JELLYFIN_MEDIA_PATH`   | Path to Jellyfin media                                                             | `/app/media`            | No       |
+| `KARAOKE_VIDEO_LIBRARY` | Jellyfin library (name or id) with karaoke videos; unset = `MusicVideo` items only | -                       | No       |
 
 #### TV Display Timing Configuration (milliseconds)
 

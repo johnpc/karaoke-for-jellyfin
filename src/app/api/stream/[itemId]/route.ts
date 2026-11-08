@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getJellyfinService } from "@/services/jellyfin";
+import { getVideoStreamUrl, isVideoStreamRequest } from "./videoStream";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -21,8 +22,11 @@ export async function GET(
       );
     }
 
-    const jellyfinService = getJellyfinService();
-    const streamUrl = await jellyfinService.getDirectStreamUrl(itemId);
+    const isVideo = isVideoStreamRequest(request);
+    const kind = isVideo ? "video" : "audio";
+    const streamUrl = isVideo
+      ? await getVideoStreamUrl(itemId)
+      : await getJellyfinService().getDirectStreamUrl(itemId);
 
     const range = request.headers.get("range");
 
@@ -39,12 +43,13 @@ export async function GET(
 
     if (!response.ok && response.status !== 206) {
       return NextResponse.json(
-        { error: "Failed to fetch audio stream" },
+        { error: `Failed to fetch ${kind} stream` },
         { status: response.status }
       );
     }
 
-    const contentType = response.headers.get("content-type") || "audio/mpeg";
+    const fallbackType = isVideo ? "video/mp4" : "audio/mpeg";
+    const contentType = response.headers.get("content-type") || fallbackType;
     const contentLength = response.headers.get("content-length");
     const contentRange = response.headers.get("content-range");
 
@@ -66,7 +71,7 @@ export async function GET(
 
     if (!response.body) {
       return NextResponse.json(
-        { error: "No audio data received from Jellyfin" },
+        { error: `No ${kind} data received from Jellyfin` },
         { status: 502 }
       );
     }

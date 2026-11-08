@@ -36,6 +36,8 @@ JELLYFIN_API_KEY=<key>
 JELLYFIN_USERNAME=<user>
 ```
 
+Optional: `KARAOKE_VIDEO_LIBRARY=<library name or id>` widens karaoke-video search from `MusicVideo` items to every video in that library (see `src/services/jellyfin/videos.ts`). Video entries (`mediaItem.mediaType === "video"`) play full-screen via `components/tv/VideoPlayer` with no lyric overlay.
+
 ## Commands
 
 ```bash

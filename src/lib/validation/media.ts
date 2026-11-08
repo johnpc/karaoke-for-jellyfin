@@ -1,5 +1,5 @@
 // Media item and queue item validation
-import { MediaItem, QueueItem, TypeGuard } from "@/types";
+import { MediaItem, MediaType, QueueItem, TypeGuard } from "@/types";
 import {
   ValidationError,
   isString,
@@ -27,9 +27,13 @@ export const isValidMediaItem: TypeGuard<MediaItem> = (
     (v.jellyfinId as string).length > 0 &&
     isValidUrl(v.streamUrl) &&
     (v.album === undefined || isString(v.album)) &&
-    (v.lyricsPath === undefined || isString(v.lyricsPath))
+    (v.lyricsPath === undefined || isString(v.lyricsPath)) &&
+    (v.mediaType === undefined || isValidMediaType(v.mediaType))
   );
 };
+
+export const isValidMediaType = (value: unknown): value is MediaType =>
+  value === "audio" || value === "video";
 
 export function validateMediaItem(item: unknown): MediaItem {
   if (!isValidMediaItem(item)) {

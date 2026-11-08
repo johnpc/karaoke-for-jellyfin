@@ -10,6 +10,9 @@ services:
       - JELLYFIN_API_KEY=${JELLYFIN_API_KEY}
       - JELLYFIN_USERNAME=${JELLYFIN_USERNAME}
 
+      # OPTIONAL Karaoke video library (name or id). Unset = MusicVideo items only
+      - KARAOKE_VIDEO_LIBRARY=${KARAOKE_VIDEO_LIBRARY}
+
       # TV Display Timing Configuration (in milliseconds)
       - RATING_ANIMATION_DURATION=${RATING_ANIMATION_DURATION:-15000}
       - NEXT_SONG_DURATION=${NEXT_SONG_DURATION:-15000}

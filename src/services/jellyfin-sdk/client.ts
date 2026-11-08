@@ -4,7 +4,12 @@ import { MediaItem, Artist, Playlist } from "@/types";
 import { JellyfinContext, SongResult } from "./types";
 import { authenticateUser, fetchMusicLibraryId, checkHealth } from "./auth";
 import { searchArtists, getAllArtists } from "./artists";
-import { getSongsByArtistId, searchByTitle, getAllAudioItems } from "./songs";
+import { getAllAudioItems } from "./songs";
+// Audio results plus karaoke videos (see ./videos); audio paths unchanged
+import {
+  getSongsByArtistIdWithVideos as getSongsByArtistId,
+  searchByTitleWithVideos as searchByTitle,
+} from "./videos";
 import { getPlaylists, getPlaylistItems } from "./playlists";
 
 export class JellyfinSDKService {

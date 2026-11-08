@@ -11,19 +11,24 @@ interface UseAudioPlayerOptions {
   onTimeUpdate: (currentTime: number) => void;
 }
 
-interface UseAudioPlayerReturn {
-  audioRef: React.RefObject<HTMLAudioElement | null>;
+interface UseAudioPlayerReturn<T extends HTMLMediaElement> {
+  audioRef: React.RefObject<T | null>;
   isLoading: boolean;
   error: string | null;
 }
 
-export function useAudioPlayer({
+/**
+ * Drives an <audio> (default) or <video> element from the shared playback
+ * state. The element type is generic so the TV's VideoPlayer can reuse the
+ * exact same load/play/pause/seek/volume/ended logic.
+ */
+export function useAudioPlayer<T extends HTMLMediaElement = HTMLAudioElement>({
   song,
   playbackState,
   onSongEnded,
   onTimeUpdate,
-}: UseAudioPlayerOptions): UseAudioPlayerReturn {
-  const audioRef = useRef<HTMLAudioElement>(null);
+}: UseAudioPlayerOptions): UseAudioPlayerReturn<T> {
+  const audioRef = useRef<T>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentSongId, setCurrentSongId] = useState<string | null>(null);

@@ -70,6 +70,7 @@ Mobile-optimized host controls for managing the karaoke session.
 - **TV Display**: Full-screen lyrics display and playback control
 - **Admin Interface**: Comprehensive host controls for session management
 - **Jellyfin Integration**: Leverages your existing Jellyfin media library
+- **Karaoke Videos (MP4)**: Plays video files with burned-in lyrics (e.g. MP3+CDG converted with ffmpeg) full-screen on the TV, alongside regular audio tracks
 - **Real-time Sync**: WebSocket-based real-time updates between devices
 - **Progressive Web App**: Install on mobile/desktop for native app experience
 - **Offline Support**: Core functionality works without internet connection
@@ -98,6 +99,9 @@ services:
       # OPTIONAL Playlist Filtering
       - PLAYLIST_FILTER_REGEX=${PLAYLIST_FILTER_REGEX}
 
+      # OPTIONAL Karaoke video library (name or id). Unset = MusicVideo items only
+      - KARAOKE_VIDEO_LIBRARY=${KARAOKE_VIDEO_LIBRARY}
+
       # OPTIONAL TV Display Timing Configuration (in milliseconds)
       - RATING_ANIMATION_DURATION=${RATING_ANIMATION_DURATION:-15000}
       - NEXT_SONG_DURATION=${NEXT_SONG_DURATION:-15000}
@@ -115,13 +119,36 @@ networks: {}
 
 ```
 
+#### Environment Variables
+
+| Variable                | Description                                                                                                                                                                                     | Default | Required |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------- |
+| `JELLYFIN_SERVER_URL`   | URL of your Jellyfin server                                                                                                                                                                     | -       | Yes      |
+| `JELLYFIN_API_KEY`      | Jellyfin API key                                                                                                                                                                                | -       | Yes      |
+| `JELLYFIN_USERNAME`     | Jellyfin user whose library is searched                                                                                                                                                         | -       | Yes      |
+| `PLAYLIST_FILTER_REGEX` | Only show playlists whose names match this regex                                                                                                                                                | -       | No       |
+| `KARAOKE_VIDEO_LIBRARY` | Name or id of a Jellyfin library holding karaoke videos (MP4 etc.). When set, every video in that library is searchable and plays full-screen. When unset, only `MusicVideo` items are included | -       | No       |
+
+See [DOCKER.md](DOCKER.md) for the TV display timing variables.
+
+### Karaoke Videos (MP4 with burned-in lyrics)
+
+Besides audio tracks with synced lyrics, the app can queue **videos whose lyrics are already part of the picture** - for example MP3+CDG karaoke files converted to MP4 with ffmpeg. Video entries show a small **Video** badge on phones, and on the TV the video plays full-screen with no text-lyrics overlay. Queueing, skipping, play/pause, volume, ratings and the next-up flow work exactly like audio songs.
+
+1. Convert your MP3+CDG pairs, e.g. `ffmpeg -i song.cdg -i song.mp3 -c:v libx264 -pix_fmt yuv420p -c:a aac song.mp4`
+2. Put the MP4s in a Jellyfin library (a **Music Videos** or **Home Videos** library works well) and let Jellyfin scan it. Files named `Artist - Title.mp4` get their artist/title parsed when Jellyfin has no artist metadata.
+3. Either tag the items as Music Videos in Jellyfin, or set `KARAOKE_VIDEO_LIBRARY` to that library's name (or id) so all its videos are included.
+4. Search for the song on your phone and add it to the queue as usual.
+
+The TV loads videos through the app's stream proxy (`/api/stream/<id>?type=video`), which requests Jellyfin's direct stream (`/Videos/<id>/stream?static=true`) server-side - your API key never reaches the browser. Use a browser-friendly container/codec (MP4 with H.264 + AAC) since the video is played natively without transcoding.
+
 ### Local Development
 
 ### Prerequisites
 
 - Node.js 18+
 - A running Jellyfin server
-- Audio files in your Jellyfin library
+- Audio files (and optionally karaoke MP4 videos) in your Jellyfin library
 
 ### Installation
 

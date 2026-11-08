@@ -1,6 +1,8 @@
 "use client";
 
 import { MediaItem } from "@/types";
+import { MediaTypeBadge } from "@/components/MediaTypeBadge";
+import { isVideoMediaItem } from "@/lib/mediaType";
 
 interface LyricsIndicatorProps {
   song: MediaItem;
@@ -15,6 +17,11 @@ export function LyricsIndicator({
   variant = "badge",
   className = "",
 }: LyricsIndicatorProps) {
+  // Karaoke videos have lyrics burned in; "Audio Only" would be misleading
+  if (isVideoMediaItem(song)) {
+    return <MediaTypeBadge song={song} size={size} className={className} />;
+  }
+
   // Use Jellyfin's authoritative HasLyrics field, with fallback to lyricsPath check
   const hasLyrics = song.hasLyrics ?? Boolean(song.lyricsPath);
 

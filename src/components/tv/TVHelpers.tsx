@@ -1,4 +1,6 @@
 import { LyricsDisplay } from "@/components/tv/LyricsDisplay";
+import { VideoOverlay } from "@/components/tv/VideoOverlay";
+import { isVideoMediaItem } from "@/lib/mediaType";
 import { WaitingScreen } from "@/components/tv/WaitingScreen";
 import { RatingAnimation } from "@/components/tv/RatingAnimation";
 import { NextSongSplash } from "@/components/tv/NextSongSplash";
@@ -89,6 +91,16 @@ export function MainContent({
   onNextSongComplete,
 }: MainContentProps) {
   if (transitionState.displayState === "playing" && currentSong) {
+    // Karaoke videos carry their own lyrics; show the video, not text lyrics
+    if (isVideoMediaItem(currentSong.mediaItem)) {
+      return (
+        <VideoOverlay
+          song={currentSong}
+          playbackState={playbackState}
+          isConnected={isConnected}
+        />
+      );
+    }
     return (
       <LyricsDisplay
         song={currentSong}

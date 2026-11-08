@@ -7,7 +7,7 @@ export interface AudioEventHandlers {
 }
 
 export function setupAudioEventListeners(
-  audio: HTMLAudioElement,
+  audio: HTMLMediaElement,
   handlers: AudioEventHandlers,
   lastSeekTimeRef: React.MutableRefObject<number>
 ): () => void {
@@ -60,7 +60,7 @@ export function setupAudioEventListeners(
 }
 
 export function syncPlaybackState(
-  audio: HTMLAudioElement,
+  audio: HTMLMediaElement,
   playbackState: PlaybackState,
   isLoading: boolean,
   lastSeekTimeRef: React.MutableRefObject<number>,
@@ -73,7 +73,7 @@ export function syncPlaybackState(
 }
 
 export function syncPlayPause(
-  audio: HTMLAudioElement,
+  audio: HTMLMediaElement,
   playbackState: PlaybackState,
   isLoading: boolean,
   setError: React.Dispatch<React.SetStateAction<string | null>>
@@ -91,7 +91,7 @@ export function syncPlayPause(
 }
 
 export function syncMuteAndVolume(
-  audio: HTMLAudioElement,
+  audio: HTMLMediaElement,
   playbackState: PlaybackState
 ): void {
   if (playbackState.isMuted !== undefined) {
@@ -107,7 +107,7 @@ export function syncMuteAndVolume(
 }
 
 export function syncSeekPosition(
-  audio: HTMLAudioElement,
+  audio: HTMLMediaElement,
   playbackState: PlaybackState,
   lastSeekTimeRef: React.MutableRefObject<number>
 ): void {
@@ -129,7 +129,7 @@ export function syncSeekPosition(
 }
 
 export function syncPlaybackRate(
-  audio: HTMLAudioElement,
+  audio: HTMLMediaElement,
   playbackState: PlaybackState
 ): void {
   if (
