@@ -54,7 +54,7 @@ describe("GET /api/stream/[itemId]?type=video", () => {
 
     expect(mockGetDirectStreamUrl).not.toHaveBeenCalled();
     expect(mockFetch.mock.calls[0][0]).toBe(
-      "http://jellyfin:8096/Videos/vid1/stream?static=true&api_key=secret"
+      "http://jellyfin:8096/Videos/vid1/stream?static=true"
     );
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("video/mp4");

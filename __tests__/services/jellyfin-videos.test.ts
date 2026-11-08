@@ -76,7 +76,9 @@ describe("karaoke video library setting", () => {
     expect(mockFetch.mock.calls[0][0]).toBe(
       "http://jf:8096/Library/VirtualFolders"
     );
-    expect(mockFetch.mock.calls[0][1].headers["X-Emby-Token"]).toBe("key");
+    expect(mockFetch.mock.calls[0][1].headers.Authorization).toContain(
+      'Token="key"'
+    );
   });
 
   it("warns and falls back to null (MusicVideo only) when not found", async () => {
