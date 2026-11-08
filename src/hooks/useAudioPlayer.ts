@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { QueueItem, PlaybackState } from "@/types";
-import { setupAudioEventListeners, syncPlaybackState } from "./audioPlayerSync";
+import { attachSourceLoadListeners } from "./audioSourceLoader";
+import { setupAudioEventListeners } from "./audioEventListeners";
+import { syncPlaybackState } from "./audioPlayerSync";
+import { useAutoplayGate } from "./useAutoplayGate";
 
 interface UseAudioPlayerOptions {
   song: QueueItem | null;
@@ -15,6 +18,10 @@ interface UseAudioPlayerReturn<T extends HTMLMediaElement> {
   audioRef: React.RefObject<T | null>;
   isLoading: boolean;
   error: string | null;
+  /** See `useAutoplayGate`: the browser needs a tap before audio can start. */
+  needsUserGesture: boolean;
+  /** Call from a tap/click handler to unlock audio and start playback. */
+  startPlaybackFromGesture: () => void;
 }
 
 /**
@@ -33,6 +40,13 @@ export function useAudioPlayer<T extends HTMLMediaElement = HTMLAudioElement>({
   const [error, setError] = useState<string | null>(null);
   const [currentSongId, setCurrentSongId] = useState<string | null>(null);
   const lastSeekTimeRef = useRef<number>(0);
+
+  const { needsUserGesture, playFailure, startPlaybackFromGesture } =
+    useAutoplayGate({
+      audioRef,
+      shouldBePlaying: playbackState?.isPlaying ?? false,
+      setError,
+    });
 
   // Update audio source when song changes
   useEffect(() => {
@@ -67,57 +81,24 @@ export function useAudioPlayer<T extends HTMLMediaElement = HTMLAudioElement>({
     console.log("Audio element src set to:", audio.src);
     audio.load();
 
-    const handleCanPlay = () => {
-      console.log("Audio can play");
-      setIsLoading(false);
-      if (playbackState?.isPlaying && audio.paused) {
-        console.log("Audio ready and should be playing - starting playback");
-        audio.play().catch(err => {
-          console.error("Auto-play on ready failed:", err);
-          setError(`Auto-play failed: ${err.message}`);
-        });
-      }
-    };
-
-    const handleError = (e: Event) => {
-      console.error("Audio load error:", e);
-      console.error("Audio element error details:", {
-        error: audio.error,
-        networkState: audio.networkState,
-        readyState: audio.readyState,
-        src: audio.src,
-      });
-      setIsLoading(false);
-      setError("Failed to load audio");
-    };
-
-    const handleLoadedData = () => {
-      console.log("Audio loaded data");
-      setIsLoading(false);
-    };
-
-    audio.addEventListener("canplay", handleCanPlay);
-    audio.addEventListener("error", handleError);
-    audio.addEventListener("loadeddata", handleLoadedData);
-
-    return () => {
-      audio.removeEventListener("canplay", handleCanPlay);
-      audio.removeEventListener("error", handleError);
-      audio.removeEventListener("loadeddata", handleLoadedData);
-    };
+    return attachSourceLoadListeners(audio, {
+      playbackState,
+      playFailure,
+      setIsLoading,
+      setError,
+    });
   }, [song?.id, song?.mediaItem?.streamUrl]);
 
   // Handle playback state changes
   useEffect(() => {
     if (!audioRef.current || !playbackState || !song) return;
-    syncPlaybackState(
-      audioRef.current,
-      playbackState,
+    syncPlaybackState(audioRef.current, playbackState, {
       isLoading,
+      autoplayBlocked: needsUserGesture,
       lastSeekTimeRef,
-      setError
-    );
-  }, [playbackState, isLoading, song]);
+      playFailure,
+    });
+  }, [playbackState, isLoading, song, needsUserGesture, playFailure]);
 
   // Set up audio event listeners
   useEffect(() => {
@@ -129,5 +110,11 @@ export function useAudioPlayer<T extends HTMLMediaElement = HTMLAudioElement>({
     );
   }, [onTimeUpdate, onSongEnded]);
 
-  return { audioRef, isLoading, error };
+  return {
+    audioRef,
+    isLoading,
+    error,
+    needsUserGesture,
+    startPlaybackFromGesture,
+  };
 }

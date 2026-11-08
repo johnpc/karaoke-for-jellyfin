@@ -1,32 +1,5 @@
-// SRT, VTT, plain text, and Jellyfin native format parsers
+// SRT, VTT, and plain text parsers
 import { LyricsFile, LyricsLine } from "@/types";
-
-interface JellyfinLyricsItem {
-  Start: number;
-  Text: string;
-}
-
-/**
- * Parse Jellyfin's native lyrics format (array of {Start, Text} objects)
- */
-export function parseJellyfinLyrics(
-  lyricsData: JellyfinLyricsItem[],
-  songId: string
-): LyricsFile {
-  const lines: LyricsLine[] = lyricsData
-    .filter(item => item.Text && item.Text.trim())
-    .map(item => ({
-      timestamp: Math.round(item.Start / 10000), // nanoseconds to milliseconds
-      text: item.Text.trim(),
-    }))
-    .sort((a, b) => a.timestamp - b.timestamp);
-
-  return {
-    songId,
-    lines,
-    format: "lrc", // Treat as LRC-compatible format
-  };
-}
 
 /**
  * Parse SRT format lyrics

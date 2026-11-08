@@ -12,6 +12,9 @@ services:
 
       # OPTIONAL Karaoke video library (name or id). Unset = MusicVideo items only
       - KARAOKE_VIDEO_LIBRARY=${KARAOKE_VIDEO_LIBRARY}
+      # Optional: auto-queue a playlist whenever the queue is empty
+      - AUTOPLAY_PLAYLIST=${AUTOPLAY_PLAYLIST}
+      - AUTOPLAY_PLAYLIST_SHUFFLE=${AUTOPLAY_PLAYLIST_SHUFFLE:-false}
 
       # TV Display Timing Configuration (in milliseconds)
       - RATING_ANIMATION_DURATION=${RATING_ANIMATION_DURATION:-15000}

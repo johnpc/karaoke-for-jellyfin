@@ -8,6 +8,7 @@ export type {
   Playlist,
   MediaMetadata,
   LyricsLine,
+  LyricsWord,
   LyricsFile,
   LyricsMetadata,
   LyricsFormat,

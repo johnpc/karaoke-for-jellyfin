@@ -1,9 +1,14 @@
 "use client";
 
-import { LyricsFile } from "@/types";
+import { LyricsFile, LyricsWord } from "@/types";
+import { LyricsWords } from "@/components/tv/LyricsWords";
 
 interface LyricsContentProps {
   currentLine: string;
+  currentLineWords?: LyricsWord[];
+  currentLineEndMs?: number;
+  currentTime?: number; // seconds, lyrics offset already applied
+  isPlaying?: boolean;
   nextLine: string;
   lyricsError: string | null;
   lyricsLoading: boolean;
@@ -13,6 +18,10 @@ interface LyricsContentProps {
 
 export function LyricsContent({
   currentLine,
+  currentLineWords,
+  currentLineEndMs,
+  currentTime = 0,
+  isPlaying = false,
   nextLine,
   lyricsError,
   lyricsLoading,
@@ -26,7 +35,16 @@ export function LyricsContent({
           data-testid="current-lyric"
           className="text-6xl font-bold text-white leading-relaxed mb-6 min-h-[160px] flex items-center justify-center px-4"
         >
-          {currentLine}
+          {currentLineWords && currentLineWords.length > 0 ? (
+            <LyricsWords
+              words={currentLineWords}
+              lineEndMs={currentLineEndMs}
+              currentTime={currentTime}
+              isPlaying={isPlaying}
+            />
+          ) : (
+            currentLine
+          )}
         </div>
 
         {nextLine && (

@@ -83,6 +83,14 @@ This document provides instructions for building and running the Karaoke For Jel
 | `QUEUE_AUTOPLAY_DELAY`      | Queue autoplay delay                   | `1000`  | No       |
 | `TIME_UPDATE_INTERVAL`      | Time update sync interval              | `2000`  | No       |
 
+#### Playlist Configuration
+
+| Variable                    | Description                                                                                           | Default | Required |
+| --------------------------- | ----------------------------------------------------------------------------------------------------- | ------- | -------- |
+| `PLAYLIST_FILTER_REGEX`     | Only show playlists whose names match this regex (case-insensitive) in the phone UI                   | -       | No       |
+| `AUTOPLAY_PLAYLIST`         | Playlist name or Jellyfin id to auto-queue whenever the queue is empty (TV connects / last song ends) | -       | No       |
+| `AUTOPLAY_PLAYLIST_SHUFFLE` | Shuffle the autoplay playlist each time it is queued (`true`/`false`)                                 | `false` | No       |
+
 #### Timing Configuration Examples
 
 **Fast-Paced Party Setup:**

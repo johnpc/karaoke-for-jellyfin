@@ -19,6 +19,9 @@ export function LyricsDisplay({
 }: LyricsDisplayProps) {
   const {
     currentLine,
+    currentLineWords,
+    currentLineEndMs,
+    currentTime,
     nextLine,
     lyricsLoading,
     lyricsError,
@@ -54,6 +57,10 @@ export function LyricsDisplay({
 
       <LyricsContent
         currentLine={currentLine}
+        currentLineWords={currentLineWords}
+        currentLineEndMs={currentLineEndMs}
+        currentTime={currentTime}
+        isPlaying={isPlaying}
         nextLine={nextLine}
         lyricsError={lyricsError}
         lyricsLoading={lyricsLoading}

@@ -293,3 +293,170 @@ describe("useAudioPlayer", () => {
     expect(result.current.error).toBeNull();
   });
 });
+
+describe("useAudioPlayer autoplay gating (iOS Safari)", () => {
+  const playingState: PlaybackState = {
+    isPlaying: true,
+    currentTime: 0,
+    volume: 80,
+    isMuted: false,
+    playbackRate: 1.0,
+    lyricsOffset: 0,
+  };
+
+  const song: QueueItem = {
+    id: "song-1",
+    mediaItem: {
+      id: "media-1",
+      title: "Test Song",
+      artist: "Test Artist",
+      duration: 180,
+      jellyfinId: "jf-1",
+      streamUrl: "/api/stream/jf-1",
+    },
+    addedBy: "TestUser",
+    addedAt: new Date(),
+    position: 0,
+    status: "playing",
+  };
+
+  const notAllowed = () =>
+    new DOMException("not allowed without a gesture", "NotAllowedError");
+
+  function createFakeAudio(play: () => Promise<void>) {
+    const listeners: Record<string, EventListener[]> = {};
+    return {
+      paused: true,
+      readyState: 4,
+      src: "",
+      volume: 1,
+      muted: false,
+      currentTime: 0,
+      playbackRate: 1,
+      error: null,
+      networkState: 0,
+      play: vi.fn(play),
+      pause: vi.fn(),
+      load: vi.fn(),
+      addEventListener: vi.fn((type: string, listener: EventListener) => {
+        (listeners[type] ||= []).push(listener);
+      }),
+      removeEventListener: vi.fn(),
+      dispatch(type: string) {
+        listeners[type]?.forEach(listener => listener(new Event(type)));
+      },
+    };
+  }
+
+  function renderWithAudio(audio: ReturnType<typeof createFakeAudio>) {
+    const hook = renderHook(
+      (props: { song: QueueItem | null }) =>
+        useAudioPlayer({
+          song: props.song,
+          playbackState: playingState,
+          onSongEnded: vi.fn(),
+          onTimeUpdate: vi.fn(),
+        }),
+      { initialProps: { song: null } as { song: QueueItem | null } }
+    );
+    (
+      hook.result.current
+        .audioRef as React.MutableRefObject<HTMLAudioElement | null>
+    ).current = audio as unknown as HTMLAudioElement;
+    return hook;
+  }
+
+  beforeEach(() => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  it("asks for a gesture instead of erroring when autoplay is blocked", async () => {
+    const audio = createFakeAudio(() => Promise.reject(notAllowed()));
+    const { result, rerender } = renderWithAudio(audio);
+
+    await act(async () => {
+      rerender({ song });
+    });
+    await act(async () => {
+      audio.dispatch("canplay");
+    });
+
+    expect(audio.load).toHaveBeenCalledTimes(1);
+    expect(audio.play).toHaveBeenCalled();
+    expect(result.current.needsUserGesture).toBe(true);
+    expect(result.current.error).toBeNull();
+  });
+
+  it("stops retrying play() while waiting for the gesture", async () => {
+    const audio = createFakeAudio(() => Promise.reject(notAllowed()));
+    const { result, rerender } = renderWithAudio(audio);
+
+    await act(async () => {
+      rerender({ song });
+    });
+    await act(async () => {
+      audio.dispatch("canplay");
+    });
+    expect(result.current.needsUserGesture).toBe(true);
+    const attempts = audio.play.mock.calls.length;
+
+    await act(async () => {
+      rerender({ song: { ...song } });
+    });
+
+    expect(audio.play.mock.calls.length).toBe(attempts);
+  });
+
+  it("unlocks and plays when started from a user gesture", async () => {
+    const audio = createFakeAudio(() => Promise.reject(notAllowed()));
+    const { result, rerender } = renderWithAudio(audio);
+
+    await act(async () => {
+      rerender({ song });
+    });
+    await act(async () => {
+      audio.dispatch("canplay");
+    });
+    expect(result.current.needsUserGesture).toBe(true);
+
+    audio.play.mockImplementation(() => Promise.resolve());
+    await act(async () => {
+      result.current.startPlaybackFromGesture();
+    });
+
+    expect(result.current.needsUserGesture).toBe(false);
+    expect(result.current.error).toBeNull();
+    expect(audio.pause).not.toHaveBeenCalled();
+  });
+
+  it("still reports non-policy play failures as errors", async () => {
+    const audio = createFakeAudio(() => Promise.reject(new Error("boom")));
+    const { result, rerender } = renderWithAudio(audio);
+
+    await act(async () => {
+      rerender({ song });
+    });
+    await act(async () => {
+      audio.dispatch("canplay");
+    });
+
+    expect(result.current.needsUserGesture).toBe(false);
+    expect(result.current.error).toMatch(/failed: boom$/);
+  });
+
+  it("is a no-op when there is no audio element yet", () => {
+    const { result } = renderHook(() =>
+      useAudioPlayer({
+        song: null,
+        playbackState: null,
+        onSongEnded: vi.fn(),
+        onTimeUpdate: vi.fn(),
+      })
+    );
+
+    expect(result.current.needsUserGesture).toBe(false);
+    expect(() => result.current.startPlaybackFromGesture()).not.toThrow();
+  });
+});

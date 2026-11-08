@@ -83,6 +83,19 @@ describe("getServerConfig", () => {
     expect(config.nextSongDuration).toBe(600);
   });
 
+  it("omits autoplayPlaylist when AUTOPLAY_PLAYLIST is unset or blank", () => {
+    delete process.env.AUTOPLAY_PLAYLIST;
+    expect(getServerConfig().autoplayPlaylist).toBeUndefined();
+
+    process.env.AUTOPLAY_PLAYLIST = "   ";
+    expect(getServerConfig().autoplayPlaylist).toBeUndefined();
+  });
+
+  it("exposes a trimmed AUTOPLAY_PLAYLIST", () => {
+    process.env.AUTOPLAY_PLAYLIST = "  Kids Karaoke ";
+    expect(getServerConfig().autoplayPlaylist).toBe("Kids Karaoke");
+  });
+
   it("should return NaN for non-numeric env values (parseInt behavior)", () => {
     process.env.AUTOPLAY_DELAY = "not_a_number";
     const config = getServerConfig();
@@ -103,6 +116,7 @@ describe("getServerConfig", () => {
     expect(config).toHaveProperty("timeUpdateInterval");
     expect(config).toHaveProperty("ratingAnimationDuration");
     expect(config).toHaveProperty("nextSongDuration");
-    expect(Object.keys(config)).toHaveLength(6);
+    expect(config).toHaveProperty("autoplayPlaylist");
+    expect(Object.keys(config)).toHaveLength(7);
   });
 });

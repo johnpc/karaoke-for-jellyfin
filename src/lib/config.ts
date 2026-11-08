@@ -6,10 +6,13 @@ export interface AppConfig {
   timeUpdateInterval: number;
   ratingAnimationDuration: number;
   nextSongDuration: number;
+  /** Name/id of the Jellyfin playlist auto-queued when the queue is empty */
+  autoplayPlaylist?: string;
 }
 
 export function getServerConfig(): AppConfig {
   return {
+    autoplayPlaylist: process.env.AUTOPLAY_PLAYLIST?.trim() || undefined,
     autoplayDelay: parseInt(process.env.AUTOPLAY_DELAY || "500"),
     queueAutoplayDelay: parseInt(process.env.QUEUE_AUTOPLAY_DELAY || "1000"),
     controlsAutoHideDelay: parseInt(

@@ -24,10 +24,10 @@ Use your phone to search and queue songs while others sing along on the TV.
 
 Full-screen karaoke experience with lyrics, performance feedback, and queue management.
 
-| Auto-Play & Controls                                            | Sing-Along Lyrics                                           | Performance Rating                                                               | Next Song Countdown                                           |
-| --------------------------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| ![TV Autoplay](./screenshots/tv-1-autoplay-when-song-added.png) | ![TV Lyrics](./screenshots/tv-2-sing-along-with-lyrics.png) | ![TV Rating](./screenshots/tv-3-graded-singing-performance.png)                  | ![TV Next Up](./screenshots/tv-4-next-up-countdown.png)       |
-| Automatic playback when songs are added with host controls      | Full-screen lyrics display with real-time synchronization   | Performance ratings and feedback after each song. (These are just random. Shhh!) | Smooth transitions with next song preview and countdown timer |
+| Auto-Play & Controls                                            | Sing-Along Lyrics                                                          | Performance Rating                                                               | Next Song Countdown                                           |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| ![TV Autoplay](./screenshots/tv-1-autoplay-when-song-added.png) | ![TV Lyrics](./screenshots/tv-2-sing-along-with-lyrics.png)                | ![TV Rating](./screenshots/tv-3-graded-singing-performance.png)                  | ![TV Next Up](./screenshots/tv-4-next-up-countdown.png)       |
+| Automatic playback when songs are added with host controls      | Full-screen synced lyrics, with word-by-word highlighting for Enhanced LRC | Performance ratings and feedback after each song. (These are just random. Shhh!) | Smooth transitions with next song preview and countdown timer |
 
 ### Admin Interface
 
@@ -68,6 +68,7 @@ Mobile-optimized host controls for managing the karaoke session.
 
 - **Mobile Interface**: Search and queue songs from your phone
 - **TV Display**: Full-screen lyrics display and playback control
+- **Sing-Along Lyrics**: Line-synced LRC plus word-by-word highlighting for Enhanced LRC (`.lrc`/`.elrc` with `<mm:ss.xx>` word tags)
 - **Admin Interface**: Comprehensive host controls for session management
 - **Jellyfin Integration**: Leverages your existing Jellyfin media library
 - **Karaoke Videos (MP4)**: Plays video files with burned-in lyrics (e.g. MP3+CDG converted with ffmpeg) full-screen on the TV, alongside regular audio tracks
@@ -101,6 +102,9 @@ services:
 
       # OPTIONAL Karaoke video library (name or id). Unset = MusicVideo items only
       - KARAOKE_VIDEO_LIBRARY=${KARAOKE_VIDEO_LIBRARY}
+      # OPTIONAL Auto-queue a playlist whenever the queue is empty
+      - AUTOPLAY_PLAYLIST=${AUTOPLAY_PLAYLIST}
+      - AUTOPLAY_PLAYLIST_SHUFFLE=${AUTOPLAY_PLAYLIST_SHUFFLE:-false}
 
       # OPTIONAL TV Display Timing Configuration (in milliseconds)
       - RATING_ANIMATION_DURATION=${RATING_ANIMATION_DURATION:-15000}
@@ -141,6 +145,24 @@ Besides audio tracks with synced lyrics, the app can queue **videos whose lyrics
 4. Search for the song on your phone and add it to the queue as usual.
 
 The TV loads videos through the app's stream proxy (`/api/stream/<id>?type=video`), which requests Jellyfin's direct stream (`/Videos/<id>/stream?static=true`) server-side - your API key never reaches the browser. Use a browser-friendly container/codec (MP4 with H.264 + AAC) since the video is played natively without transcoding.
+
+#### Auto-queue a playlist (hands-free mode)
+
+Running the TV page on a tablet for a kid, or want music to start on its own
+instead of building a queue by hand? Point the server at a Jellyfin playlist:
+
+| Variable                    | Description                                                                                                                                                               | Default |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `AUTOPLAY_PLAYLIST`         | Name (case-insensitive) or Jellyfin id of a playlist. Whenever the queue is empty — when the TV page connects and after the last song finishes — its songs are queued up. | _unset_ |
+| `AUTOPLAY_PLAYLIST_SHUFFLE` | Set to `true` to shuffle the playlist each time it is queued.                                                                                                             | `false` |
+
+Notes:
+
+- Leaving `AUTOPLAY_PLAYLIST` unset keeps the current behaviour (empty queue waits for phones).
+- Only songs with lyrics are queued, the same rule the phone UI applies.
+- Songs added from a phone are interleaved ahead of the playlist by the fair-rotation queue, so a kid can still pick a favourite without waiting for the whole playlist.
+- The playlist lookup ignores `PLAYLIST_FILTER_REGEX`, so the auto-queued playlist does not have to be visible in the phone UI.
+- Queued songs show the playlist name as "added by", and the TV waiting screen shows which playlist is in use.
 
 ### Local Development
 
@@ -193,6 +215,13 @@ The admin interface provides three main control panels:
 - **Playback**: Control current song playback, volume, and lyrics timing
 - **Queue**: Monitor upcoming songs and queue status
 - **Emergency**: Quick access to emergency controls, system status, and cache management
+
+### Lyrics Formats
+
+Lyrics are fetched from Jellyfin first (`/Audio/{id}/Lyrics`), then from local files in `LYRICS_PATH`, `JELLYFIN_MEDIA_PATH`, or the bundled `lyrics/` folder (matched by song ID; `.lrc`, `.srt`, `.vtt`, `.txt`).
+
+- **LRC** (`[mm:ss.xx]Line`): the current line is highlighted as a whole.
+- **Enhanced LRC** (`[mm:ss.xx]<mm:ss.xx>Word <mm:ss.xx>by <mm:ss.xx>word`): each word lights up as it is sung, with a smooth fill on the current word. Works with the admin **lyrics offset** control. Jellyfin 10.11+ parses `.lrc`/`.elrc` word tags into per-word cues, which the TV display uses directly; raw `.lrc` files with inline `<mm:ss.xx>` tags are parsed by the app itself. Lines without word tags render exactly as plain LRC, so mixed files work. See `lyrics/sample-enhanced.lrc` for an example.
 
 ### Tips for Hosts
 

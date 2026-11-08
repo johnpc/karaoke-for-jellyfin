@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PlaybackState } from "@/types";
+import { LyricsWord, PlaybackState } from "@/types";
 import { useLyrics } from "@/hooks/useLyrics";
 
 interface UseLyricsSyncOptions {
@@ -12,6 +12,8 @@ interface UseLyricsSyncOptions {
 
 interface UseLyricsSyncReturn {
   currentLine: string;
+  currentLineWords?: LyricsWord[]; // word-level timing (Enhanced LRC)
+  currentLineEndMs?: number; // start of the next line, if any
   nextLine: string;
   lyricsLoading: boolean;
   lyricsError: string | null;
@@ -56,8 +58,15 @@ export function useLyricsSync({
   const progress =
     duration > 0 ? ((playbackState?.currentTime || 0) / duration) * 100 : 0;
 
+  const activeLine =
+    lyricsFile && syncState && syncState.currentLine >= 0
+      ? lyricsFile.lines[syncState.currentLine]
+      : undefined;
+
   return {
     currentLine,
+    currentLineWords: activeLine?.words,
+    currentLineEndMs: syncState?.nextLine?.timestamp,
     nextLine,
     lyricsLoading,
     lyricsError,

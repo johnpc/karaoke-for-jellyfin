@@ -137,6 +137,11 @@ export function MainContent({
   }
 
   return (
-    <WaitingScreen queue={queue} session={session} isConnected={isConnected} />
+    <WaitingScreen
+      queue={queue}
+      session={session}
+      isConnected={isConnected}
+      autoplayPlaylist={config.autoplayPlaylist}
+    />
   );
 }
