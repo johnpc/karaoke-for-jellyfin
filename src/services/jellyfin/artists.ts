@@ -2,7 +2,7 @@
 import { Artist } from "@/types";
 import type { JellyfinContext, JellyfinArtistSearchResponse } from "./types";
 import { transformArtists } from "./transforms";
-import { jellyfinAuthHeaders } from "./auth-header";
+import { jellyfinJsonHeaders } from "./auth-header";
 
 /**
  * Search for artists by name
@@ -37,10 +37,7 @@ export async function searchArtists(
     const response = await fetch(
       `${ctx.baseUrl}/Items?${searchParams.toString()}`,
       {
-        headers: {
-          ...jellyfinAuthHeaders(ctx.apiKey),
-          "Content-Type": "application/json",
-        },
+        headers: jellyfinJsonHeaders(ctx.apiKey),
       }
     );
 

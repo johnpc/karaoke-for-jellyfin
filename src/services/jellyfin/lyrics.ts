@@ -1,6 +1,6 @@
 // Lyrics fetching from Jellyfin
 import type { JellyfinContext } from "./types";
-import { jellyfinAuthHeaders } from "./auth-header";
+import { jellyfinAuthHeaders, jellyfinJsonHeaders } from "./auth-header";
 
 interface MediaStream {
   Type: string;
@@ -27,10 +27,7 @@ export async function getLyrics(
   try {
     const lyricsUrl = `${ctx.baseUrl}/Audio/${itemId}/Lyrics`;
     const response = await fetch(lyricsUrl, {
-      headers: {
-        ...jellyfinAuthHeaders(ctx.apiKey),
-        "Content-Type": "application/json",
-      },
+      headers: jellyfinJsonHeaders(ctx.apiKey),
     });
 
     if (response.ok) {
@@ -60,10 +57,7 @@ async function tryEmbeddedLyrics(
   const itemResponse = await fetch(
     `${ctx.baseUrl}/Items/${itemId}?userId=${ctx.userId}&fields=MediaStreams,MediaSources`,
     {
-      headers: {
-        ...jellyfinAuthHeaders(ctx.apiKey),
-        "Content-Type": "application/json",
-      },
+      headers: jellyfinJsonHeaders(ctx.apiKey),
     }
   );
 

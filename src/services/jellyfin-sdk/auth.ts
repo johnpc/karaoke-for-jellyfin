@@ -1,4 +1,4 @@
-import { jellyfinAuthHeaders } from "../jellyfin/auth-header";
+import { jellyfinJsonHeaders } from "../jellyfin/auth-header";
 // Authentication and library discovery for the Jellyfin SDK service
 
 interface VirtualFolder {
@@ -21,10 +21,7 @@ export async function fetchMusicLibraryId(
   try {
     const response = await fetch(`${baseUrl}/Library/VirtualFolders`, {
       method: "GET",
-      headers: {
-        ...jellyfinAuthHeaders(apiKey),
-        "Content-Type": "application/json",
-      },
+      headers: jellyfinJsonHeaders(apiKey),
     });
 
     if (!response.ok) {
@@ -59,10 +56,7 @@ export async function authenticateUser(
   try {
     const response = await fetch(`${baseUrl}/Users`, {
       method: "GET",
-      headers: {
-        ...jellyfinAuthHeaders(apiKey),
-        "Content-Type": "application/json",
-      },
+      headers: jellyfinJsonHeaders(apiKey),
     });
 
     if (!response.ok) {
@@ -109,10 +103,7 @@ export async function checkHealth(
   try {
     const response = await fetch(`${baseUrl}/System/Info`, {
       method: "GET",
-      headers: {
-        ...jellyfinAuthHeaders(apiKey),
-        "Content-Type": "application/json",
-      },
+      headers: jellyfinJsonHeaders(apiKey),
     });
     return response.ok;
   } catch (error) {
