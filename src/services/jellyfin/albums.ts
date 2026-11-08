@@ -6,7 +6,7 @@ import type {
   JellyfinSearchResponse,
 } from "./types";
 import { transformAlbums, transformMediaItems } from "./transforms";
-import { jellyfinAuthHeaders } from "./auth-header";
+import { jellyfinJsonHeaders } from "./auth-header";
 
 /**
  * Search for albums by name
@@ -41,10 +41,7 @@ export async function searchAlbums(
     const response = await fetch(
       `${ctx.baseUrl}/Items?${searchParams.toString()}`,
       {
-        headers: {
-          ...jellyfinAuthHeaders(ctx.apiKey),
-          "Content-Type": "application/json",
-        },
+        headers: jellyfinJsonHeaders(ctx.apiKey),
       }
     );
 
@@ -98,10 +95,7 @@ export async function getSongsByAlbumId(
     const response = await fetch(
       `${ctx.baseUrl}/Items?${searchParams.toString()}`,
       {
-        headers: {
-          ...jellyfinAuthHeaders(ctx.apiKey),
-          "Content-Type": "application/json",
-        },
+        headers: jellyfinJsonHeaders(ctx.apiKey),
       }
     );
 
