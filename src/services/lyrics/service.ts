@@ -3,7 +3,7 @@ import { LyricsFile, LyricsLine, LyricsSyncState } from "@/types";
 import path from "path";
 
 import { parseLRC } from "./parse-lrc";
-import { parseJellyfinLyrics } from "./parse-timed";
+import { parseJellyfinLyrics, JellyfinLyricsItem } from "./parse-jellyfin";
 import {
   findLyricsFile,
   parseLyricsFile,
@@ -45,7 +45,7 @@ export class LyricsService {
         if (Array.isArray(jellyfinLyrics)) {
           console.log("Parsing Jellyfin native lyrics format");
           lyricsFile = parseJellyfinLyrics(
-            jellyfinLyrics as { Start: number; Text: string }[],
+            jellyfinLyrics as JellyfinLyricsItem[],
             songId
           );
         } else if (typeof jellyfinLyrics === "string") {

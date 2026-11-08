@@ -1,6 +1,8 @@
 // LRC format parser and time utilities
 import { LyricsFile, LyricsLine, LyricsMetadata } from "@/types";
 
+import { parseWordTiming } from "./word-timing";
+
 /**
  * Parse time string (mm:ss.xx or mm:ss) to milliseconds
  */
@@ -66,9 +68,11 @@ export function parseLRC(content: string, songId: string): LyricsFile {
         parseInt(centiseconds) * 10;
 
       if (text.trim()) {
+        const { text: lineText, words } = parseWordTiming(text, timestamp);
         lines.push({
           timestamp,
-          text: text.trim(),
+          text: lineText,
+          ...(words && { words }),
           isChorus:
             text.toLowerCase().includes("chorus") ||
             text.toLowerCase().includes("refrain"),

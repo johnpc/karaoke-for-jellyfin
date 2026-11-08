@@ -57,9 +57,16 @@ export interface MediaMetadata {
 
 // Lyrics types
 
+/** One timed segment of an Enhanced LRC line (usually a single word) */
+export interface LyricsWord {
+  word: string;
+  startMs: number; // milliseconds from start of song
+}
+
 export interface LyricsLine {
   timestamp: number; // milliseconds from start
-  text: string;
+  text: string; // display text with any inline word tags stripped
+  words?: LyricsWord[]; // present only when the line has word-level timing
   duration?: number; // milliseconds
   isChorus?: boolean;
   isVerse?: boolean;
