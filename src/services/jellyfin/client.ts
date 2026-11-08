@@ -1,5 +1,6 @@
 // Jellyfin connection, authentication, and health check
 import type { JellyfinContext } from "./types";
+import { jellyfinAuthHeaders } from "./auth-header";
 
 interface JellyfinUser {
   Id: string;
@@ -87,7 +88,7 @@ export class JellyfinClient {
   async healthCheck(): Promise<boolean> {
     try {
       const response = await fetch(`${this.baseUrl}/System/Info`, {
-        headers: { "X-Emby-Token": this.apiKey },
+        headers: jellyfinAuthHeaders(this.apiKey),
       });
       return response.ok;
     } catch (error) {
@@ -108,7 +109,7 @@ export class JellyfinClient {
    */
   async getDirectStreamUrl(itemId: string): Promise<string> {
     const ctx = await this.ensureAuth();
-    return `${ctx.baseUrl}/Audio/${itemId}/universal?userId=${ctx.userId}&deviceId=karaoke-app&api_key=${ctx.apiKey}&container=mp3,aac,m4a,flac,webma,webm,wav,ogg`;
+    return `${ctx.baseUrl}/Audio/${itemId}/universal?userId=${ctx.userId}&deviceId=karaoke-app&container=mp3,aac,m4a,flac,webma,webm,wav,ogg`;
   }
 
   /**
@@ -140,7 +141,7 @@ export class JellyfinClient {
   /** Standard headers for Jellyfin API calls */
   headers(): Record<string, string> {
     return {
-      "X-Emby-Token": this.apiKey,
+      ...jellyfinAuthHeaders(this.apiKey),
       "Content-Type": "application/json",
     };
   }

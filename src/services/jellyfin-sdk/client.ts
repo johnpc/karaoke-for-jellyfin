@@ -119,7 +119,7 @@ export class JellyfinSDKService {
 
   async getDirectStreamUrl(itemId: string): Promise<string> {
     await this.ensureAuthenticated();
-    return `${this.baseUrl}/Audio/${itemId}/universal?userId=${this.userId}&deviceId=karaoke-app&api_key=${this.apiKey}&container=mp3,aac,m4a,flac,webma,webm,wav,ogg`;
+    return `${this.baseUrl}/Audio/${itemId}/universal?userId=${this.userId}&deviceId=karaoke-app&container=mp3,aac,m4a,flac,webma,webm,wav,ogg`;
   }
 
   async healthCheck(): Promise<boolean> {
