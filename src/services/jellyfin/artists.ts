@@ -2,6 +2,7 @@
 import { Artist } from "@/types";
 import type { JellyfinContext, JellyfinArtistSearchResponse } from "./types";
 import { transformArtists } from "./transforms";
+import { jellyfinAuthHeaders } from "./auth-header";
 
 /**
  * Search for artists by name
@@ -37,7 +38,7 @@ export async function searchArtists(
       `${ctx.baseUrl}/Items?${searchParams.toString()}`,
       {
         headers: {
-          "X-Emby-Token": ctx.apiKey,
+          ...jellyfinAuthHeaders(ctx.apiKey),
           "Content-Type": "application/json",
         },
       }

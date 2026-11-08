@@ -1,5 +1,6 @@
 // Lyrics fetching from Jellyfin
 import type { JellyfinContext } from "./types";
+import { jellyfinAuthHeaders } from "./auth-header";
 
 interface MediaStream {
   Type: string;
@@ -27,7 +28,7 @@ export async function getLyrics(
     const lyricsUrl = `${ctx.baseUrl}/Audio/${itemId}/Lyrics`;
     const response = await fetch(lyricsUrl, {
       headers: {
-        "X-Emby-Token": ctx.apiKey,
+        ...jellyfinAuthHeaders(ctx.apiKey),
         "Content-Type": "application/json",
       },
     });
@@ -60,7 +61,7 @@ async function tryEmbeddedLyrics(
     `${ctx.baseUrl}/Items/${itemId}?userId=${ctx.userId}&fields=MediaStreams,MediaSources`,
     {
       headers: {
-        "X-Emby-Token": ctx.apiKey,
+        ...jellyfinAuthHeaders(ctx.apiKey),
         "Content-Type": "application/json",
       },
     }
@@ -83,10 +84,10 @@ async function tryEmbeddedLyrics(
   if (lyricsStreams.length === 0) return null;
 
   const lyricsStream = lyricsStreams[0];
-  const subtitleUrl = `${ctx.baseUrl}/Videos/${itemId}/${lyricsStream.Index}/Subtitles/0/Stream.lrc?api_key=${ctx.apiKey}`;
+  const subtitleUrl = `${ctx.baseUrl}/Videos/${itemId}/${lyricsStream.Index}/Subtitles/0/Stream.lrc`;
 
   const subtitleResponse = await fetch(subtitleUrl, {
-    headers: { "X-Emby-Token": ctx.apiKey },
+    headers: jellyfinAuthHeaders(ctx.apiKey),
   });
 
   if (subtitleResponse.ok) {

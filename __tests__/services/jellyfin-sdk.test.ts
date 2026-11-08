@@ -90,7 +90,7 @@ describe("JellyfinSDKService", () => {
         expect.objectContaining({
           method: "GET",
           headers: expect.objectContaining({
-            "X-Emby-Token": "test-api-key-123",
+            Authorization: `MediaBrowser Client="Karaoke For Jellyfin", Device="Server", DeviceId="karaoke-for-jellyfin", Version="1.0.0", Token="test-api-key-123"`,
           }),
         })
       );
@@ -261,7 +261,7 @@ describe("JellyfinSDKService", () => {
         "http://jellyfin.local:8096/Audio/item-123/universal"
       );
       expect(url).toContain("userId=user-1");
-      expect(url).toContain("api_key=test-api-key-123");
+      expect(url).not.toContain("api_key=");
     });
   });
 
@@ -278,7 +278,7 @@ describe("JellyfinSDKService", () => {
         "http://jellyfin.local:8096/System/Info",
         expect.objectContaining({
           headers: expect.objectContaining({
-            "X-Emby-Token": "test-api-key-123",
+            Authorization: `MediaBrowser Client="Karaoke For Jellyfin", Device="Server", DeviceId="karaoke-for-jellyfin", Version="1.0.0", Token="test-api-key-123"`,
           }),
         })
       );
