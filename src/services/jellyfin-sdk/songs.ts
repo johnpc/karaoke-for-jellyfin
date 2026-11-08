@@ -1,7 +1,7 @@
 import { MediaItem } from "@/types";
 import { JellyfinContext, SongResult } from "./types";
 import { transformMediaItems } from "./transformers";
-import { jellyfinAuthHeaders } from "../jellyfin/auth-header";
+import { jellyfinJsonHeaders } from "../jellyfin/auth-header";
 
 export async function getSongsByArtistId(
   ctx: JellyfinContext,
@@ -29,10 +29,7 @@ export async function getSongsByArtistId(
   const itemsUrl = `${ctx.baseUrl}/Items?${params}`;
   const response = await fetch(itemsUrl, {
     method: "GET",
-    headers: {
-      ...jellyfinAuthHeaders(ctx.apiKey),
-      "Content-Type": "application/json",
-    },
+    headers: jellyfinJsonHeaders(ctx.apiKey),
   });
 
   if (!response.ok) {
@@ -78,10 +75,7 @@ export async function searchByTitle(
   const itemsUrl = `${ctx.baseUrl}/Items?${params}`;
   const response = await fetch(itemsUrl, {
     method: "GET",
-    headers: {
-      ...jellyfinAuthHeaders(ctx.apiKey),
-      "Content-Type": "application/json",
-    },
+    headers: jellyfinJsonHeaders(ctx.apiKey),
   });
 
   if (!response.ok) {
@@ -127,10 +121,7 @@ export async function getAllAudioItems(
   const itemsUrl = `${ctx.baseUrl}/Items?${params}`;
   const response = await fetch(itemsUrl, {
     method: "GET",
-    headers: {
-      ...jellyfinAuthHeaders(ctx.apiKey),
-      "Content-Type": "application/json",
-    },
+    headers: jellyfinJsonHeaders(ctx.apiKey),
   });
 
   if (!response.ok) {

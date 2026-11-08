@@ -2,7 +2,7 @@
 import { Artist } from "@/types";
 import { JellyfinContext } from "./types";
 import { transformArtists } from "./transformers";
-import { jellyfinAuthHeaders } from "../jellyfin/auth-header";
+import { jellyfinJsonHeaders } from "../jellyfin/auth-header";
 
 /**
  * Search for artists by name
@@ -34,10 +34,7 @@ export async function searchArtists(
   const artistsUrl = `${ctx.baseUrl}/Artists?${params}`;
   const response = await fetch(artistsUrl, {
     method: "GET",
-    headers: {
-      ...jellyfinAuthHeaders(ctx.apiKey),
-      "Content-Type": "application/json",
-    },
+    headers: jellyfinJsonHeaders(ctx.apiKey),
   });
 
   if (!response.ok) {
@@ -83,10 +80,7 @@ export async function getAllArtists(
   const artistsUrl = `${ctx.baseUrl}/Artists?${params}`;
   const response = await fetch(artistsUrl, {
     method: "GET",
-    headers: {
-      ...jellyfinAuthHeaders(ctx.apiKey),
-      "Content-Type": "application/json",
-    },
+    headers: jellyfinJsonHeaders(ctx.apiKey),
   });
 
   if (!response.ok) {

@@ -3,7 +3,7 @@ import { MediaItem } from "@/types";
 import type { JellyfinContext, JellyfinSearchResponse } from "./types";
 import { transformMediaItems } from "./transforms";
 import { fetchAllAudioItemsBatched } from "./batch";
-import { jellyfinAuthHeaders } from "./auth-header";
+import { jellyfinJsonHeaders } from "./auth-header";
 
 /** Compute a relevance score for a media item (lower = more relevant) */
 function getRelevanceScore(item: MediaItem, queryLower: string): number {
@@ -85,10 +85,7 @@ export async function performSearch(
     const response = await fetch(
       `${ctx.baseUrl}/Items?${searchParams.toString()}`,
       {
-        headers: {
-          ...jellyfinAuthHeaders(ctx.apiKey),
-          "Content-Type": "application/json",
-        },
+        headers: jellyfinJsonHeaders(ctx.apiKey),
       }
     );
 

@@ -15,3 +15,8 @@ export function jellyfinAuthHeaders(apiKey: string): Record<string, string> {
       `DeviceId="${JELLYFIN_DEVICE_ID}", Version="1.0.0", Token="${apiKey}"`,
   };
 }
+
+/** Auth header plus the JSON content type used by every Jellyfin API call. */
+export function jellyfinJsonHeaders(apiKey: string): Record<string, string> {
+  return { ...jellyfinAuthHeaders(apiKey), "Content-Type": "application/json" };
+}
