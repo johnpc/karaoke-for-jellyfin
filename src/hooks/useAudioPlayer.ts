@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { QueueItem, PlaybackState } from "@/types";
-import { setupAudioEventListeners, syncPlaybackState } from "./audioPlayerSync";
+import { handlePlayFailure } from "./audioPlaybackPolicy";
+import { setupAudioEventListeners } from "./audioEventListeners";
+import { syncPlaybackState } from "./audioPlayerSync";
+import { useAutoplayGate } from "./useAutoplayGate";
 
 interface UseAudioPlayerOptions {
   song: QueueItem | null;
@@ -15,6 +18,10 @@ interface UseAudioPlayerReturn {
   audioRef: React.RefObject<HTMLAudioElement | null>;
   isLoading: boolean;
   error: string | null;
+  /** See `useAutoplayGate`: the browser needs a tap before audio can start. */
+  needsUserGesture: boolean;
+  /** Call from a tap/click handler to unlock audio and start playback. */
+  startPlaybackFromGesture: () => void;
 }
 
 export function useAudioPlayer({
@@ -28,6 +35,13 @@ export function useAudioPlayer({
   const [error, setError] = useState<string | null>(null);
   const [currentSongId, setCurrentSongId] = useState<string | null>(null);
   const lastSeekTimeRef = useRef<number>(0);
+
+  const { needsUserGesture, playFailure, startPlaybackFromGesture } =
+    useAutoplayGate({
+      audioRef,
+      shouldBePlaying: playbackState?.isPlaying ?? false,
+      setError,
+    });
 
   // Update audio source when song changes
   useEffect(() => {
@@ -67,10 +81,11 @@ export function useAudioPlayer({
       setIsLoading(false);
       if (playbackState?.isPlaying && audio.paused) {
         console.log("Audio ready and should be playing - starting playback");
-        audio.play().catch(err => {
-          console.error("Auto-play on ready failed:", err);
-          setError(`Auto-play failed: ${err.message}`);
-        });
+        audio
+          .play()
+          .catch(err =>
+            handlePlayFailure(err, "Auto-play failed", playFailure)
+          );
       }
     };
 
@@ -105,14 +120,13 @@ export function useAudioPlayer({
   // Handle playback state changes
   useEffect(() => {
     if (!audioRef.current || !playbackState || !song) return;
-    syncPlaybackState(
-      audioRef.current,
-      playbackState,
+    syncPlaybackState(audioRef.current, playbackState, {
       isLoading,
+      autoplayBlocked: needsUserGesture,
       lastSeekTimeRef,
-      setError
-    );
-  }, [playbackState, isLoading, song]);
+      playFailure,
+    });
+  }, [playbackState, isLoading, song, needsUserGesture, playFailure]);
 
   // Set up audio event listeners
   useEffect(() => {
@@ -124,5 +138,11 @@ export function useAudioPlayer({
     );
   }, [onTimeUpdate, onSongEnded]);
 
-  return { audioRef, isLoading, error };
+  return {
+    audioRef,
+    isLoading,
+    error,
+    needsUserGesture,
+    startPlaybackFromGesture,
+  };
 }
