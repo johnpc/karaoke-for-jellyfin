@@ -3,7 +3,7 @@
 import { useTVDisplay } from "@/hooks/useTVDisplay";
 import { QueuePreview } from "@/components/tv/QueuePreview";
 import { HostControls } from "@/components/tv/HostControls";
-import { AudioPlayer } from "@/components/tv/AudioPlayer";
+import { MediaPlayer } from "@/components/tv/MediaPlayer";
 import { NextUpSidebar } from "@/components/tv/NextUpSidebar";
 import { QRCode } from "@/components/tv/QRCode";
 import { ApplausePlayer } from "@/components/tv/ApplausePlayer";
@@ -121,7 +121,7 @@ export default function TVDisplay() {
         />
       )}
 
-      <AudioPlayer
+      <MediaPlayer
         song={currentSong}
         playbackState={playbackState}
         onPlaybackControl={playbackControl}

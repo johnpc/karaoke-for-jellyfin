@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { handlePlayFailure, PlayFailureHandlers } from "./audioPlaybackPolicy";
 
 interface UseAutoplayGateOptions {
-  audioRef: React.RefObject<HTMLAudioElement | null>;
+  audioRef: React.RefObject<HTMLMediaElement | null>;
   /** Whether the host currently wants the song playing. */
   shouldBePlaying: boolean;
   setError: React.Dispatch<React.SetStateAction<string | null>>;

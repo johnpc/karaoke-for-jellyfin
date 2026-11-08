@@ -2,6 +2,7 @@
 
 export type {
   MediaItem,
+  MediaType,
   Artist,
   Album,
   Playlist,

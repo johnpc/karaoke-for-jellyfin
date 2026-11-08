@@ -10,7 +10,7 @@ export interface PlaybackSyncOptions {
 }
 
 export function syncPlaybackState(
-  audio: HTMLAudioElement,
+  audio: HTMLMediaElement,
   playbackState: PlaybackState,
   options: PlaybackSyncOptions
 ): void {
@@ -21,7 +21,7 @@ export function syncPlaybackState(
 }
 
 export function syncPlayPause(
-  audio: HTMLAudioElement,
+  audio: HTMLMediaElement,
   playbackState: PlaybackState,
   { isLoading, autoplayBlocked, playFailure }: PlaybackSyncOptions
 ): void {
@@ -40,7 +40,7 @@ export function syncPlayPause(
 }
 
 export function syncMuteAndVolume(
-  audio: HTMLAudioElement,
+  audio: HTMLMediaElement,
   playbackState: PlaybackState
 ): void {
   if (playbackState.isMuted !== undefined) {
@@ -56,7 +56,7 @@ export function syncMuteAndVolume(
 }
 
 export function syncSeekPosition(
-  audio: HTMLAudioElement,
+  audio: HTMLMediaElement,
   playbackState: PlaybackState,
   lastSeekTimeRef: React.MutableRefObject<number>
 ): void {
@@ -78,7 +78,7 @@ export function syncSeekPosition(
 }
 
 export function syncPlaybackRate(
-  audio: HTMLAudioElement,
+  audio: HTMLMediaElement,
   playbackState: PlaybackState
 ): void {
   if (

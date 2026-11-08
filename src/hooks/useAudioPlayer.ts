@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { QueueItem, PlaybackState } from "@/types";
-import { handlePlayFailure } from "./audioPlaybackPolicy";
+import { attachSourceLoadListeners } from "./audioSourceLoader";
 import { setupAudioEventListeners } from "./audioEventListeners";
 import { syncPlaybackState } from "./audioPlayerSync";
 import { useAutoplayGate } from "./useAutoplayGate";
@@ -14,8 +14,8 @@ interface UseAudioPlayerOptions {
   onTimeUpdate: (currentTime: number) => void;
 }
 
-interface UseAudioPlayerReturn {
-  audioRef: React.RefObject<HTMLAudioElement | null>;
+interface UseAudioPlayerReturn<T extends HTMLMediaElement> {
+  audioRef: React.RefObject<T | null>;
   isLoading: boolean;
   error: string | null;
   /** See `useAutoplayGate`: the browser needs a tap before audio can start. */
@@ -24,13 +24,18 @@ interface UseAudioPlayerReturn {
   startPlaybackFromGesture: () => void;
 }
 
-export function useAudioPlayer({
+/**
+ * Drives an <audio> (default) or <video> element from the shared playback
+ * state. The element type is generic so the TV's VideoPlayer can reuse the
+ * exact same load/play/pause/seek/volume/ended logic.
+ */
+export function useAudioPlayer<T extends HTMLMediaElement = HTMLAudioElement>({
   song,
   playbackState,
   onSongEnded,
   onTimeUpdate,
-}: UseAudioPlayerOptions): UseAudioPlayerReturn {
-  const audioRef = useRef<HTMLAudioElement>(null);
+}: UseAudioPlayerOptions): UseAudioPlayerReturn<T> {
+  const audioRef = useRef<T>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentSongId, setCurrentSongId] = useState<string | null>(null);
@@ -76,45 +81,12 @@ export function useAudioPlayer({
     console.log("Audio element src set to:", audio.src);
     audio.load();
 
-    const handleCanPlay = () => {
-      console.log("Audio can play");
-      setIsLoading(false);
-      if (playbackState?.isPlaying && audio.paused) {
-        console.log("Audio ready and should be playing - starting playback");
-        audio
-          .play()
-          .catch(err =>
-            handlePlayFailure(err, "Auto-play failed", playFailure)
-          );
-      }
-    };
-
-    const handleError = (e: Event) => {
-      console.error("Audio load error:", e);
-      console.error("Audio element error details:", {
-        error: audio.error,
-        networkState: audio.networkState,
-        readyState: audio.readyState,
-        src: audio.src,
-      });
-      setIsLoading(false);
-      setError("Failed to load audio");
-    };
-
-    const handleLoadedData = () => {
-      console.log("Audio loaded data");
-      setIsLoading(false);
-    };
-
-    audio.addEventListener("canplay", handleCanPlay);
-    audio.addEventListener("error", handleError);
-    audio.addEventListener("loadeddata", handleLoadedData);
-
-    return () => {
-      audio.removeEventListener("canplay", handleCanPlay);
-      audio.removeEventListener("error", handleError);
-      audio.removeEventListener("loadeddata", handleLoadedData);
-    };
+    return attachSourceLoadListeners(audio, {
+      playbackState,
+      playFailure,
+      setIsLoading,
+      setError,
+    });
   }, [song?.id, song?.mediaItem?.streamUrl]);
 
   // Handle playback state changes

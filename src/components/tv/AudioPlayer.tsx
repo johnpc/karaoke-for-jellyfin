@@ -4,7 +4,7 @@ import { SpeakerWaveIcon } from "@heroicons/react/24/outline";
 import { QueueItem, PlaybackState, PlaybackCommand } from "@/types";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 
-interface AudioPlayerProps {
+export interface AudioPlayerProps {
   song: QueueItem | null;
   playbackState: PlaybackState | null;
   onPlaybackControl: (command: PlaybackCommand) => void;

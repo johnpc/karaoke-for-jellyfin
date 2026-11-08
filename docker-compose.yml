@@ -10,6 +10,8 @@ services:
       - JELLYFIN_API_KEY=${JELLYFIN_API_KEY}
       - JELLYFIN_USERNAME=${JELLYFIN_USERNAME}
 
+      # OPTIONAL Karaoke video library (name or id). Unset = MusicVideo items only
+      - KARAOKE_VIDEO_LIBRARY=${KARAOKE_VIDEO_LIBRARY}
       # Optional: auto-queue a playlist whenever the queue is empty
       - AUTOPLAY_PLAYLIST=${AUTOPLAY_PLAYLIST}
       - AUTOPLAY_PLAYLIST_SHUFFLE=${AUTOPLAY_PLAYLIST_SHUFFLE:-false}

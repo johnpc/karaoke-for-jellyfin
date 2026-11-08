@@ -1,5 +1,13 @@
 // Media types — songs, artists, albums, playlists, and metadata
 
+/**
+ * How a queue entry is played on the TV.
+ * - "audio": Jellyfin audio track, lyrics rendered as text (default when absent)
+ * - "video": Jellyfin video (e.g. MP4 converted from MP3+CDG) with lyrics
+ *   burned in; played full-screen with no lyric overlay
+ */
+export type MediaType = "audio" | "video";
+
 export interface MediaItem {
   id: string;
   title: string;
@@ -10,6 +18,7 @@ export interface MediaItem {
   streamUrl: string;
   lyricsPath?: string;
   hasLyrics?: boolean; // From Jellyfin's HasLyrics field
+  mediaType?: MediaType; // Absent means "audio"
   metadata?: MediaMetadata;
 }
 

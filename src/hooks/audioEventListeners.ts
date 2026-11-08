@@ -7,7 +7,7 @@ export interface AudioEventHandlers {
 }
 
 export function setupAudioEventListeners(
-  audio: HTMLAudioElement,
+  audio: HTMLMediaElement,
   handlers: AudioEventHandlers,
   lastSeekTimeRef: React.MutableRefObject<number>
 ): () => void {
