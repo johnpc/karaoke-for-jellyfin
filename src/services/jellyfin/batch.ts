@@ -2,7 +2,7 @@
 import { MediaItem } from "@/types";
 import type { JellyfinContext, JellyfinSearchResponse } from "./types";
 import { transformMediaItems } from "./transforms";
-import { jellyfinAuthHeaders } from "./auth-header";
+import { jellyfinJsonHeaders } from "./auth-header";
 
 const BATCH_SIZE = 1000;
 const MAX_ITEMS = 50000;
@@ -33,10 +33,7 @@ export async function fetchAllAudioItemsBatched(
     const response = await fetch(
       `${ctx.baseUrl}/Items?${searchParams.toString()}`,
       {
-        headers: {
-          ...jellyfinAuthHeaders(ctx.apiKey),
-          "Content-Type": "application/json",
-        },
+        headers: jellyfinJsonHeaders(ctx.apiKey),
       }
     );
 
