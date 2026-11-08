@@ -218,6 +218,31 @@ describe("WaitingScreen", () => {
     expect(screen.queryByText("Session Info")).not.toBeInTheDocument();
   });
 
+  it("shows the autoplay playlist label when configured and queue is empty", () => {
+    render(
+      <WaitingScreen
+        queue={[]}
+        session={mockSession}
+        isConnected={true}
+        autoplayPlaylist="Kids Karaoke"
+      />
+    );
+
+    expect(screen.getByTestId("autoplay-playlist-label")).toHaveTextContent(
+      /Auto-queueing from playlist .Kids Karaoke./
+    );
+  });
+
+  it("hides the autoplay playlist label when not configured", () => {
+    render(
+      <WaitingScreen queue={[]} session={mockSession} isConnected={true} />
+    );
+
+    expect(
+      screen.queryByTestId("autoplay-playlist-label")
+    ).not.toBeInTheDocument();
+  });
+
   it("filters out completed songs from count", () => {
     const queue = [
       createQueueItem({ id: "q1", status: "completed" }),

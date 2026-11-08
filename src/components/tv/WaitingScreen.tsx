@@ -11,12 +11,15 @@ interface WaitingScreenProps {
   queue: QueueItem[];
   session: KaraokeSession | null;
   isConnected: boolean;
+  /** Playlist that auto-fills the queue (AUTOPLAY_PLAYLIST), if configured */
+  autoplayPlaylist?: string;
 }
 
 export function WaitingScreen({
   queue,
   session,
   isConnected,
+  autoplayPlaylist,
 }: WaitingScreenProps) {
   const nextSongs = queue.filter(item => item.status === "pending").slice(0, 3);
   const totalSongs = queue.filter(item => item.status === "pending").length;
@@ -75,6 +78,15 @@ export function WaitingScreen({
               <p className="text-sm text-green-400">
                 &#10024; Songs will start playing automatically when added
               </p>
+              {autoplayPlaylist && (
+                <p
+                  data-testid="autoplay-playlist-label"
+                  className="text-sm text-purple-300 mt-2"
+                >
+                  &#127925; Auto-queueing from playlist &ldquo;
+                  {autoplayPlaylist}&rdquo;
+                </p>
+              )}
             </div>
           )}
         </div>
