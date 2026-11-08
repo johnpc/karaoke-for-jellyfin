@@ -1,3 +1,4 @@
+import { jellyfinAuthHeaders } from "../jellyfin/auth-header";
 // Authentication and library discovery for the Jellyfin SDK service
 
 interface VirtualFolder {
@@ -21,7 +22,7 @@ export async function fetchMusicLibraryId(
     const response = await fetch(`${baseUrl}/Library/VirtualFolders`, {
       method: "GET",
       headers: {
-        "X-Emby-Token": apiKey,
+        ...jellyfinAuthHeaders(apiKey),
         "Content-Type": "application/json",
       },
     });
@@ -59,7 +60,7 @@ export async function authenticateUser(
     const response = await fetch(`${baseUrl}/Users`, {
       method: "GET",
       headers: {
-        "X-Emby-Token": apiKey,
+        ...jellyfinAuthHeaders(apiKey),
         "Content-Type": "application/json",
       },
     });
@@ -109,7 +110,7 @@ export async function checkHealth(
     const response = await fetch(`${baseUrl}/System/Info`, {
       method: "GET",
       headers: {
-        "X-Emby-Token": apiKey,
+        ...jellyfinAuthHeaders(apiKey),
         "Content-Type": "application/json",
       },
     });

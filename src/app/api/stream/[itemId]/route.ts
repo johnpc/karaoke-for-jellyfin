@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getJellyfinService } from "@/services/jellyfin";
+import { jellyfinAuthHeaders } from "../../../../services/jellyfin/auth-header";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -27,7 +28,7 @@ export async function GET(
     const range = request.headers.get("range");
 
     const fetchHeaders: Record<string, string> = {
-      "X-Emby-Token": process.env.JELLYFIN_API_KEY || "",
+      ...jellyfinAuthHeaders(process.env.JELLYFIN_API_KEY || ""),
       "User-Agent": "Karaoke-For-Jellyfin/1.0",
     };
 
