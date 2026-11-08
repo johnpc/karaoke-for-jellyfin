@@ -36,15 +36,11 @@ export function isVideoMediaItem(
 
 /**
  * Jellyfin direct video stream (no transcoding). Used server-side by the
- * stream proxy so the API key never reaches the browser.
+ * stream proxy, which authenticates with the Authorization header.
  */
-export function buildVideoStreamUrl(
-  baseUrl: string,
-  itemId: string,
-  apiKey: string
-): string {
+export function buildVideoStreamUrl(baseUrl: string, itemId: string): string {
   const base = baseUrl.replace(/\/$/, "");
-  return `${base}/Videos/${encodeURIComponent(itemId)}/stream?static=true&api_key=${encodeURIComponent(apiKey)}`;
+  return `${base}/Videos/${encodeURIComponent(itemId)}/stream?static=true`;
 }
 
 /** App-relative URL the TV's <video> element loads (proxied via /api/stream) */

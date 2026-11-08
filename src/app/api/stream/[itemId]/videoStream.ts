@@ -10,5 +10,5 @@ export function isVideoStreamRequest(request: NextRequest): boolean {
 /** Direct (static, non-transcoded) Jellyfin video stream for an item */
 export async function getVideoStreamUrl(itemId: string): Promise<string> {
   const ctx = await getJellyfinService().ensureAuth();
-  return buildVideoStreamUrl(ctx.baseUrl, itemId, ctx.apiKey);
+  return buildVideoStreamUrl(ctx.baseUrl, itemId);
 }

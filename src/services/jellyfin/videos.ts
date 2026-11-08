@@ -1,6 +1,7 @@
 // Karaoke video discovery: KARAOKE_VIDEO_LIBRARY resolution + /Items fetch
 import type { MediaItem } from "@/types";
 import {
+import { jellyfinAuthHeaders } from "./auth-header";
   buildVideoQueryParams,
   transformVideoItems,
   type VideoQueryOptions,
@@ -50,7 +51,7 @@ export function resetVideoLibraryCache(): void {
 }
 
 function authHeaders(apiKey: string): Record<string, string> {
-  return { "X-Emby-Token": apiKey, "Content-Type": "application/json" };
+  return { ...jellyfinAuthHeaders(apiKey), "Content-Type": "application/json" };
 }
 
 /**

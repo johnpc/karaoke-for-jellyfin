@@ -57,15 +57,15 @@ describe("isVideoMediaItem", () => {
 });
 
 describe("buildVideoStreamUrl", () => {
-  it("builds the Jellyfin static video stream URL with the token", () => {
-    expect(buildVideoStreamUrl("http://jf:8096", "abc123", "key")).toBe(
-      "http://jf:8096/Videos/abc123/stream?static=true&api_key=key"
+  it("builds the Jellyfin static video stream URL without a token in it", () => {
+    expect(buildVideoStreamUrl("http://jf:8096", "abc123")).toBe(
+      "http://jf:8096/Videos/abc123/stream?static=true"
     );
   });
 
   it("strips a trailing slash and encodes unsafe characters", () => {
-    expect(buildVideoStreamUrl("http://jf:8096/", "a b", "k&y")).toBe(
-      "http://jf:8096/Videos/a%20b/stream?static=true&api_key=k%26y"
+    expect(buildVideoStreamUrl("http://jf:8096/", "a b")).toBe(
+      "http://jf:8096/Videos/a%20b/stream?static=true"
     );
   });
 });
